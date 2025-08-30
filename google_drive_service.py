@@ -11,8 +11,7 @@ from googleapiclient.errors import HttpError
 from dotenv import load_dotenv
 
 load_dotenv()
-SERVICE_ACCOUNT_JSON_PATH = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON_PATH")
-
+SERVICE_ACCOUNT_JSON_STRING = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
 
 # Simple caches with TTL
 _file_cache = {}
@@ -30,13 +29,21 @@ def _scopes():
 
 
 def create_drive_service():
-    """Initialize Google Drive service with credentials from JSON file"""
+    """Initialize Google Drive service with credentials from JSON string"""
     try:
-        print("📁 Initializing Google Drive service with credentials from JSON file...")
-
-        # Load credentials from JSON file
-        with open(SERVICE_ACCOUNT_JSON_PATH) as f:
-            credentials_info = json.load(f)
+        print("📁 Initializing Google Drive service with credentials from JSON string...")
+        
+        if not SERVICE_ACCOUNT_JSON_STRING:
+            print("❌ Google Service Account JSON string not found in environment variables")
+            return None
+        
+        # Parse JSON string
+        credentials_info = json.loads(SERVICE_ACCOUNT_JSON_STRING)
+        
+        # Fix private key formatting - replace \\n with actual newlines
+        if 'private_key' in credentials_info:
+            credentials_info['private_key'] = credentials_info['private_key'].replace('\\n', '\n')
+        
         credentials = Credentials.from_service_account_info(credentials_info, scopes=_scopes())
         service = build('drive', 'v3', credentials=credentials, cache_discovery=False)
 
@@ -45,8 +52,14 @@ def create_drive_service():
         print(f"✅ Connected as: {about.get('user', {}).get('emailAddress', 'Unknown')}")
         return service
 
+    except json.JSONDecodeError as e:
+        print(f"❌ Failed to parse JSON string: {e}")
+        print(f"JSON content: {SERVICE_ACCOUNT_JSON_STRING[:200]}...")  # First 200 chars for debugging
+        return None
     except Exception as e:
         print(f"❌ Failed to initialize Google Drive service: {e}")
+        import traceback
+        traceback.print_exc()
         return None
 
 
