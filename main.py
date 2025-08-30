@@ -1864,4 +1864,5 @@ if __name__ == '__main__':
         print("Google Drive integration: INACTIVE")
         print("Running in fallback mode without Google Drive")
 
-    app.run(debug=True, host='0.0.0.0', port=5000)
+
+    app.run()
