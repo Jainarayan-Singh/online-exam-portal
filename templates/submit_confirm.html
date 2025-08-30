@@ -1,0 +1,212 @@
+{% extends "base.html" %}
+
+{% block title %}Submit Exam Confirmation - ExamPortal{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg">
+                <div class="card-header bg-warning text-dark text-center">
+                    <h3 class="mb-0">
+                        <i class="fas fa-exclamation-triangle"></i> Confirm Exam Submission
+                    </h3>
+                </div>
+                <div class="card-body p-5 text-center">
+                    <div class="mb-4">
+                        <i class="fas fa-paper-plane fa-4x text-primary mb-3"></i>
+                        <h4>Are you sure you want to submit your exam?</h4>
+                        <p class="text-muted">Once submitted, you cannot return to answer or modify any questions.</p>
+                    </div>
+
+                    <div class="alert alert-info">
+                        <h5><i class="fas fa-info-circle"></i> Important Notes:</h5>
+                        <ul class="list-unstyled mb-0">
+                            <li class="mb-2">• Your answers have been automatically saved</li>
+                            <li class="mb-2">• You can view detailed results after submission</li>
+                            <li class="mb-2">• Your response analysis will be available for review</li>
+                            <li>• This action cannot be undone</li>
+                        </ul>
+                    </div>
+
+                    <!-- Progress Bar (initially hidden) -->
+                    <div id="submissionProgress" class="mb-4" style="display: none;">
+                        <div class="card">
+                            <div class="card-body">
+                                <h6 class="mb-3">
+                                    <i class="fas fa-cog fa-spin me-2"></i>
+                                    <span id="progressText">Processing your submission...</span>
+                                </h6>
+                                <div class="progress mb-3" style="height: 25px;">
+                                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                         role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                                        <span id="progressPercent">0%</span>
+                                    </div>
+                                </div>
+                                <div id="progressDetails" class="text-muted small">
+                                    Initializing submission process...
+                                </div>
+                                <div class="alert alert-info mt-3">
+                                    <i class="fas fa-info-circle me-2"></i>
+                                    Please do not close this window or navigate away during submission.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 text-center" id="actionButtons">
+                        <button type="button" id="submitExamBtn" class="btn btn-success btn-lg me-3" onclick="handleSubmission()">
+                            <i class="fas fa-check"></i> Yes, Submit Exam
+                        </button>
+                        <button id="goBackBtn" class="btn btn-outline-secondary btn-lg" onclick="goBack()">
+                            <i class="fas fa-arrow-left"></i> Go Back to Exam
+                        </button>
+                    </div>
+
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            <i class="fas fa-clock"></i> Take your time - there's no rush to submit until you're ready.
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let submissionInProgress = false;
+
+function finalConfirm() {
+    return confirm('Final confirmation: Are you absolutely sure you want to submit your exam? This cannot be undone.');
+}
+
+function goBack() {
+    if (!submissionInProgress) {
+        history.back();
+    }
+}
+
+function updateProgress(percent, text, details) {
+    const progressBar = document.getElementById('progressBar');
+    const progressPercent = document.getElementById('progressPercent');
+    const progressText = document.getElementById('progressText');
+    const progressDetails = document.getElementById('progressDetails');
+
+    progressBar.style.width = percent + '%';
+    progressBar.setAttribute('aria-valuenow', percent);
+    progressPercent.textContent = percent + '%';
+    progressText.textContent = text;
+    progressDetails.textContent = details;
+}
+
+async function simulateRealProgress() {
+    // Phase 1: Loading exam data
+    updateProgress(5, 'Loading exam data...', 'Retrieving your answers and exam configuration');
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    updateProgress(15, 'Validating responses...', 'Checking answer format and completeness');
+    await new Promise(resolve => setTimeout(resolve, 600));
+
+    updateProgress(25, 'Processing questions...', 'Analyzing your responses against correct answers');
+    await new Promise(resolve => setTimeout(resolve, 1000));
+
+    updateProgress(40, 'Calculating scores...', 'Computing marks for each question');
+    await new Promise(resolve => setTimeout(resolve, 800));
+
+    updateProgress(55, 'Generating results...', 'Creating your performance summary');
+    await new Promise(resolve => setTimeout(resolve, 900));
+
+    updateProgress(70, 'Saving to database...', 'Storing your results and responses');
+    await new Promise(resolve => setTimeout(resolve, 1200));
+
+    updateProgress(85, 'Creating response analysis...', 'Preparing detailed answer breakdown');
+    await new Promise(resolve => setTimeout(resolve, 700));
+
+    updateProgress(95, 'Finalizing submission...', 'Completing the submission process');
+    await new Promise(resolve => setTimeout(resolve, 500));
+
+    updateProgress(100, 'Submission completed!', 'Redirecting to your results...');
+    await new Promise(resolve => setTimeout(resolve, 300));
+}
+
+async function handleSubmission() {
+    if (submissionInProgress) {
+        return;
+    }
+
+    // Final confirmation
+    if (!finalConfirm()) {
+        return;
+    }
+
+    submissionInProgress = true;
+
+    // Hide action buttons and show progress
+    document.getElementById('actionButtons').style.display = 'none';
+    document.getElementById('submissionProgress').style.display = 'block';
+
+    try {
+        // Start progress simulation
+        const progressPromise = simulateRealProgress();
+
+        // Create FormData for submission
+        const formData = new FormData();
+
+        // Submit the form via fetch to track progress
+        const submitPromise = fetch('{{ url_for("submit_exam", exam_id=exam_id) }}', {
+            method: 'POST',
+            body: formData,
+            credentials: 'same-origin'
+        });
+
+        // Wait for both progress simulation and actual submission
+        await Promise.all([progressPromise, submitPromise.then(async response => {
+            if (response.ok) {
+                // Check if response is a redirect
+                if (response.redirected) {
+                    window.location.href = response.url;
+                } else {
+                    // Handle JSON response or other cases
+                    const text = await response.text();
+                    if (text.includes('window.location') || text.includes('redirect')) {
+                        // Server sent redirect instruction
+                        window.location.href = '{{ url_for("result", exam_id=exam_id) }}';
+                    } else {
+                        // Handle other response types
+                        document.body.innerHTML = text;
+                    }
+                }
+            } else {
+                throw new Error(`Server error: ${response.status}`);
+            }
+        })]);
+
+    } catch (error) {
+        console.error('Submission error:', error);
+
+        // Show error state
+        updateProgress(0, 'Submission failed!', 'An error occurred. Please try again.');
+        document.getElementById('progressBar').classList.remove('bg-success');
+        document.getElementById('progressBar').classList.add('bg-danger');
+
+        // Re-enable buttons after error
+        setTimeout(() => {
+            submissionInProgress = false;
+            document.getElementById('actionButtons').style.display = 'block';
+            document.getElementById('submissionProgress').style.display = 'none';
+            document.getElementById('progressBar').classList.remove('bg-danger');
+            document.getElementById('progressBar').classList.add('bg-success');
+        }, 3000);
+    }
+}
+
+// Additional safety measures
+window.onload = function() {
+    // Ensure clean state on page load
+    submissionInProgress = false;
+    document.getElementById('actionButtons').style.display = 'block';
+    document.getElementById('submissionProgress').style.display = 'none';
+};
+</script>
+{% endblock %}

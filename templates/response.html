@@ -1,0 +1,396 @@
+{% extends "base.html" %}
+
+{% block title %}Exam Response Analysis - ExamPortal{% endblock %}
+
+{% block content %}
+<div class="container mt-4" id="responseContainer">
+    <!-- Header Section -->
+    <div class="row mb-4" id="examHeader">
+        <div class="col-md-12">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h3><i class="fas fa-clipboard-check"></i> {{ exam.name }} - Response Analysis</h3>
+                            <p class="mb-1">Student: {{ session.full_name }}</p>
+                            <p class="mb-0">Completed: {{ result.completed_at }}</p>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <div class="score-summary">
+                                <h4>Score: {{ result.score }}/{{ result.max_score }}</h4>
+                                <p class="mb-0">{{ result.percentage }}% | Grade: {{ result.grade }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Action Buttons -->
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <button id="downloadPdfBtn" class="btn btn-success btn-lg me-3">
+                <i class="fas fa-download"></i> Download as PDF
+            </button>
+            <button onclick="window.print()" class="btn btn-lg me-3"
+                    style="background-color: #4a90e2; color: #ffffff; border: none; border-radius: 5px;">
+                <i class="fas fa-print"></i> Print Response
+            </button>
+            <button onclick="closeResponseWindow()" class="btn btn-lg"
+                    style="background-color: #e74c3c; color: #ffffff; border: none; border-radius: 5px;">
+                <i class="fas fa-times"></i> Close
+            </button>
+        </div>
+    </div>
+
+    <!-- Questions and Responses -->
+    <div id="responseContent">
+        {% if responses %}
+            {% for response in responses %}
+            <div class="card mb-4 question-response-card">
+                <div class="card-header
+                    {% if not response.is_attempted %}bg-secondary text-white
+                    {% elif response.is_correct %}bg-success text-white
+                    {% else %}bg-danger text-white{% endif %}">
+                    <div class="row">
+                        <div class="col-md-8">
+                            <h6 class="mb-0">
+                                <i class="fas fa-question-circle"></i> Question {{ loop.index }}
+                                <span class="badge
+                                    {% if response.question_type == 'MCQ' %}bg-light text-dark
+                                    {% elif response.question_type == 'MSQ' %}bg-warning text-dark
+                                    {% elif response.question_type == 'NUMERIC' %}bg-info text-dark
+                                    {% else %}bg-secondary{% endif %} ms-2">
+                                    {% if response.question_type == 'MCQ' %}Single Choice
+                                    {% elif response.question_type == 'MSQ' %}Multiple Choice
+                                    {% elif response.question_type == 'NUMERIC' %}Numerical
+                                    {% else %}{{ response.question_type }}{% endif %}
+                                </span>
+                            </h6>
+                        </div>
+                        <div class="col-md-4 text-end">
+                            <span class="badge
+                                {% if not response.is_attempted %}bg-light text-secondary
+                                {% elif response.is_correct %}bg-light text-success
+                                {% else %}bg-light text-danger{% endif %} fs-6">
+                                {% if not response.is_attempted %}
+                                    <i class="fas fa-minus"></i> Not Attempted (0)
+                                {% elif response.is_correct %}
+                                    <i class="fas fa-check"></i> Correct (+{{ response.marks_obtained }})
+                                {% else %}
+                                    <i class="fas fa-times"></i> Incorrect ({{ response.marks_obtained }})
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <h6><strong>Question:</strong></h6>
+                    <p>{{ response.question.question_text }}</p>
+
+                    <!-- Fixed Image Display -->
+                    {% if response.question.has_image and response.question.image_url %}
+                    <div class="mb-3 text-center">
+                        <img src="{{ response.question.image_url }}"
+                             alt="Question {{ loop.index }} Image"
+                             class="img-fluid rounded shadow"
+                             style="max-width: 400px; cursor: pointer;"
+                             onclick="openImageModal(this.src, 'Question {{ loop.index }} Image')"
+                             onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
+                        <div class="alert alert-warning mt-2" style="display: none;">
+                            <i class="fas fa-exclamation-triangle"></i> Image failed to load
+                        </div>
+                        <br>
+                        <small class="text-muted">Click to enlarge</small>
+                    </div>
+                    {% endif %}
+
+                    <!-- Display responses depending on type -->
+                    {% if response.question_type == 'MCQ' %}
+                        {% set options = [
+                            {'id': 'A', 'text': response.question.option_a},
+                            {'id': 'B', 'text': response.question.option_b},
+                            {'id': 'C', 'text': response.question.option_c},
+                            {'id': 'D', 'text': response.question.option_d}
+                        ] %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><strong>Options:</strong></h6>
+                                {% for opt in options %}
+                                    {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
+                                    <div class="p-2 mb-2 rounded option-display
+                                        {% if response.is_attempted and opt.id == response.given_answer and opt.id == response.correct_answer %}bg-success text-white
+                                        {% elif response.is_attempted and opt.id == response.given_answer and opt.id != response.correct_answer %}bg-danger text-white
+                                        {% elif opt.id == response.correct_answer %}bg-success text-white
+                                        {% else %}bg-light{% endif %}">
+                                        <strong>{{ opt.id }}.</strong> {{ opt.text }}
+                                        {% if response.is_attempted and opt.id == response.given_answer %}
+                                            <i class="fas fa-arrow-left ms-2"></i> <small>Your Choice</small>
+                                        {% endif %}
+                                        {% if opt.id == response.correct_answer %}
+                                            <i class="fas fa-check ms-2"></i> <small>Correct Answer</small>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Your Answer:</strong>
+                                {% if response.is_attempted and response.given_answer %}
+                                    {{ response.given_answer }}
+                                {% else %}
+                                    <span class="text-muted">Not Answered</span>
+                                {% endif %}<br>
+                                <strong>Correct Answer:</strong> {{ response.correct_answer or 'N/A' }}
+                            </div>
+                        </div>
+
+                    {% elif response.question_type == 'MSQ' %}
+                        {% set options = [
+                            {'id': 'A', 'text': response.question.option_a},
+                            {'id': 'B', 'text': response.question.option_b},
+                            {'id': 'C', 'text': response.question.option_c},
+                            {'id': 'D', 'text': response.question.option_d}
+                        ] %}
+
+                        <!-- Handle MSQ answers as lists -->
+                        {% set given_list = [] %}
+                        {% set correct_list = [] %}
+
+                        {% if response.is_attempted and response.given_answer %}
+                            {% if response.given_answer is string and response.given_answer != 'None' %}
+                                {% set given_list = response.given_answer.split(',') if ',' in response.given_answer else [response.given_answer] %}
+                            {% elif response.given_answer is iterable and response.given_answer is not string %}
+                                {% set given_list = response.given_answer %}
+                            {% endif %}
+                        {% endif %}
+
+                        {% if response.correct_answer %}
+                            {% if response.correct_answer is string and response.correct_answer != 'None' %}
+                                {% set correct_list = response.correct_answer.split(',') if ',' in response.correct_answer else [response.correct_answer] %}
+                            {% elif response.correct_answer is iterable and response.correct_answer is not string %}
+                                {% set correct_list = response.correct_answer %}
+                            {% endif %}
+                        {% endif %}
+
+                        <div class="row">
+                            <div class="col-md-6">
+                                <h6><strong>Options:</strong></h6>
+                                {% for opt in options %}
+                                    {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
+                                    {% set in_given = response.is_attempted and opt.id in given_list %}
+                                    {% set in_correct = opt.id in correct_list %}
+                                    <div class="p-2 mb-2 rounded option-display
+                                        {% if in_given and in_correct %}bg-success text-white
+                                        {% elif in_given and not in_correct %}bg-danger text-white
+                                        {% elif not in_given and in_correct %}bg-warning text-dark
+                                        {% else %}bg-light{% endif %}">
+                                        <strong>{{ opt.id }}.</strong> {{ opt.text }}
+                                        {% if in_given %}
+                                            <i class="fas fa-check-square ms-2"></i> <small>Your Choice</small>
+                                        {% endif %}
+                                        {% if in_correct %}
+                                            <i class="fas fa-star ms-2"></i> <small>Correct Option</small>
+                                        {% endif %}
+                                    </div>
+                                    {% endif %}
+                                {% endfor %}
+                            </div>
+                            <div class="col-md-6">
+                                <strong>Your Selection:</strong>
+                                {% if response.is_attempted and given_list %}
+                                    {{ given_list|join(', ') }}
+                                {% else %}
+                                    <span class="text-muted">Not Answered</span>
+                                {% endif %}<br>
+                                <strong>Correct Selection:</strong> {{ correct_list|join(', ') or 'N/A' }}
+                            </div>
+                        </div>
+
+                    {% elif response.question_type == 'NUMERIC' %}
+                        <div class="row">
+                            <div class="col-md-12">
+                                <strong>Your Answer:</strong>
+                                {% if response.is_attempted and response.given_answer %}
+                                    {{ response.given_answer }}
+                                {% else %}
+                                    <span class="text-muted">Not Answered</span>
+                                {% endif %}<br>
+                                <strong>Correct Answer:</strong> {{ response.correct_answer or 'N/A' }}
+                                {% if response.question.tolerance %}
+                                    <br><small class="text-muted">Tolerance: ±{{ response.question.tolerance }}</small>
+                                {% endif %}
+                            </div>
+                        </div>
+
+                    {% else %}
+                        <!-- Fallback for unknown question types -->
+                        <div class="alert alert-warning">
+                            <strong>Unknown question type:</strong> {{ response.question_type }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="alert alert-warning text-center">
+                <h4><i class="fas fa-exclamation-triangle"></i> No Response Data Found</h4>
+                <p>No responses were found for this exam. This might be because:</p>
+                <ul class="list-unstyled">
+                    <li>• The exam was not completed</li>
+                    <li>• There was an error saving responses</li>
+                    <li>• The responses.csv file structure needs updating</li>
+                </ul>
+            </div>
+        {% endif %}
+    </div>
+
+    <!-- Enhanced Summary Stats -->
+    <div class="card mt-4" id="summaryStats">
+        <div class="card-header bg-info text-white">
+            <h5 class="mb-0"><i class="fas fa-chart-bar"></i> Performance Summary</h5>
+        </div>
+        <div class="card-body">
+            <div class="row text-center">
+                <div class="col-md-2">
+                    <div class="text-success">
+                        <h4>{{ result.correct_answers if result.correct_answers is defined else (responses|selectattr('is_correct')|selectattr('is_attempted')|list|length) }}</h4>
+                        <p class="mb-0">Correct</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-danger">
+                        <h4>{{ result.incorrect_answers if result.incorrect_answers is defined else (responses|rejectattr('is_correct')|selectattr('is_attempted')|list|length) }}</h4>
+                        <p class="mb-0">Incorrect</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-muted">
+                        <h4>{{ result.unanswered_questions if result.unanswered_questions is defined else (responses|rejectattr('is_attempted')|list|length) }}</h4>
+                        <p class="mb-0">Unanswered</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-primary">
+                        <h4>{{ result.score }}</h4>
+                        <p class="mb-0">Score</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-info">
+                        <h4>{{ result.total_questions }}</h4>
+                        <p class="mb-0">Total</p>
+                    </div>
+                </div>
+                <div class="col-md-2">
+                    <div class="text-warning">
+                        <h4>{{ result.percentage }}%</h4>
+                        <p class="mb-0">Percentage</p>
+                    </div>
+                </div>
+            </div>
+            <hr>
+            <div class="row text-center">
+                <div class="col-md-6">
+                    <strong>Attempted:</strong>
+                    {% set attempted_count = (result.correct_answers if result.correct_answers is defined else (responses|selectattr('is_correct')|selectattr('is_attempted')|list|length)) + (result.incorrect_answers if result.incorrect_answers is defined else (responses|rejectattr('is_correct')|selectattr('is_attempted')|list|length)) %}
+                    {{ attempted_count }} / {{ result.total_questions }}
+                </div>
+                <div class="col-md-6">
+                    <strong>Accuracy (on attempted):</strong>
+                    {% set correct_count = result.correct_answers if result.correct_answers is defined else (responses|selectattr('is_correct')|selectattr('is_attempted')|list|length) %}
+                    {% if attempted_count > 0 %}
+                        {{ (correct_count / attempted_count * 100) | round(1) }}%
+                    {% else %}
+                        N/A
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Image Modal -->
+<div class="modal fade" id="responseImageModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="imageModalTitle"><i class="fas fa-image me-2"></i>Question Image</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <img id="responseModalImage" src="" alt="Question image" class="img-fluid rounded shadow" style="max-height: 80vh;">
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+function openImageModal(src, title) {
+    document.getElementById('responseModalImage').src = src;
+    document.getElementById('imageModalTitle').textContent = title;
+    new bootstrap.Modal(document.getElementById('responseImageModal')).show();
+}
+
+function closeResponseWindow() {
+    if (window.opener) { window.close(); } else { window.history.back(); }
+}
+
+// PDF Download
+document.getElementById('downloadPdfBtn').onclick = async function () {
+    const downloadBtn = this;
+    const originalText = downloadBtn.innerHTML;
+    downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+    downloadBtn.disabled = true;
+
+    try {
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        let yOffset = 10;
+
+        // Header
+        const header = document.getElementById('examHeader');
+        const headerCanvas = await html2canvas(header, { scale: 2, useCORS: true });
+        const headerImgData = headerCanvas.toDataURL('image/png');
+        const headerHeight = (headerCanvas.height * pdfWidth) / headerCanvas.width;
+        pdf.addImage(headerImgData, 'PNG', 0, yOffset, pdfWidth, headerHeight);
+        yOffset += headerHeight + 5;
+
+        // All question cards
+        const cards = document.querySelectorAll('.question-response-card');
+        for (let i = 0; i < cards.length; i++) {
+            const canvas = await html2canvas(cards[i], { scale: 2, useCORS: true });
+            const imgData = canvas.toDataURL('image/png');
+            const cardHeight = (canvas.height * pdfWidth) / canvas.width;
+            if (yOffset + cardHeight > pdfHeight - 10) { pdf.addPage(); yOffset = 10; }
+            pdf.addImage(imgData, 'PNG', 0, yOffset, pdfWidth, cardHeight);
+            yOffset += cardHeight + 5;
+        }
+
+        // Summary
+        const summary = document.getElementById('summaryStats');
+        const summaryCanvas = await html2canvas(summary, { scale: 2, useCORS: true });
+        const summaryImgData = summaryCanvas.toDataURL('image/png');
+        const summaryHeight = (summaryCanvas.height * pdfWidth) / summaryCanvas.width;
+        if (yOffset + summaryHeight > pdfHeight - 10) { pdf.addPage(); yOffset = 10; }
+        pdf.addImage(summaryImgData, 'PNG', 0, yOffset, pdfWidth, summaryHeight);
+
+        pdf.save('{{ exam.name|replace(" ", "_") }}_Response_Analysis_{{ session.username }}.pdf');
+    } catch (err) {
+        console.error(err);
+        alert('Error generating PDF. Please try again.');
+    } finally {
+        downloadBtn.innerHTML = originalText;
+        downloadBtn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

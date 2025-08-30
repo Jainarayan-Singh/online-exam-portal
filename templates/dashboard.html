@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Student Dashboard - ExamPortal{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h2 class="text-white">
+                <i class="fas fa-tachometer-alt"></i> Welcome, {{ session.full_name }}!
+            </h2>
+            <p class="text-white-50">Manage your exams and view your progress</p>
+        </div>
+    </div>
+
+    <ul class="nav nav-tabs" id="examTabs" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="upcoming-tab" data-bs-toggle="tab" data-bs-target="#upcoming" type="button" role="tab" style="color:#ffffff;">
+                <i class="fas fa-calendar-alt"></i> Upcoming Exams
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="ongoing-tab" data-bs-toggle="tab" data-bs-target="#ongoing" type="button" role="tab" style="color:#ffffff;">
+                <i class="fas fa-play-circle"></i> Ongoing Exams
+            </button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="completed-tab" data-bs-toggle="tab" data-bs-target="#completed" type="button" role="tab" style="color:#ffffff;">
+                <i class="fas fa-check-circle"></i> Completed Exams
+            </button>
+        </li>
+    </ul>
+
+    <div class="tab-content mt-4">
+        <!-- Upcoming Exams -->
+        <div class="tab-pane fade show active" id="upcoming">
+            {% if upcoming_exams %}
+            <div class="row">
+                {% for exam in upcoming_exams %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-file-alt text-primary"></i> {{ exam.name }}
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> {{ exam.date }}<br>
+                                    <i class="fas fa-clock"></i> {{ exam.start_time }}<br>
+                                    <i class="fas fa-stopwatch"></i> Duration: {{ exam.duration }} mins<br>
+                                    <i class="fas fa-question-circle"></i> Questions: {{ exam.total_questions }}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ exam.instructions }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <button class="btn btn-secondary btn-sm w-100" disabled>
+                                <i class="fas fa-clock"></i> Not Started Yet
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-calendar-times fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Upcoming Exams</h4>
+                    <p class="text-muted">You don't have any upcoming exams at the moment.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Ongoing Exams -->
+        <div class="tab-pane fade" id="ongoing">
+            {% if ongoing_exams %}
+            <div class="row">
+                {% for exam in ongoing_exams %}
+                <div class="col-md-6 col-lg-4 mb-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-play-circle text-success"></i> {{ exam.name }}
+                                <span class="badge bg-success ms-2">LIVE</span>
+                            </h5>
+                            <p class="card-text">
+                                <small class="text-muted">
+                                    <i class="fas fa-calendar"></i> {{ exam.date }}<br>
+                                    <i class="fas fa-clock"></i> {{ exam.start_time }}<br>
+                                    <i class="fas fa-stopwatch"></i> Duration: {{ exam.duration }} mins<br>
+                                    <i class="fas fa-question-circle"></i> Questions: {{ exam.total_questions }}
+                                </small>
+                            </p>
+                            <p class="card-text">{{ exam.instructions }}</p>
+                        </div>
+                        <div class="card-footer">
+                            <a href="{{ url_for('exam_instructions', exam_id=exam.id) }}"
+                               class="btn btn-success btn-sm w-100">
+                                <i class="fas fa-play"></i> Start Exam
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-play-circle fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Ongoing Exams</h4>
+                    <p class="text-muted">There are no active exams at this time.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Completed Exams -->
+        <div class="tab-pane fade" id="completed">
+            {% if completed_exams %}
+            <div class="table-responsive">
+                <table class="table table-hover">
+                    <thead class="table-light">
+                        <tr>
+                            <th><i class="fas fa-file-alt"></i> Exam Name</th>
+                            <th><i class="fas fa-calendar"></i> Date</th>
+                            <th><i class="fas fa-chart-bar"></i> Score</th>
+                            <th><i class="fas fa-info-circle"></i> Status</th>
+                            <th><i class="fas fa-eye"></i> Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for exam in completed_exams %}
+                        <tr>
+                            <td>
+                                <strong>{{ exam.name }}</strong>
+                            </td>
+                            <td>{{ exam.date }}</td>
+                            <td>
+                                {% if exam.result %}
+                                    <span class="badge bg-info">{{ exam.result }}</span>
+                                {% else %}
+                                    <span class="badge bg-warning">Pending</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <span class="badge bg-success">
+                                    <i class="fas fa-check"></i> Completed
+                                </span>
+                            </td>
+                            <td>
+                                <a href="{{ url_for('result', exam_id=exam.id) }}"
+                                   class="btn btn-outline-primary btn-sm">
+                                    <i class="fas fa-eye"></i> View Result
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% else %}
+            <div class="card">
+                <div class="card-body text-center py-5">
+                    <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                    <h4 class="text-muted">No Completed Exams</h4>
+                    <p class="text-muted">You haven't completed any exams yet.</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

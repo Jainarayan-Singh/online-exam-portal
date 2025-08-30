@@ -1,0 +1,1867 @@
+# main.py - COMPLETELY FIXED VERSION with proper file IDs and loading states
+from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
+import pandas as pd
+import os
+from datetime import datetime
+import hashlib
+from functools import wraps
+import json
+import time
+import secrets
+import string
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+import secrets
+import re
+from fpdf import FPDF
+from PIL import Image
+import requests
+from io import BytesIO
+import tempfile
+from reportlab.lib.pagesizes import letter
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
+
+# Import Google Drive service
+from google_drive_service import (
+    create_drive_service, load_csv_from_drive, save_csv_to_drive,
+    find_file_by_name, get_public_url, find_folder_by_name,
+    list_drive_files, create_file_if_not_exists
+)
+
+app = Flask(__name__)
+app.secret_key = os.environ.get('SECRET_KEY')
+app.config['SESSION_PERMANENT'] = True
+app.config['PERMANENT_SESSION_LIFETIME'] = 7200  # 2 hours
+
+# Configuration
+USERS_CSV = 'users.csv'
+EXAMS_CSV = 'exams.csv'
+QUESTIONS_CSV = 'questions.csv'
+RESULTS_CSV = 'results.csv'
+RESPONSES_CSV = 'responses.csv'
+
+#1-Lo4Nc8_mur_v9e3E1jVSVDc2v1fitow
+
+# FIXED Google Drive File IDs - Using separate IDs for each file
+USERS_FILE_ID = os.environ.get('USERS_FILE_ID')
+EXAMS_FILE_ID = os.environ.get('EXAMS_FILE_ID')
+QUESTIONS_FILE_ID = os.environ.get('QUESTIONS_FILE_ID')
+RESULTS_FILE_ID = os.environ.get('RESULTS_FILE_ID')
+RESPONSES_FILE_ID = os.environ.get('RESPONSES_FILE_ID')
+
+DRIVE_FILE_IDS = {
+    'users': USERS_FILE_ID,
+    'exams': EXAMS_FILE_ID,
+    'questions': QUESTIONS_FILE_ID,
+    'results': RESULTS_FILE_ID,
+    'responses': RESPONSES_FILE_ID
+}
+
+# Google Drive Folder IDs
+ROOT_FOLDER_ID = os.environ.get('ROOT_FOLDER_ID')
+IMAGES_FOLDER_ID = os.environ.get('IMAGES_FOLDER_ID')
+PHYSICS_FOLDER_ID = os.environ.get('PHYSICS_FOLDER_ID')
+CHEMISTRY_FOLDER_ID = os.environ.get('CHEMISTRY_FOLDER_ID')
+MATH_FOLDER_ID = os.environ.get('MATH_FOLDER_ID')
+CIVIL_FOLDER_ID = os.environ.get('CIVIL_FOLDER_ID')
+
+DRIVE_FOLDER_IDS = {
+    'root': ROOT_FOLDER_ID,
+    'images': IMAGES_FOLDER_ID,
+    'physics': PHYSICS_FOLDER_ID,
+    'chemistry': CHEMISTRY_FOLDER_ID,
+    'math': MATH_FOLDER_ID,
+    'civil': CIVIL_FOLDER_ID
+}
+
+# Global drive service instance
+drive_service = None
+
+# In-memory cache to reduce API calls
+app_cache = {
+    'data': {},
+    'images': {},
+    'timestamps': {}
+}
+
+
+# -------------------------
+# Helper Functions
+# -------------------------
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user_id' not in session:
+            flash('Please login first', 'error')
+            return redirect(url_for('login'))
+        return f(*args, **kwargs)
+
+    return decorated_function
+
+
+def parse_correct_answers(correct_answer_str, question_type):
+    """Parse correct answers based on question type"""
+    if pd.isna(correct_answer_str) or str(correct_answer_str).strip() == '':
+        if question_type == 'MSQ':
+            return []
+        else:
+            return None
+
+    if question_type == 'MSQ':
+        # Multiple correct answers (comma separated)
+        return [ans.strip().upper() for ans in str(correct_answer_str).split(',') if ans.strip()]
+    elif question_type == 'NUMERIC':
+        # Numerical answer
+        try:
+            return float(str(correct_answer_str).strip())
+        except (ValueError, TypeError):
+            return None
+    else:  # MCQ
+        # Single correct answer
+        return str(correct_answer_str).strip().upper()
+
+
+def init_drive_service():
+    """Initialize the Google Drive service"""
+    global drive_service
+    try:
+        print("🔧 Initializing Google Drive service...")
+        drive_service = create_drive_service()
+        if drive_service:
+            print("✅ Google Drive service initialized successfully!")
+
+            # FIXED: Ensure all required files exist
+            ensure_required_files()
+            return True
+        else:
+            print("❌ Failed to initialize Google Drive service")
+            return False
+    except Exception as e:
+        print(f"❌ Failed to initialize Google Drive service: {e}")
+        return False
+
+
+def ensure_required_files():
+    """Ensure all required CSV files exist in Google Drive"""
+    global drive_service
+
+    if not drive_service:
+        return
+
+    required_files = {
+        'users.csv': DRIVE_FILE_IDS['users'],
+        'exams.csv': DRIVE_FILE_IDS['exams'],
+        'questions.csv': DRIVE_FILE_IDS['questions'],
+        'results.csv': DRIVE_FILE_IDS['results'],
+        'responses.csv': DRIVE_FILE_IDS['responses']
+    }
+
+    for filename, file_id in required_files.items():
+        try:
+            # Try to load the file to check if it exists
+            test_df = load_csv_from_drive(drive_service, file_id)
+            if test_df is not None:
+                print(f"✅ Verified {filename} exists")
+            else:
+                print(f"⚠️ {filename} may not exist, but ID is configured")
+        except Exception as e:
+            print(f"❌ Error verifying {filename}: {e}")
+
+
+def load_csv_with_cache(filename, force_reload=False):
+    """Load CSV with smart caching - FIXED VERSION"""
+    global app_cache
+
+    cache_key = f'csv_{filename}'
+    cache_duration = 300  # 5 minutes
+
+    # Check cache first
+    if not force_reload and cache_key in app_cache['data']:
+        cached_time = app_cache['timestamps'].get(cache_key, 0)
+        if time.time() - cached_time < cache_duration:
+            print(f"📋 Using cached data for {filename}")
+            return app_cache['data'][cache_key].copy()
+
+    # Load from Google Drive
+    print(f"📥 Loading fresh data for {filename}...")
+    df = load_csv_from_drive_direct(filename)
+
+    if not df.empty:
+        # Cache the data
+        app_cache['data'][cache_key] = df.copy()
+        app_cache['timestamps'][cache_key] = time.time()
+        print(f"💾 Cached {len(df)} records for {filename}")
+
+    return df
+
+
+def load_csv_from_drive_direct(filename):
+    """Direct CSV loading from Google Drive with better error handling"""
+    global drive_service
+
+    if drive_service is None:
+        print("No Google Drive service available")
+        return pd.DataFrame()
+
+    file_id_key = filename.replace('.csv', '')
+    file_id = DRIVE_FILE_IDS.get(file_id_key)
+
+    if file_id and not file_id.startswith('YOUR_'):
+        try:
+            df = load_csv_from_drive(drive_service, file_id)
+            if not df.empty:
+                # Clean column names
+                df.columns = df.columns.str.strip()
+                print(f"Successfully loaded {len(df)} rows from {filename}")
+                return df
+            else:
+                print(f"Empty DataFrame for {filename}")
+        except Exception as e:
+            print(f"Error loading {filename} from Drive: {e}")
+
+    return pd.DataFrame()
+
+
+def process_question_image_fixed(question):
+    """FIXED image processing with better error handling and caching"""
+    global drive_service, app_cache
+
+    image_path = question.get('image_path')
+
+    if (image_path is None or
+            pd.isna(image_path) or
+            str(image_path).strip() in ['', 'nan', 'NaN', 'null', 'None']):
+        return False, None
+
+    image_path = str(image_path).strip()
+    if not image_path:
+        return False, None
+
+    # Check image cache first
+    cache_key = f'image_{image_path}'
+    if cache_key in app_cache['images']:
+        cached_time = app_cache['timestamps'].get(cache_key, 0)
+        if time.time() - cached_time < 3600:  # 1 hour cache for images
+            print(f"Using cached image URL for {image_path}")
+            return True, app_cache['images'][cache_key]
+
+    if drive_service is None:
+        print(f"No drive service for image: {image_path}")
+        return False, None
+
+    try:
+        filename = os.path.basename(image_path)
+        subject = os.path.dirname(image_path).lower()
+
+        # Determine folder ID based on subject
+        folder_id = None
+        if subject == 'physics' and DRIVE_FOLDER_IDS.get('physics'):
+            folder_id = DRIVE_FOLDER_IDS['physics']
+        elif subject == 'chemistry' and DRIVE_FOLDER_IDS.get('chemistry'):
+            folder_id = DRIVE_FOLDER_IDS['chemistry']
+        elif subject == 'math' and DRIVE_FOLDER_IDS.get('math'):
+            folder_id = DRIVE_FOLDER_IDS['math']
+        elif subject == 'civil' and DRIVE_FOLDER_IDS.get('civil'):
+            folder_id = DRIVE_FOLDER_IDS['civil']
+        elif DRIVE_FOLDER_IDS.get('images'):
+            folder_id = DRIVE_FOLDER_IDS['images']
+
+        if not folder_id:
+            print(f"No folder ID found for subject: {subject}")
+            return False, None
+
+        # Find and get public URL
+        image_file_id = find_file_by_name(drive_service, filename, folder_id)
+
+        if image_file_id:
+            image_url = get_public_url(drive_service, image_file_id)
+
+            if image_url:
+                # Cache the URL
+                app_cache['images'][cache_key] = image_url
+                app_cache['timestamps'][cache_key] = time.time()
+                print(f"Cached image URL: {image_path} -> {image_url}")
+                return True, image_url
+
+        print(f"Image file not found: {filename} in folder {folder_id}")
+        return False, None
+
+    except Exception as e:
+        print(f"Error processing image {image_path}: {e}")
+        return False, None
+
+
+def preload_exam_data_fixed(exam_id):
+    """COMPLETELY FIXED exam data preloading with comprehensive error handling"""
+    start_time = time.time()
+    print(f"Preloading exam data for exam_id: {exam_id}")
+
+    try:
+        # Load all required data
+        questions_df = load_csv_with_cache('questions.csv')
+        exams_df = load_csv_with_cache('exams.csv')
+
+        if questions_df.empty:
+            print("Questions DataFrame is empty")
+            return False, "Failed to load questions data"
+
+        if exams_df.empty:
+            print("Exams DataFrame is empty")
+            return False, "Failed to load exam data"
+
+        # Convert exam_id to ensure consistency
+        exam_id_str = str(exam_id)
+
+        # Filter questions for this exam
+        print(f"Filtering questions for exam_id: {exam_id_str}")
+        exam_questions = questions_df[questions_df['exam_id'].astype(str) == exam_id_str]
+
+        if exam_questions.empty:
+            print(f"No questions found for exam_id: {exam_id_str}")
+            print(f"Available exam_ids in questions: {questions_df['exam_id'].unique().tolist()}")
+            return False, f"No questions found for exam ID {exam_id}"
+
+        # Get exam info
+        exam_info = exams_df[exams_df['id'].astype(str) == exam_id_str]
+        if exam_info.empty:
+            print(f"Exam not found with id: {exam_id_str}")
+            return False, "Exam not found"
+
+        # Process and cache questions with images
+        processed_questions = []
+        image_urls = {}
+        failed_images = []
+
+        for _, question in exam_questions.iterrows():
+            question_dict = question.to_dict()
+
+            # Process image if exists
+            image_path = question_dict.get('image_path')
+            if image_path and str(image_path).strip() not in ['', 'nan', 'NaN', 'null', 'None']:
+                has_image, image_url = process_question_image_fixed(question_dict)
+                question_dict['has_image'] = has_image
+                question_dict['image_url'] = image_url
+
+                if has_image and image_url:
+                    image_urls[str(question_dict['id'])] = image_url
+                    print(f"Image processed for Q{question_dict['id']}: {image_path}")
+                else:
+                    failed_images.append(image_path)
+                    print(f"Failed to load image for Q{question_dict['id']}: {image_path}")
+            else:
+                question_dict['has_image'] = False
+                question_dict['image_url'] = None
+
+            # Parse correct answers
+            question_dict['parsed_correct_answer'] = parse_correct_answers(
+                question_dict.get('correct_answer'),
+                question_dict.get('question_type', 'MCQ')
+            )
+
+            processed_questions.append(question_dict)
+
+        # Store in session with more comprehensive data
+        cache_key = f'exam_data_{exam_id}'
+        session[cache_key] = {
+            'exam_info': exam_info.iloc[0].to_dict(),
+            'questions': processed_questions,
+            'image_urls': image_urls,
+            'failed_images': failed_images,
+            'total_questions': len(processed_questions),
+            'loaded_at': datetime.now().isoformat(),
+            'exam_id': exam_id
+        }
+        session.permanent = True
+
+        load_time = time.time() - start_time
+        print(
+            f"Preloaded exam data in {load_time:.2f}s: {len(processed_questions)} questions, {len(image_urls)} images loaded, {len(failed_images)} images failed")
+
+        return True, f"Successfully loaded {len(processed_questions)} questions"
+
+    except Exception as e:
+        print(f"Critical error preloading exam data: {e}")
+        import traceback
+        traceback.print_exc()
+        return False, f"Critical error: {str(e)}"
+
+
+def get_cached_exam_data(exam_id):
+    """Get cached exam data with validation"""
+    cache_key = f'exam_data_{exam_id}'
+    cached_data = session.get(cache_key)
+
+    if cached_data:
+        # Validate cached data structure
+        required_keys = ['exam_info', 'questions', 'total_questions']
+        if all(key in cached_data for key in required_keys):
+            return cached_data
+        else:
+            print(f"Invalid cached data structure for exam {exam_id}")
+            session.pop(cache_key, None)
+
+    return None
+
+
+def check_answer(given_answer, correct_answer, question_type, tolerance=0.1):
+    """Enhanced answer checking with better validation"""
+    if question_type == 'MCQ':
+        if given_answer is None or correct_answer is None:
+            return False
+        return str(given_answer).strip().upper() == str(correct_answer).strip().upper()
+
+    elif question_type == 'MSQ':
+        if not given_answer or not correct_answer:
+            return False
+
+        # Convert to lists if needed
+        if isinstance(given_answer, str):
+            given_list = [x.strip().upper() for x in given_answer.split(',') if x.strip()]
+        else:
+            given_list = [str(x).strip().upper() for x in given_answer if x]
+
+        if isinstance(correct_answer, str):
+            correct_list = [x.strip().upper() for x in correct_answer.split(',') if x.strip()]
+        else:
+            correct_list = [str(x).strip().upper() for x in correct_answer if x]
+
+        return set(given_list) == set(correct_list)
+
+    elif question_type == 'NUMERIC':
+        if given_answer is None or correct_answer is None:
+            return False
+
+        try:
+            given_val = float(str(given_answer).strip())
+            correct_val = float(str(correct_answer).strip())
+            return abs(given_val - correct_val) <= tolerance
+        except (ValueError, TypeError):
+            return False
+
+    return False
+
+
+def calculate_question_score(is_correct, question_type, positive_marks, negative_marks):
+    """Calculate score for a question"""
+    if is_correct:
+        return float(positive_marks)
+    else:
+        return -float(negative_marks) if negative_marks else 0.0
+
+
+def save_csv_to_drive_batch(df, csv_type):
+    """Batch save CSV to Google Drive - FIXED"""
+    global drive_service
+
+    if drive_service is None:
+        print("No Google Drive service for batch save")
+        return False
+
+    file_id = DRIVE_FILE_IDS.get(csv_type)
+    if not file_id:
+        print(f"No file ID found for {csv_type}")
+        return False
+
+    try:
+        success = save_csv_to_drive(drive_service, df, file_id)
+        if success:
+            # Clear cache for this CSV type
+            cache_key = f'csv_{csv_type}.csv'
+            app_cache['data'].pop(cache_key, None)
+            app_cache['timestamps'].pop(cache_key, None)
+            print(f"Successfully saved and cleared cache for {csv_type}")
+        return success
+    except Exception as e:
+        print(f"Error in batch save for {csv_type}: {e}")
+        return False
+
+
+def batch_save_responses(response_records):
+    """Batch save responses to Google Drive - FIXED"""
+    try:
+        # Load existing responses
+        responses_df = load_csv_with_cache('responses.csv')
+
+        # Create DataFrame from new records
+        new_responses_df = pd.DataFrame(response_records)
+
+        # Combine with existing data
+        if not responses_df.empty:
+            combined_df = pd.concat([responses_df, new_responses_df], ignore_index=True)
+        else:
+            combined_df = new_responses_df
+
+        return save_csv_to_drive_batch(combined_df, 'responses')
+    except Exception as e:
+        print(f"Error batch saving responses: {e}")
+        return False
+
+
+# -------------------------
+# Routes - COMPLETELY FIXED VERSION
+# -------------------------
+@app.route('/')
+def index():
+    if 'user_id' in session:
+        return redirect(url_for('dashboard'))
+    return redirect(url_for('login'))
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if request.method == 'POST':
+        username = request.form['username']
+        password = request.form['password']
+
+        users_df = load_csv_with_cache('users.csv')
+        if not users_df.empty:
+            user = users_df[
+                ((users_df['username'] == username) | (users_df['email'] == username)) &
+                (users_df['password'] == password)
+                ]
+
+            if not user.empty:
+                session['user_id'] = int(user.iloc[0]['id'])
+                session['username'] = user.iloc[0]['username']
+                session['full_name'] = user.iloc[0]['full_name']
+                flash('Login successful!', 'success')
+                return redirect(url_for('dashboard'))
+
+        flash('Invalid username or password!', 'error')
+
+    return render_template('login.html')
+
+
+
+
+# 1. REPLACE your EMAIL_CONFIG with this (line 1-8 replace karo):
+
+EMAIL_CONFIG = {
+    'SMTP_SERVER': 'smtp.gmail.com',
+    'SMTP_PORT': 587,
+    'EMAIL_ADDRESS': os.environ.get('EMAIL_ADDRESS'),
+    'EMAIL_PASSWORD': os.environ.get('EMAIL_PASSWORD'),
+    'FROM_NAME': 'ExamPortal System'
+}
+
+# 2. REPLACE your send_credentials_email function completely (around line 50-90):
+
+def send_credentials_email(email, full_name, username, password):
+    """Send welcome email with credentials"""
+    try:
+        msg = MIMEMultipart('alternative')
+        msg['Subject'] = 'Welcome to ExamPortal - Your Account Credentials'
+        msg['From'] = f"{EMAIL_CONFIG['FROM_NAME']} <{EMAIL_CONFIG['EMAIL_ADDRESS']}>"
+        msg['To'] = email
+
+        html_content = f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <style>
+                body {{
+                    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+                    line-height: 1.6;
+                    color: #333;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    padding: 20px;
+                }}
+                .header {{
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    padding: 30px;
+                    text-align: center;
+                    border-radius: 10px 10px 0 0;
+                }}
+                .content {{
+                    background: #f8f9fa;
+                    padding: 30px;
+                    border-radius: 0 0 10px 10px;
+                    border: 1px solid #e9ecef;
+                }}
+                .credentials-box {{
+                    background: white;
+                    padding: 20px;
+                    border-radius: 8px;
+                    border-left: 4px solid #28a745;
+                    margin: 20px 0;
+                    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+                }}
+                .credential-item {{
+                    margin: 10px 0;
+                    padding: 8px;
+                    background: #f8f9fa;
+                    border-radius: 4px;
+                }}
+                .credential-label {{
+                    font-weight: bold;
+                    color: #495057;
+                }}
+                .credential-value {{
+                    font-family: 'Courier New', monospace;
+                    color: #007bff;
+                    font-size: 16px;
+                }}
+            </style>
+        </head>
+        <body>
+            <div class="header">
+                <h1>🎓 Welcome to ExamPortal!</h1>
+                <p>Your account has been successfully created</p>
+            </div>
+
+            <div class="content">
+                <p>Dear <strong>{full_name}</strong>,</p>
+
+                <p>Welcome to ExamPortal! Your account has been created successfully.</p>
+
+                <div class="credentials-box">
+                    <h3>🔐 Your Login Credentials</h3>
+                    <div class="credential-item">
+                        <span class="credential-label">Username:</span>
+                        <div class="credential-value">{username}</div>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Password:</span>
+                        <div class="credential-value">{password}</div>
+                    </div>
+                    <div class="credential-item">
+                        <span class="credential-label">Email:</span>
+                        <div class="credential-value">{email}</div>
+                    </div>
+                </div>
+
+                <p>Please keep these credentials secure and change your password after first login.</p>
+
+                <div style="text-align: center; margin-top: 30px; color: #6c757d; font-size: 14px;">
+                    <p><strong>ExamPortal Team</strong></p>
+                    <p>Generated on {datetime.now().strftime('%B %d, %Y at %I:%M %p')}</p>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+
+        text_content = f"""
+        Welcome to ExamPortal!
+
+        Dear {full_name},
+
+        Your account has been created successfully. Here are your login credentials:
+
+        Username: {username}
+        Password: {password}
+        Email: {email}
+
+        Please keep these credentials secure don't share with anyone.
+
+        Best regards,
+        ExamPortal Team
+        """
+
+        text_part = MIMEText(text_content, 'plain')
+        html_part = MIMEText(html_content, 'html')
+
+        msg.attach(text_part)
+        msg.attach(html_part)
+
+        with smtplib.SMTP(EMAIL_CONFIG['SMTP_SERVER'], EMAIL_CONFIG['SMTP_PORT']) as server:
+            server.starttls()
+            server.login(EMAIL_CONFIG['EMAIL_ADDRESS'], EMAIL_CONFIG['EMAIL_PASSWORD'])
+            server.send_message(msg)
+
+        return True, "Email sent successfully"
+
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False, f"Failed to send email: {str(e)}"
+
+# 3. REPLACE your generate_username function (around line 15-25):
+
+def generate_username(full_name, existing_usernames):
+    """Generate a unique username based on full name"""
+    name_parts = full_name.lower().replace(' ', '').replace('.', '')
+    base_username = name_parts[:8]
+
+    username = base_username
+    counter = 1
+    while username in existing_usernames:
+        username = f"{base_username}{counter}"
+        counter += 1
+
+    return username
+
+# 4. REPLACE your generate_password function (around line 10-15):
+
+def generate_password(length=8):
+    """Generate a random password"""
+    characters = string.ascii_letters + string.digits
+    return ''.join(secrets.choice(characters) for _ in range(length))
+
+
+def is_valid_email(email):
+    """Simple email validation"""
+    return '@' in email and '.' in email.split('@')[1] and len(email) > 5
+
+
+def verify_email_exists(email):
+    """Simple email verification"""
+    if not is_valid_email(email):
+        return False, "Invalid email format"
+
+    # Just check if it has @ and domain
+    domain = email.split('@')[1].lower()
+    if len(domain) > 3 and '.' in domain:
+        return True, "Valid email format"
+    else:
+        return False, "Invalid email domain"
+
+
+# 6. Your forgot_password route looks good, but make sure it's exactly like this:
+# (Replace the existing forgot_password route completely)
+
+@app.route('/forgot_password', methods=['GET', 'POST'])
+def forgot_password():
+    """Register new user with email verification"""
+    if request.method == 'POST':
+        try:
+            email = request.form['email'].strip().lower()
+            full_name = request.form.get('full_name', '').strip()
+
+            # Validate inputs
+            if not email:
+                flash('Please enter your email address.', 'error')
+                return render_template('forgot_password.html')
+
+            if not full_name:
+                flash('Please enter your full name.', 'error')
+                return render_template('forgot_password.html', email=email)
+
+            # Verify email format and domain
+            is_valid, error_message = verify_email_exists(email)
+            if not is_valid:
+                flash(f'Invalid email: {error_message}', 'error')
+                return render_template('forgot_password.html', email=email, full_name=full_name)
+
+            # Load existing users
+            users_df = load_csv_with_cache('users.csv')
+
+            # Check if email already exists
+            if not users_df.empty and email in users_df['email'].str.lower().values:
+                # Email already exists - send existing credentials
+                existing_user = users_df[users_df['email'].str.lower() == email].iloc[0]
+                username = existing_user['username']
+                password = existing_user['password']
+                existing_full_name = existing_user['full_name']
+
+                # Send credentials email
+                email_sent, email_message = send_credentials_email(email, existing_full_name, username, password)
+
+                if email_sent:
+                    flash(f'Account already exists! Your login credentials have been sent to {email}', 'success')
+                    return render_template('forgot_password.html', success=True, email=email)
+                else:
+                    flash('Account exists. Here are your credentials:', 'warning')
+                    return render_template('forgot_password.html', success=True, email=email, credentials={
+                        'username': username,
+                        'password': password
+                    })
+
+            # Create new user account
+            # Generate unique username and password
+            existing_usernames = users_df['username'].tolist() if not users_df.empty else []
+            username = generate_username(full_name, existing_usernames)
+            password = generate_password()
+
+            # Generate new user ID
+            next_user_id = 1
+            if not users_df.empty and 'id' in users_df.columns:
+                try:
+                    next_user_id = int(users_df['id'].fillna(0).astype(int).max()) + 1
+                except:
+                    next_user_id = len(users_df) + 1
+
+            # Create new user record
+            new_user = {
+                'id': int(next_user_id),
+                'full_name': full_name,
+                'username': username,
+                'email': email,
+                'password': password,
+                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            }
+
+            # Add to users DataFrame
+            if users_df.empty:
+                new_users_df = pd.DataFrame([new_user])
+            else:
+                new_users_df = pd.concat([users_df, pd.DataFrame([new_user])], ignore_index=True)
+
+            # Save to Google Drive
+            if save_csv_to_drive_batch(new_users_df, 'users'):
+                # Clear cache
+                cache_key = f'csv_users.csv'
+                app_cache['data'].pop(cache_key, None)
+                app_cache['timestamps'].pop(cache_key, None)
+
+                # Send credentials email
+                email_sent, email_message = send_credentials_email(email, full_name, username, password)
+
+                if email_sent:
+                    flash(f'Account created successfully! Your credentials have been sent to {email}', 'success')
+                    return render_template('forgot_password.html', success=True, email=email)
+                else:
+                    # User created but email failed - show credentials on screen
+                    flash('Account created! Here are your credentials:', 'success')
+                    return render_template('forgot_password.html', success=True, email=email, credentials={
+                        'username': username,
+                        'password': password
+                    })
+            else:
+                flash('Failed to create account. Please try again.', 'error')
+
+        except Exception as e:
+            print(f"Registration error: {e}")
+            flash('System error occurred. Please try again.', 'error')
+
+    return render_template('forgot_password.html')
+
+
+
+
+@app.route('/dashboard')
+@login_required
+def dashboard():
+    exams_df = load_csv_with_cache('exams.csv')
+    results_df = load_csv_with_cache('results.csv')
+
+    upcoming_exams, ongoing_exams, completed_exams = [], [], []
+
+    if not exams_df.empty:
+        if 'status' not in exams_df.columns:
+            exams_df['status'] = 'upcoming'
+
+        upcoming_exams = exams_df[exams_df['status'] == 'upcoming'].to_dict('records')
+        ongoing_exams = exams_df[exams_df['status'] == 'ongoing'].to_dict('records')
+        completed_exams = exams_df[exams_df['status'] == 'completed'].to_dict('records')
+
+        # Process results for completed exams
+        if not results_df.empty:
+            for exam in completed_exams:
+                exam_id = int(exam.get('id', 0))
+                r = results_df[
+                    (results_df['student_id'].astype(str) == str(session['user_id'])) &
+                    (results_df['exam_id'].astype(str) == str(exam_id))
+                    ]
+                if not r.empty:
+                    score = r.iloc[0].get('score', 0)
+                    max_score = r.iloc[0].get('max_score', 0)
+                    grade = r.iloc[0].get('grade', 'N/A')
+                    exam['result'] = f"{score}/{max_score} ({grade})" if pd.notna(score) and pd.notna(
+                        max_score) else 'Recorded'
+                else:
+                    exam['result'] = 'Pending'
+        else:
+            for exam in completed_exams:
+                exam['result'] = 'Pending'
+
+    return render_template('dashboard.html',
+                           upcoming_exams=upcoming_exams,
+                           ongoing_exams=ongoing_exams,
+                           completed_exams=completed_exams)
+
+
+@app.route('/exam-instructions/<int:exam_id>')
+@login_required
+def exam_instructions(exam_id):
+    exams_df = load_csv_with_cache('exams.csv')
+    if exams_df.empty:
+        flash('No exams available.', 'error')
+        return redirect(url_for('dashboard'))
+
+    exam = exams_df[exams_df['id'].astype(str) == str(exam_id)]
+    if exam.empty:
+        flash('Exam not found!', 'error')
+        return redirect(url_for('dashboard'))
+
+    exam_data = exam.iloc[0].to_dict()
+
+    # Add default marking scheme if not present
+    if 'positive_marks' not in exam_data or pd.isna(exam_data.get('positive_marks')):
+        exam_data['positive_marks'] = 1
+    if 'negative_marks' not in exam_data or pd.isna(exam_data.get('negative_marks')):
+        exam_data['negative_marks'] = 0
+
+    return render_template('exam_instructions.html', exam=exam_data)
+
+
+@app.route('/preload-exam/<int:exam_id>')
+@login_required
+def preload_exam_route(exam_id):
+    """API endpoint to preload exam data - FIXED"""
+    try:
+        # Check if already cached and valid
+        cached_data = get_cached_exam_data(exam_id)
+        if cached_data and cached_data.get('exam_id') == exam_id:
+            return jsonify({
+                'success': True,
+                'message': f"Using cached data with {cached_data['total_questions']} questions",
+                'exam_id': exam_id,
+                'cached': True
+            })
+
+        success, message = preload_exam_data_fixed(exam_id)
+        return jsonify({
+            'success': success,
+            'message': message,
+            'exam_id': exam_id,
+            'cached': False
+        })
+    except Exception as e:
+        print(f"Error in preload route: {e}")
+        return jsonify({
+            'success': False,
+            'message': f"Error preloading exam: {str(e)}",
+            'exam_id': exam_id
+        }), 500
+
+
+@app.route('/exam/<int:exam_id>')
+@login_required
+def exam_page(exam_id):
+    """COMPLETELY FIXED exam page with comprehensive error handling"""
+    print(f"Loading exam page for exam_id: {exam_id}")
+
+    try:
+        # Check if this is a navigation or new attempt
+        is_navigation = 'q' in request.args
+        is_new_attempt = 'new_attempt' in request.args
+
+        # Clear session only for new attempts
+        if is_new_attempt:
+            session.pop('exam_answers', None)
+            session.pop('marked_for_review', None)
+            session.pop('exam_start_time', None)
+            # Clear exam cache for new attempt
+            cache_key = f'exam_data_{exam_id}'
+            session.pop(cache_key, None)
+            print("Cleared session data for new attempt")
+
+        # Get cached data or preload
+        cached_data = get_cached_exam_data(exam_id)
+
+        if not cached_data:
+            print("No cached data found, preloading...")
+            success, message = preload_exam_data_fixed(exam_id)
+            if not success:
+                print(f"Preload failed: {message}")
+                flash(f"Error loading exam: {message}", "error")
+                return redirect(url_for('dashboard'))
+            cached_data = get_cached_exam_data(exam_id)
+
+        if not cached_data:
+            print("Failed to get cached data after preload")
+            flash("Failed to load exam data! Please try again.", "error")
+            return redirect(url_for('dashboard'))
+
+        exam_data = cached_data['exam_info']
+        questions = cached_data['questions']
+
+        if not questions:
+            print("No questions in cached data")
+            flash("No questions found for this exam!", "error")
+            return redirect(url_for('dashboard'))
+
+        # Validate question index
+        q_index = int(request.args.get('q', 0))
+        if q_index < 0:
+            q_index = 0
+        elif q_index >= len(questions):
+            q_index = len(questions) - 1
+
+        current_question = questions[q_index]
+
+        # Initialize session for storing answers if not exists
+        if 'exam_answers' not in session:
+            session['exam_answers'] = {}
+        if 'marked_for_review' not in session:
+            session['marked_for_review'] = []
+        if 'exam_start_time' not in session:
+            session['exam_start_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+
+        # Get selected answer for current question
+        selected_answer = session['exam_answers'].get(str(current_question['id']), None)
+
+        # Create question palette status
+        palette = {}
+        for i, q in enumerate(questions):
+            qid = str(q['id'])
+            if qid in session['marked_for_review']:
+                palette[i] = 'review'
+            elif qid in session['exam_answers']:
+                palette[i] = 'answered'
+            else:
+                palette[i] = 'not-visited'
+
+        # Mark current question as visited
+        if palette.get(q_index, 'not-visited') == 'not-visited':
+            palette[q_index] = 'visited'
+
+        print(f"Successfully loaded exam page: Q{q_index + 1}/{len(questions)}")
+
+        return render_template(
+            'exam_page.html',
+            exam=exam_data,
+            question=current_question,
+            current_index=q_index,
+            selected_answer=selected_answer,
+            total_questions=len(questions),
+            palette=palette,
+            questions=questions
+        )
+
+    except Exception as e:
+        print(f"Critical error in exam_page: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f"Critical error loading exam page: {str(e)}", "error")
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/exam/<int:exam_id>/navigate', methods=['POST'])
+@login_required
+def navigate_exam(exam_id):
+    """FIXED navigation with better error handling"""
+    try:
+        action = request.form.get('action')
+        current_index = int(request.form.get('current_index', 0))
+        question_id = request.form.get('question_id')
+
+        print(f"Navigation: action={action}, current_index={current_index}, question_id={question_id}")
+
+        # Initialize session data if not exists
+        if 'exam_answers' not in session:
+            session['exam_answers'] = {}
+        if 'marked_for_review' not in session:
+            session['marked_for_review'] = []
+
+        # Get question info from cached data
+        cached_data = get_cached_exam_data(exam_id)
+        if not cached_data:
+            flash("Exam session expired. Please restart the exam.", "error")
+            return redirect(url_for('dashboard'))
+
+        question_info = None
+        for q in cached_data['questions']:
+            if str(q['id']) == str(question_id):
+                question_info = q
+                break
+
+        if question_info:
+            question_type = question_info.get('question_type', 'MCQ')
+
+            # Handle clear action first
+            if action == 'clear':
+                if question_id and question_id in session['exam_answers']:
+                    del session['exam_answers'][question_id]
+                if question_id and question_id in session['marked_for_review']:
+                    session['marked_for_review'].remove(question_id)
+                session.modified = True
+                return redirect(url_for('exam_page', exam_id=exam_id, q=current_index))
+
+            # Get answer based on question type
+            if question_type == 'MCQ':
+                answer = request.form.get('answer')
+            elif question_type == 'MSQ':
+                answer = request.form.getlist('answer')
+            elif question_type == 'NUMERIC':
+                answer = request.form.get('numeric_answer')
+            else:
+                answer = request.form.get('answer')
+
+            # Save answer if provided
+            if answer and question_id:
+                if question_type == 'MSQ' and isinstance(answer, list) and len(answer) > 0:
+                    session['exam_answers'][question_id] = answer
+                elif question_type == 'NUMERIC' and str(answer).strip():
+                    session['exam_answers'][question_id] = str(answer).strip()
+                elif question_type == 'MCQ' and str(answer).strip():
+                    session['exam_answers'][question_id] = str(answer).strip()
+
+                # Remove from review if answered
+                if question_id in session['marked_for_review']:
+                    session['marked_for_review'].remove(question_id)
+
+                session.modified = True
+                print(f"Saved answer for question {question_id}: {answer}")
+
+        # Handle navigation
+        if action == 'prev':
+            new_index = max(0, current_index - 1)
+        elif action == 'next':
+            new_index = min(len(cached_data['questions']) - 1, current_index + 1)
+        elif action == 'review':
+            if question_id and question_id not in session['marked_for_review']:
+                session['marked_for_review'].append(question_id)
+                session.modified = True
+            new_index = min(len(cached_data['questions']) - 1, current_index + 1)
+        elif action == 'submit':
+            return redirect(url_for('submit_exam', exam_id=exam_id))
+        else:
+            new_index = current_index
+
+        return redirect(url_for('exam_page', exam_id=exam_id, q=new_index))
+
+    except Exception as e:
+        print(f"Error in navigation: {e}")
+        flash("Navigation error. Please try again.", "error")
+        return redirect(url_for('exam_page', exam_id=exam_id, q=0))
+
+
+@app.route('/exam/<int:exam_id>/clear-answer', methods=['POST'])
+@login_required
+def clear_answer(exam_id):
+    """AJAX endpoint for clearing question answers - FIXED"""
+    try:
+        question_id = request.json.get('question_id')
+
+        if 'exam_answers' not in session:
+            session['exam_answers'] = {}
+        if 'marked_for_review' not in session:
+            session['marked_for_review'] = []
+
+        if question_id and question_id in session['exam_answers']:
+            del session['exam_answers'][question_id]
+
+        if question_id and question_id in session['marked_for_review']:
+            session['marked_for_review'].remove(question_id)
+
+        session.modified = True
+
+        return jsonify({
+            'success': True,
+            'message': 'Selection cleared successfully'
+        })
+    except Exception as e:
+        print(f"Error clearing answer: {e}")
+        return jsonify({
+            'success': False,
+            'message': 'Error clearing selection'
+        }), 500
+
+
+@app.route('/submit-exam/<int:exam_id>', methods=['GET', 'POST'])
+@login_required
+def submit_exam(exam_id):
+    """COMPLETELY FIXED exam submission with comprehensive error handling"""
+    if request.method == 'GET':
+        return render_template('submit_confirm.html', exam_id=exam_id)
+
+    try:
+        # Get cached exam data
+        cached_data = get_cached_exam_data(exam_id)
+        if not cached_data:
+            print("No cached exam data for submission")
+            flash("Exam session expired. Please contact administrator.", "error")
+            return redirect(url_for('dashboard'))
+
+        exam_data = cached_data['exam_info']
+        questions = cached_data['questions']
+
+        # Get marking scheme
+        default_positive_marks = exam_data.get('positive_marks', 1) or 1
+        default_negative_marks = exam_data.get('negative_marks', 0) or 0
+
+        total_questions = len(questions)
+        total_score = 0
+        max_possible_score = 0
+
+        # Track answer statistics
+        correct_answers = 0
+        incorrect_answers = 0
+        unanswered_questions = 0
+
+        # Load current data for ID generation
+        results_df = load_csv_with_cache('results.csv')
+        responses_df = load_csv_with_cache('responses.csv')
+
+        # Generate next result ID
+        next_result_id = 1
+        if not results_df.empty and 'id' in results_df.columns and results_df['id'].notna().any():
+            try:
+                next_result_id = int(results_df['id'].fillna(0).astype(int).max()) + 1
+            except Exception:
+                next_result_id = len(results_df) + 1
+
+        # Process each question and store responses
+        response_records = []
+        next_response_id = 1
+        if not responses_df.empty and 'id' in responses_df.columns and responses_df['id'].notna().any():
+            try:
+                next_response_id = int(responses_df['id'].fillna(0).astype(int).max()) + 1
+            except Exception:
+                next_response_id = len(responses_df) + 1
+
+        print(f"Processing {total_questions} questions for submission...")
+
+        if total_questions > 0:
+            for question in questions:
+                qid = str(question['id'])
+                question_type = question.get('question_type', 'MCQ')
+
+                # Get marking scheme for this question
+                q_positive_marks = question.get('positive_marks', default_positive_marks) or default_positive_marks
+                q_negative_marks = question.get('negative_marks', default_negative_marks) or default_negative_marks
+
+                max_possible_score += q_positive_marks
+
+                # Get correct answer
+                correct_answer = question.get('parsed_correct_answer')
+
+                # Get given answer from session
+                given_answer = session.get('exam_answers', {}).get(qid, None)
+
+                # Check if question was attempted
+                is_attempted = False
+                if given_answer is not None:
+                    if question_type == 'MSQ':
+                        is_attempted = isinstance(given_answer, list) and len(given_answer) > 0
+                    elif question_type == 'NUMERIC':
+                        is_attempted = str(given_answer).strip() != ''
+                    else:  # MCQ
+                        is_attempted = str(given_answer).strip() not in ['', 'None', 'null']
+
+                # Default values
+                is_correct = False
+                question_score = 0
+
+                # Only evaluate if the student actually attempted
+                if is_attempted:
+                    tolerance = question.get('tolerance', 0.1) if question_type == 'NUMERIC' else None
+                    is_correct = check_answer(given_answer, correct_answer, question_type, tolerance or 0.1)
+                    question_score = calculate_question_score(is_correct, question_type, q_positive_marks,
+                                                              q_negative_marks)
+
+                    if is_correct:
+                        correct_answers += 1
+                    else:
+                        incorrect_answers += 1
+                else:
+                    unanswered_questions += 1
+
+                total_score += question_score
+
+                # Prepare answers for storage
+                if question_type == 'MSQ' and isinstance(given_answer, list):
+                    given_answer_str = json.dumps(given_answer)
+                elif given_answer is not None:
+                    given_answer_str = str(given_answer)
+                else:
+                    given_answer_str = ""
+
+                if question_type == 'MSQ' and isinstance(correct_answer, list):
+                    correct_answer_str = json.dumps(correct_answer)
+                elif correct_answer is not None:
+                    correct_answer_str = str(correct_answer)
+                else:
+                    correct_answer_str = ""
+
+                # Store response record
+                response_record = {
+                    'id': int(next_response_id),
+                    'result_id': int(next_result_id),
+                    'exam_id': int(exam_id),
+                    'question_id': int(question['id']),
+                    'given_answer': given_answer_str,
+                    'correct_answer': correct_answer_str,
+                    'is_correct': bool(is_correct),
+                    'marks_obtained': float(question_score),
+                    'question_type': str(question_type),
+                    'is_attempted': bool(is_attempted)
+                }
+                response_records.append(response_record)
+                next_response_id += 1
+
+            percentage = (total_score / max_possible_score) * 100 if max_possible_score > 0 else 0.0
+        else:
+            percentage = 0.0
+
+        # Determine grade
+        if percentage >= 90:
+            grade = 'A+'
+        elif percentage >= 80:
+            grade = 'A'
+        elif percentage >= 70:
+            grade = 'B'
+        elif percentage >= 60:
+            grade = 'C'
+        else:
+            grade = 'F'
+
+        # Calculate time taken
+        start_time_str = session.get('exam_start_time')
+        if start_time_str:
+            try:
+                start_time = datetime.strptime(start_time_str, '%Y-%m-%d %H:%M:%S')
+                time_taken_seconds = (datetime.now() - start_time).total_seconds()
+                time_taken_minutes = round(time_taken_seconds / 60, 2)
+            except Exception:
+                time_taken_minutes = None
+        else:
+            time_taken_minutes = None
+
+        # Create new result record
+        new_result = {
+            'id': int(next_result_id),
+            'student_id': int(session['user_id']),
+            'exam_id': int(exam_id),
+            'score': float(total_score),
+            'total_questions': int(total_questions),
+            'correct_answers': int(correct_answers),
+            'incorrect_answers': int(incorrect_answers),
+            'unanswered_questions': int(unanswered_questions),
+            'max_score': float(max_possible_score),
+            'percentage': float(round(percentage, 2)),
+            'grade': str(grade),
+            'time_taken_minutes': float(time_taken_minutes) if time_taken_minutes else None,
+            'completed_at': str(datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+        }
+
+        print(f"Attempting to save results: Score {total_score}/{max_possible_score} ({percentage:.1f}%)")
+
+        # Batch save results and responses
+        try:
+            # Save result
+            new_results_df = pd.concat([results_df, pd.DataFrame([new_result])], ignore_index=True)
+            results_saved = save_csv_to_drive_batch(new_results_df, 'results')
+
+            # Batch save responses
+            responses_saved = batch_save_responses(response_records) if response_records else True
+
+            if results_saved and responses_saved:
+                session['latest_attempt_id'] = next_result_id
+                print(f"Successfully saved exam results and {len(response_records)} responses")
+
+                # Clear exam session data
+                session.pop('exam_answers', None)
+                session.pop('marked_for_review', None)
+                session.pop('exam_start_time', None)
+
+                # Clear exam cache
+                cache_key = f'exam_data_{exam_id}'
+                session.pop(cache_key, None)
+
+                flash('Exam submitted successfully!', 'success')
+                return redirect(url_for('result', exam_id=exam_id))
+            else:
+                print("Failed to save results or responses")
+                flash('Error saving exam results. Please try again.', 'error')
+                return redirect(url_for('exam_page', exam_id=exam_id))
+
+        except Exception as e:
+            print(f"Critical error during save: {e}")
+            import traceback
+            traceback.print_exc()
+            flash(f'Critical error saving exam results: {str(e)}', 'error')
+            return redirect(url_for('exam_page', exam_id=exam_id))
+
+    except Exception as e:
+        print(f"Critical error in submit_exam: {e}")
+        import traceback
+        traceback.print_exc()
+        flash(f'Critical error during submission: {str(e)}', 'error')
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/result/<int:exam_id>')
+@login_required
+def result(exam_id):
+    """FIXED result page with better error handling"""
+    try:
+        results_df = load_csv_with_cache('results.csv')
+        exams_df = load_csv_with_cache('exams.csv')
+
+        if results_df.empty or exams_df.empty:
+            flash('Result not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        user_id = int(session['user_id'])
+        attempt_id = session.get('latest_attempt_id')
+
+        if attempt_id:
+            r = results_df[
+                (results_df['id'].astype('Int64') == int(attempt_id)) &
+                (results_df['student_id'].astype('Int64') == user_id) &
+                (results_df['exam_id'].astype('Int64') == int(exam_id))
+                ]
+        else:
+            r = results_df[
+                (results_df['student_id'].astype('Int64') == user_id) &
+                (results_df['exam_id'].astype('Int64') == int(exam_id))
+                ].sort_values('id', ascending=False).head(1)
+
+        exam = exams_df[exams_df['id'].astype('Int64') == int(exam_id)]
+
+        if r.empty or exam.empty:
+            flash('Result not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        result_data = r.iloc[0].to_dict()
+        exam_data = exam.iloc[0].to_dict()
+
+        return render_template('result.html', result=result_data, exam=exam_data)
+
+    except Exception as e:
+        print(f"Error loading result: {e}")
+        flash('Error loading result page.', 'error')
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/response/<int:exam_id>')
+@login_required
+def response_page(exam_id):
+    """Optimized response analysis: only loads images for attempted questions"""
+    try:
+        results_df = load_csv_with_cache('results.csv')
+        responses_df = load_csv_with_cache('responses.csv')
+        exams_df = load_csv_with_cache('exams.csv')
+
+        user_id = int(session['user_id'])
+
+        # Get the most recent result for this user and exam
+        user_results = results_df[
+            (results_df['student_id'].astype('Int64') == user_id) &
+            (results_df['exam_id'].astype('Int64') == int(exam_id))
+        ].sort_values('id', ascending=False)
+
+        if user_results.empty:
+            flash('Response not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        result_record = user_results.head(1)
+        result_id = int(result_record.iloc[0]['id'])
+        result_data = result_record.iloc[0].to_dict()
+
+        # Get exam data
+        exam_record = exams_df[exams_df['id'].astype('Int64') == int(exam_id)]
+        if exam_record.empty:
+            flash('Exam not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        exam_data = exam_record.iloc[0].to_dict()
+
+        # Get responses using both result_id and exam_id
+        if 'exam_id' in responses_df.columns:
+            user_responses = responses_df[
+                (responses_df['result_id'].astype('Int64') == result_id) &
+                (responses_df['exam_id'].astype('Int64') == int(exam_id))
+            ].sort_values('question_id')
+        else:
+            user_responses = responses_df[
+                responses_df['result_id'].astype('Int64') == result_id
+            ].sort_values('question_id')
+
+        # Get only the question IDs that were attempted
+        question_ids = set(user_responses['question_id'].astype(int).tolist())
+
+        # Try to get cached exam data first for question details and images
+        cached_data = get_cached_exam_data(exam_id)
+        questions_dict = {}
+
+        if cached_data:
+            # Use cached question data, but only for attempted questions
+            for q in cached_data['questions']:
+                if int(q['id']) in question_ids:
+                    questions_dict[int(q['id'])] = q
+            print(f"Using cached question data for attempted questions only")
+        else:
+            # Fallback to database lookup, but only for attempted questions
+            print("No cached data, loading only attempted questions from database")
+            questions_df = load_csv_with_cache('questions.csv')
+            filtered_questions = questions_df[questions_df['id'].astype(int).isin(question_ids)]
+            for _, q in filtered_questions.iterrows():
+                q_dict = q.to_dict()
+                has_image, image_url = process_question_image_fixed(q_dict)
+                q_dict['has_image'] = has_image
+                q_dict['image_url'] = image_url
+                questions_dict[int(q['id'])] = q_dict
+
+        # Process question responses
+        question_responses = []
+        for _, response in user_responses.iterrows():
+            question_id = int(response['question_id'])
+            question_data = questions_dict.get(question_id, {})
+
+            if question_data:
+                # Parse answers safely
+                given_answer_str = str(response['given_answer']) if response['given_answer'] is not None else ''
+                correct_answer_str = str(response['correct_answer']) if response['correct_answer'] is not None else ''
+                question_type = response['question_type']
+
+                # Parse given answer
+                try:
+                    if question_type == 'MSQ' and given_answer_str and given_answer_str.strip():
+                        if given_answer_str.startswith('[') and given_answer_str.endswith(']'):
+                            given_answer = json.loads(given_answer_str)
+                        else:
+                            given_answer = [ans.strip() for ans in given_answer_str.split(',') if ans.strip()]
+                    else:
+                        given_answer = given_answer_str if given_answer_str != 'None' and given_answer_str.strip() else None
+                except Exception as e:
+                    print(f"Error parsing given answer '{given_answer_str}': {e}")
+                    given_answer = given_answer_str if given_answer_str != 'None' else None
+
+                # Parse correct answer
+                try:
+                    if question_type == 'MSQ' and correct_answer_str and correct_answer_str.strip():
+                        if correct_answer_str.startswith('[') and correct_answer_str.endswith(']'):
+                            correct_answer = json.loads(correct_answer_str)
+                        else:
+                            correct_answer = [ans.strip() for ans in correct_answer_str.split(',') if ans.strip()]
+                    else:
+                        correct_answer = correct_answer_str if correct_answer_str != 'None' and correct_answer_str.strip() else None
+                except Exception as e:
+                    print(f"Error parsing correct answer '{correct_answer_str}': {e}")
+                    correct_answer = correct_answer_str if correct_answer_str != 'None' else None
+
+                # Check if attempted
+                is_attempted = response.get('is_attempted', True)
+                if pd.isna(is_attempted):
+                    if given_answer_str in [None, "", "null", "None"]:
+                        is_attempted = False
+                    elif question_type == 'MSQ' and (not given_answer or len(given_answer) == 0):
+                        is_attempted = False
+                    else:
+                        is_attempted = bool(given_answer_str and str(given_answer_str).strip())
+
+                response_data = {
+                    'question': question_data,
+                    'given_answer': given_answer,
+                    'correct_answer': correct_answer,
+                    'is_correct': bool(response['is_correct']),
+                    'is_attempted': is_attempted,
+                    'marks_obtained': float(response['marks_obtained']),
+                    'question_type': question_type
+                }
+                question_responses.append(response_data)
+
+        return render_template('response.html',
+                               exam=exam_data,
+                               result=result_data,
+                               responses=question_responses)
+
+    except Exception as e:
+        print(f"Error in response page: {e}")
+        import traceback
+        traceback.print_exc()
+        flash('Error loading response analysis.', 'error')
+        return redirect(url_for('dashboard'))
+
+
+@app.route('/response-pdf/<int:exam_id>')
+@login_required
+def response_pdf(exam_id):
+    """Generate PDF for exam response analysis with optimized images"""
+    try:
+        # Get response data as in response_page
+        results_df = load_csv_with_cache('results.csv')
+        responses_df = load_csv_with_cache('responses.csv')
+        exams_df = load_csv_with_cache('exams.csv')
+
+        user_id = int(session['user_id'])
+        user_results = results_df[
+            (results_df['student_id'].astype('Int64') == user_id) &
+            (results_df['exam_id'].astype('Int64') == int(exam_id))
+        ].sort_values('id', ascending=False)
+
+        if user_results.empty:
+            flash('Response not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        result_record = user_results.head(1)
+        result_id = int(result_record.iloc[0]['id'])
+        result_data = result_record.iloc[0].to_dict()
+
+        exam_record = exams_df[exams_df['id'].astype('Int64') == int(exam_id)]
+        if exam_record.empty:
+            flash('Exam not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        exam_data = exam_record.iloc[0].to_dict()
+
+        if 'exam_id' in responses_df.columns:
+            user_responses = responses_df[
+                (responses_df['result_id'].astype('Int64') == result_id) &
+                (responses_df['exam_id'].astype('Int64') == int(exam_id))
+            ].sort_values('question_id')
+        else:
+            user_responses = responses_df[
+                responses_df['result_id'].astype('Int64') == result_id
+            ].sort_values('question_id')
+
+        question_ids = set(user_responses['question_id'].astype(int).tolist())
+        cached_data = get_cached_exam_data(exam_id)
+        questions_dict = {}
+
+        if cached_data:
+            for q in cached_data['questions']:
+                if int(q['id']) in question_ids:
+                    questions_dict[int(q['id'])] = q
+        else:
+            questions_df = load_csv_with_cache('questions.csv')
+            filtered_questions = questions_df[questions_df['id'].astype(int).isin(question_ids)]
+            for _, q in filtered_questions.iterrows():
+                q_dict = q.to_dict()
+                has_image, image_url = process_question_image_fixed(q_dict)
+                q_dict['has_image'] = has_image
+                q_dict['image_url'] = image_url
+                questions_dict[int(q['id'])] = q_dict
+
+        # Prepare PDF
+        pdf = FPDF()
+        pdf.set_auto_page_break(auto=True, margin=15)
+        pdf.add_page()
+        pdf.set_font("Arial", size=12)
+
+        pdf.cell(0, 10, f"Exam Response Analysis: {exam_data.get('title', 'Exam')}", ln=True)
+        pdf.cell(0, 10, f"Student: {session.get('full_name', '')}", ln=True)
+        pdf.cell(0, 10, f"Score: {result_data.get('score', '')} / {result_data.get('max_score', '')}", ln=True)
+        pdf.ln(10)
+
+        for _, response in user_responses.iterrows():
+            question_id = int(response['question_id'])
+            question_data = questions_dict.get(question_id, {})
+
+            if not question_data:
+                continue
+
+            pdf.set_font("Arial", style='B', size=12)
+            pdf.cell(0, 10, f"Q{question_id}: {question_data.get('question_text', '')}", ln=True)
+            pdf.set_font("Arial", size=11)
+            pdf.cell(0, 8, f"Your Answer: {response.get('given_answer', '')}", ln=True)
+            pdf.cell(0, 8, f"Correct Answer: {response.get('correct_answer', '')}", ln=True)
+            pdf.cell(0, 8, f"Marks Obtained: {response.get('marks_obtained', '')}", ln=True)
+
+            # Embed image if available
+            image_url = question_data.get('image_url')
+            if question_data.get('has_image') and image_url:
+                try:
+                    img_response = requests.get(image_url, timeout=10)
+                    img_response.raise_for_status()
+                    content_type = img_response.headers.get('Content-Type', '')
+                    if not content_type.startswith('image/'):
+                        print(f"Image error Q{question_id}: URL did not return image, got {content_type}")
+                        continue
+                    img = Image.open(BytesIO(img_response.content))
+                    print(f"Image format: {img.format}, size: {img.size}, mode: {img.mode}")
+                    print(f"Downloaded image size: {len(img_response.content) / 1024:.2f} KB")
+                    # Always resize to max width 400
+                    max_width = 400
+                    if img.size[0] > max_width:
+                        w_percent = (max_width / float(img.size[0]))
+                        h_size = int((float(img.size[1]) * float(w_percent)))
+                        img = img.resize((max_width, h_size), Image.LANCZOS)
+                    # Always convert to RGB (JPEG does not support transparency)
+                    img = img.convert('RGB')
+                    with tempfile.NamedTemporaryFile(delete=False, suffix='.jpg') as tmp_img:
+                        img.save(tmp_img.name, format='JPEG', quality=40, optimize=True)
+                        pdf.image(tmp_img.name, w=100)
+                    os.remove(tmp_img.name)
+                except Exception as e:
+                    print(f"Image error Q{question_id}: {e}")
+            pdf.ln(10)
+
+        # Output PDF to browser
+        pdf_output = BytesIO()
+        pdf.output(pdf_output)
+        pdf_output.seek(0)
+        return (
+            pdf_output.read(),
+            200,
+            {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'attachment; filename=exam_response_{exam_id}.pdf'
+            }
+        )
+
+    except Exception as e:
+        print(f"PDF generation error: {e}")
+        flash('Error generating PDF.', 'error')
+        return redirect(url_for('response_page', exam_id=exam_id))
+
+
+@app.route('/response-pdf-alt/<int:exam_id>')
+@login_required
+def response_pdf_alt(exam_id):
+    """Alternative PDF generation using reportlab for better image support"""
+    try:
+        # Get response data as in response_page
+        results_df = load_csv_with_cache('results.csv')
+        responses_df = load_csv_with_cache('responses.csv')
+        exams_df = load_csv_with_cache('exams.csv')
+
+        user_id = int(session['user_id'])
+        user_results = results_df[
+            (results_df['student_id'].astype('Int64') == user_id) &
+            (results_df['exam_id'].astype('Int64') == int(exam_id))
+        ].sort_values('id', ascending=False)
+
+        if user_results.empty:
+            flash('Response not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        result_record = user_results.head(1)
+        result_id = int(result_record.iloc[0]['id'])
+        result_data = result_record.iloc[0].to_dict()
+
+        exam_record = exams_df[exams_df['id'].astype('Int64') == int(exam_id)]
+        if exam_record.empty:
+            flash('Exam not found!', 'error')
+            return redirect(url_for('dashboard'))
+
+        exam_data = exam_record.iloc[0].to_dict()
+
+        if 'exam_id' in responses_df.columns:
+            user_responses = responses_df[
+                (responses_df['result_id'].astype('Int64') == result_id) &
+                (responses_df['exam_id'].astype('Int64') == int(exam_id))
+            ].sort_values('question_id')
+        else:
+            user_responses = responses_df[
+                responses_df['result_id'].astype('Int64') == result_id
+            ].sort_values('question_id')
+
+        question_ids = set(user_responses['question_id'].astype(int).tolist())
+        cached_data = get_cached_exam_data(exam_id)
+        questions_dict = {}
+
+        if cached_data:
+            for q in cached_data['questions']:
+                if int(q['id']) in question_ids:
+                    questions_dict[int(q['id'])] = q
+        else:
+            questions_df = load_csv_with_cache('questions.csv')
+            filtered_questions = questions_df[questions_df['id'].astype(int).isin(question_ids)]
+            for _, q in filtered_questions.iterrows():
+                q_dict = q.to_dict()
+                has_image, image_url = process_question_image_fixed(q_dict)
+                q_dict['has_image'] = has_image
+                q_dict['image_url'] = image_url
+                questions_dict[int(q['id'])] = q_dict
+
+        # Prepare PDF
+        pdf_buffer = BytesIO()
+        c = canvas.Canvas(pdf_buffer, pagesize=letter)
+        width, height = letter
+        y = height - 50
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(50, y, f"Exam Response Analysis: {exam_data.get('title', 'Exam')}")
+        y -= 30
+        c.setFont("Helvetica", 12)
+        c.drawString(50, y, f"Student: {session.get('full_name', '')}")
+        y -= 20
+        c.drawString(50, y, f"Score: {result_data.get('score', '')} / {result_data.get('max_score', '')}")
+        y -= 30
+
+        for _, response in user_responses.iterrows():
+            question_id = int(response['question_id'])
+            question_data = questions_dict.get(question_id, {})
+            if not question_data:
+                continue
+
+            c.setFont("Helvetica-Bold", 12)
+            c.drawString(50, y, f"Q{question_id}: {question_data.get('question_text', '')}")
+            y -= 20
+            c.setFont("Helvetica", 11)
+            c.drawString(50, y, f"Your Answer: {response.get('given_answer', '')}")
+            y -= 15
+            c.drawString(50, y, f"Correct Answer: {response.get('correct_answer', '')}")
+            y -= 15
+            c.drawString(50, y, f"Marks Obtained: {response.get('marks_obtained', '')}")
+            y -= 20
+
+            image_url = question_data.get('image_url')
+            if question_data.get('has_image') and image_url:
+                try:
+                    img_response = requests.get(image_url, timeout=10)
+                    img_response.raise_for_status()
+                    img = Image.open(BytesIO(img_response.content))
+                    img = img.convert('RGB')
+                    max_width = 300
+                    if img.size[0] > max_width:
+                        w_percent = (max_width / float(img.size[0]))
+                        h_size = int((float(img.size[1]) * float(w_percent)))
+                        img = img.resize((max_width, h_size), Image.LANCZOS)
+                    img_byte_arr = BytesIO()
+                    img.save(img_byte_arr, format='JPEG', quality=40)
+                    img_byte_arr.seek(0)
+                    c.drawImage(ImageReader(img_byte_arr), 50, y-120, width=150, preserveAspectRatio=True, mask='auto')
+                    y -= 130
+                except Exception as e:
+                    print(f"Image error Q{question_id}: {e}")
+            else:
+                y -= 10
+
+            if y < 100:
+                c.showPage()
+                y = height - 50
+
+        c.save()
+        pdf_buffer.seek(0)
+        return (
+            pdf_buffer.read(),
+            200,
+            {
+                'Content-Type': 'application/pdf',
+                'Content-Disposition': f'attachment; filename=exam_response_{exam_id}_alt.pdf'
+            }
+        )
+    except Exception as e:
+        print(f"PDF generation error (reportlab): {e}")
+        flash('Error generating PDF.', 'error')
+        return redirect(url_for('response_page', exam_id=exam_id))
+
+
+@app.route('/logout')
+def logout():
+    # Clear all session data including cache
+    session.clear()
+    flash('You have been logged out successfully.', 'info')
+    return redirect(url_for('login'))
+
+
+# -------------------------
+# Error Handlers
+# -------------------------
+@app.errorhandler(404)
+def not_found_error(error):
+    return render_template('error.html', error_code=404, error_message="Page not found"), 404
+
+
+@app.errorhandler(500)
+def internal_error(error):
+    return render_template('error.html', error_code=500, error_message="Internal server error"), 500
+
+
+# -------------------------
+# Run App
+# -------------------------
+if __name__ == '__main__':
+    print("Starting FIXED Exam Portal...")
+
+    # Initialize Google Drive service
+    if init_drive_service():
+        print("Google Drive integration: ACTIVE")
+    else:
+        print("Google Drive integration: INACTIVE")
+        print("Running in fallback mode without Google Drive")
+
+    app.run(debug=True, host='0.0.0.0', port=5000)
