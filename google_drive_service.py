@@ -14,7 +14,14 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # Get the JSON string from environment
-SERVICE_ACCOUNT_JSON_STRING = os.environ.get("GOOGLE_SERVICE_ACCOUNT_JSON")
+# Load service account from JSON file directly
+def load_service_account_info():
+    try:
+        service_account_path = os.path.join(os.path.dirname(__file__), 'service_account.json')
+        with open(service_account_path, 'r') as f:
+            return json.load(f)
+    except:
+        return None
 
 # Simple caches with TTL
 _file_cache = {}
@@ -34,40 +41,23 @@ def create_drive_service():
     try:
         print("🔐 Starting Google Drive service initialization...")
         
-        if not SERVICE_ACCOUNT_JSON_STRING:
-            print("❌ GOOGLE_SERVICE_ACCOUNT_JSON environment variable is empty or None")
-            print("📋 Available environment variables:")
-            for key in os.environ.keys():
-                if 'GOOGLE' in key or 'SERVICE' in key:
-                    print(f"   - {key}: {'Present' if os.environ.get(key) else 'Missing'}")
+        credentials_info = load_service_account_info()
+        if not credentials_info:
+            print("❌ Could not load service_account.json file")
+            return None
+
+        print("✅ Service account loaded from file")
+        
+        # Validate required fields
+        required_fields = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email', 'client_id']
+        missing_fields = [field for field in required_fields if field not in credentials_info]
+        
+        if missing_fields:
+            print(f"❌ Missing required fields in JSON: {missing_fields}")
             return None
         
-        print(f"📝 JSON string found (length: {len(SERVICE_ACCOUNT_JSON_STRING)} characters)")
-        
-        # Debug: Check the beginning of the JSON string
-        json_preview = SERVICE_ACCOUNT_JSON_STRING[:100] + "..." if len(SERVICE_ACCOUNT_JSON_STRING) > 100 else SERVICE_ACCOUNT_JSON_STRING
-        print(f"📄 JSON preview: {json_preview}")
-        
-        # Parse JSON string with better error handling
-        try:
-            credentials_info = json.loads(SERVICE_ACCOUNT_JSON_STRING)
-            print("✅ JSON string parsed successfully")
-            
-            # Validate required fields
-            required_fields = ['type', 'project_id', 'private_key_id', 'private_key', 'client_email', 'client_id']
-            missing_fields = [field for field in required_fields if field not in credentials_info]
-            
-            if missing_fields:
-                print(f"❌ Missing required fields in JSON: {missing_fields}")
-                return None
-            
-            print(f"📧 Service account email: {credentials_info.get('client_email')}")
-            print(f"🆔 Project ID: {credentials_info.get('project_id')}")
-            
-        except json.JSONDecodeError as e:
-            print(f"❌ Failed to parse JSON string: {e}")
-            print(f"📄 Problematic content around position {e.pos}: {SERVICE_ACCOUNT_JSON_STRING[max(0, e.pos-50):e.pos+50]}")
-            return None
+        print(f"📧 Service account email: {credentials_info.get('client_email')}")
+        print(f"🆔 Project ID: {credentials_info.get('project_id')}")
         
         # Fix private key formatting
         if 'private_key' in credentials_info:
