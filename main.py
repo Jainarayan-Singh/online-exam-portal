@@ -667,6 +667,28 @@ else:
 # -------------------------
 
 
+# Footer page routes
+@app.route('/privacy-policy')
+def privacy_policy():
+    return render_template('privacy_policy.html')
+
+@app.route('/terms-of-service') 
+def terms_of_service():
+    return render_template('terms_of_service.html')
+
+@app.route('/support')
+def support():
+    return render_template('support.html')
+
+@app.route('/contact')
+def contact():
+    return render_template('contact.html')
+
+@app.route('/about')
+def about():
+    return render_template('about.html')
+
+
 
 # 6. ADD DEBUG ROUTE HERE (BEFORE MAIN ROUTES):
 @app.route('/debug/env-check')
@@ -2115,6 +2137,8 @@ def debug_service_status():
         status['drive_test'] = "Service not initialized"
     
     return jsonify(status)
+
+
 
 # -------------------------
 # Error Handlers
