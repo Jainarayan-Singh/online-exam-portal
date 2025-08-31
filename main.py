@@ -1,4 +1,4 @@
-# main.py - COMPLETELY FIXED VERSION with proper file IDs and loading states
+# main.py - FIXED VERSION with explicit Google Drive initialization
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 import pandas as pd
 import os
@@ -24,8 +24,15 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from dotenv import load_dotenv
 
-# Load environment variables from .env file
+# CRITICAL: Load environment variables FIRST
 load_dotenv()
+
+# CRITICAL: Check if running on Render or local
+IS_PRODUCTION = os.environ.get('RENDER') is not None  # Render sets this automatically
+if IS_PRODUCTION:
+    print("🌐 Running on Render (Production)")
+else:
+    print("💻 Running locally")
 
 # Import Google Drive service
 from google_drive_service import (
@@ -46,9 +53,26 @@ QUESTIONS_CSV = 'questions.csv'
 RESULTS_CSV = 'results.csv'
 RESPONSES_CSV = 'responses.csv'
 
-#1-Lo4Nc8_mur_v9e3E1jVSVDc2v1fitow
+# CRITICAL: Debug environment variables
+print("🔍 Checking environment variables...")
+required_env_vars = [
+    'SECRET_KEY', 'GOOGLE_SERVICE_ACCOUNT_JSON',
+    'USERS_FILE_ID', 'EXAMS_FILE_ID', 'QUESTIONS_FILE_ID', 'RESULTS_FILE_ID', 'RESPONSES_FILE_ID'
+]
 
-# FIXED Google Drive File IDs - Using separate IDs for each file
+for var in required_env_vars:
+    value = os.environ.get(var)
+    if value:
+        if var == 'GOOGLE_SERVICE_ACCOUNT_JSON':
+            print(f"✅ {var}: Present (length: {len(value)} chars)")
+        elif var == 'SECRET_KEY':
+            print(f"✅ {var}: Present")
+        else:
+            print(f"✅ {var}: {value}")
+    else:
+        print(f"❌ {var}: MISSING!")
+
+# Google Drive File IDs
 USERS_FILE_ID = os.environ.get('USERS_FILE_ID')
 EXAMS_FILE_ID = os.environ.get('EXAMS_FILE_ID')
 QUESTIONS_FILE_ID = os.environ.get('QUESTIONS_FILE_ID')
@@ -89,6 +113,80 @@ app_cache = {
     'images': {},
     'timestamps': {}
 }
+
+def init_drive_service():
+    """Initialize the Google Drive service with better error handling"""
+    global drive_service
+    try:
+        print("🔧 Initializing Google Drive service...")
+        
+        # Check if JSON string exists
+        json_string = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
+        if not json_string:
+            print("❌ GOOGLE_SERVICE_ACCOUNT_JSON environment variable not found")
+            return False
+            
+        print(f"📝 JSON string length: {len(json_string)} characters")
+        
+        # Try to parse JSON to check if it's valid
+        try:
+            json_data = json.loads(json_string)
+            print("✅ JSON string is valid")
+            print(f"📧 Service account email: {json_data.get('client_email', 'Unknown')}")
+        except json.JSONDecodeError as e:
+            print(f"❌ Invalid JSON string: {e}")
+            return False
+        
+        drive_service = create_drive_service()
+        if drive_service:
+            print("✅ Google Drive service initialized successfully!")
+            
+            # Test the service with a simple API call
+            try:
+                about = drive_service.about().get(fields="user").execute()
+                print(f"👤 Connected as: {about.get('user', {}).get('emailAddress', 'Unknown')}")
+            except Exception as test_error:
+                print(f"⚠️ Service created but test failed: {test_error}")
+            
+            # Ensure all required files exist
+            ensure_required_files()
+            return True
+        else:
+            print("❌ Failed to create Google Drive service")
+            return False
+    except Exception as e:
+        print(f"❌ Failed to initialize Google Drive service: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+def ensure_required_files():
+    """Ensure all required CSV files exist in Google Drive"""
+    global drive_service
+
+    if not drive_service:
+        print("❌ No Google Drive service for file verification")
+        return
+
+    required_files = {
+        'users.csv': DRIVE_FILE_IDS['users'],
+        'exams.csv': DRIVE_FILE_IDS['exams'],
+        'questions.csv': DRIVE_FILE_IDS['questions'],
+        'results.csv': DRIVE_FILE_IDS['results'],
+        'responses.csv': DRIVE_FILE_IDS['responses']
+    }
+
+    for filename, file_id in required_files.items():
+        if not file_id or file_id.startswith('YOUR_'):
+            print(f"⚠️ {filename}: File ID not configured properly")
+            continue
+            
+        try:
+            # Try to get file metadata to check if it exists
+            meta = drive_service.files().get(fileId=file_id, fields="id,name,size").execute()
+            print(f"✅ Verified {filename}: {meta.get('name')} ({meta.get('size', '0')} bytes)")
+        except Exception as e:
+            print(f"❌ Error verifying {filename} (ID: {file_id}): {e}")
 
 
 # -------------------------
@@ -506,6 +604,148 @@ def batch_save_responses(response_records):
 # -------------------------
 # Routes - COMPLETELY FIXED VERSION
 # -------------------------
+
+
+print("🔧 Module loading - checking execution context...")
+print(f"📍 __name__ = {__name__}")
+print(f"🌐 RENDER environment: {os.environ.get('RENDER', 'Not set')}")
+
+def force_drive_initialization():
+    """Force Google Drive initialization for all execution contexts"""
+    global drive_service
+    
+    print("🚀 Force initializing Google Drive service...")
+    
+    # Debug environment variables first
+    json_env = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
+    if json_env:
+        print(f"✅ GOOGLE_SERVICE_ACCOUNT_JSON found: {len(json_env)} characters")
+        
+        # Test JSON parsing
+        try:
+            test_json = json.loads(json_env)
+            print(f"✅ JSON is valid. Client email: {test_json.get('client_email', 'Not found')}")
+        except json.JSONDecodeError as e:
+            print(f"❌ JSON parsing failed: {e}")
+            print(f"📄 First 100 chars: {json_env[:100]}")
+            return False
+    else:
+        print("❌ GOOGLE_SERVICE_ACCOUNT_JSON not found in environment")
+        print("📋 Available environment variables with 'GOOGLE' or 'SERVICE':")
+        for key in os.environ.keys():
+            if 'GOOGLE' in key.upper() or 'SERVICE' in key.upper():
+                print(f"   - {key}")
+        return False
+    
+    # Initialize the service
+    try:
+        success = init_drive_service()
+        if success:
+            print("✅ Force initialization successful!")
+            return True
+        else:
+            print("❌ Force initialization failed")
+            return False
+    except Exception as e:
+        print(f"❌ Exception during force initialization: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+# CALL IT IMMEDIATELY when module loads
+print("🔄 Attempting force initialization...")
+initialization_success = force_drive_initialization()
+
+if initialization_success:
+    print("🎉 Google Drive service ready!")
+else:
+    print("⚠️ Google Drive service failed to initialize")
+
+
+# -------------------------
+# Routes - Add explicit initialization before first route
+# -------------------------
+
+
+
+# 6. ADD DEBUG ROUTE HERE (BEFORE MAIN ROUTES):
+@app.route('/debug/env-check')
+def debug_env_check():
+    """Debug endpoint to check environment variables"""
+    
+    env_status = {}
+    
+    # Check all required environment variables
+    required_vars = [
+        'SECRET_KEY',
+        'GOOGLE_SERVICE_ACCOUNT_JSON',
+        'USERS_FILE_ID',
+        'EXAMS_FILE_ID', 
+        'QUESTIONS_FILE_ID',
+        'RESULTS_FILE_ID',
+        'RESPONSES_FILE_ID',
+        'ROOT_FOLDER_ID',
+        'IMAGES_FOLDER_ID'
+    ]
+    
+    for var in required_vars:
+        value = os.environ.get(var)
+        if value:
+            if var == 'GOOGLE_SERVICE_ACCOUNT_JSON':
+                # Check JSON validity without exposing content
+                try:
+                    json_data = json.loads(value)
+                    env_status[var] = {
+                        'status': 'Present and Valid JSON',
+                        'length': len(value),
+                        'has_private_key': 'private_key' in json_data,
+                        'has_client_email': 'client_email' in json_data,
+                        'client_email': json_data.get('client_email', 'Not found')[:50] + '...'
+                    }
+                except json.JSONDecodeError as e:
+                    env_status[var] = {
+                        'status': 'Present but INVALID JSON',
+                        'error': str(e),
+                        'length': len(value),
+                        'first_100_chars': value[:100]
+                    }
+            elif 'SECRET' in var:
+                env_status[var] = {'status': 'Present', 'length': len(value)}
+            else:
+                env_status[var] = {'status': 'Present', 'value': value}
+        else:
+            env_status[var] = {'status': 'MISSING'}
+    
+    # Check if we're on Render
+    render_detected = os.environ.get('RENDER') is not None
+    
+    # Try to initialize Google Drive service
+    drive_init_status = "Not attempted"
+    try:
+        test_service = create_drive_service()
+        if test_service:
+            drive_init_status = "SUCCESS"
+            try:
+                about = test_service.about().get(fields="user").execute()
+                drive_init_status += f" - Connected as: {about.get('user', {}).get('emailAddress', 'Unknown')}"
+            except:
+                drive_init_status += " - Service created but test failed"
+        else:
+            drive_init_status = "FAILED - Service is None"
+    except Exception as e:
+        drive_init_status = f"FAILED - Exception: {str(e)}"
+    
+    return jsonify({
+        'platform': 'Render' if render_detected else 'Local/Other',
+        'environment_variables': env_status,
+        'google_drive_init': drive_init_status,
+        'python_version': os.sys.version,
+        'working_directory': os.getcwd(),
+        'file_ids_configured': DRIVE_FILE_IDS,
+        'folder_ids_configured': DRIVE_FOLDER_IDS,
+        'drive_service_status': 'Initialized' if drive_service else 'Not Initialized'
+    })
+
 @app.route('/')
 def index():
     if 'user_id' in session:
@@ -1839,6 +2079,44 @@ def logout():
 
 
 # -------------------------
+# CRITICAL: Add service check endpoint for debugging
+# -------------------------
+@app.route('/debug/service-status')
+def debug_service_status():
+    """Debug endpoint to check service status"""
+    global drive_service
+    
+    status = {
+        'drive_service_initialized': drive_service is not None,
+        'environment_variables': {},
+        'file_ids': DRIVE_FILE_IDS.copy(),
+        'folder_ids': DRIVE_FOLDER_IDS.copy()
+    }
+    
+    # Check environment variables (don't expose full values)
+    for var in ['SECRET_KEY', 'GOOGLE_SERVICE_ACCOUNT_JSON', 'USERS_FILE_ID']:
+        value = os.environ.get(var)
+        if value:
+            if var == 'GOOGLE_SERVICE_ACCOUNT_JSON':
+                status['environment_variables'][var] = f"Present ({len(value)} chars)"
+            else:
+                status['environment_variables'][var] = "Present"
+        else:
+            status['environment_variables'][var] = "MISSING"
+    
+    # Test drive service if available
+    if drive_service:
+        try:
+            about = drive_service.about().get(fields="user").execute()
+            status['drive_test'] = f"Connected as: {about.get('user', {}).get('emailAddress', 'Unknown')}"
+        except Exception as e:
+            status['drive_test'] = f"Error: {str(e)}"
+    else:
+        status['drive_test'] = "Service not initialized"
+    
+    return jsonify(status)
+
+# -------------------------
 # Error Handlers
 # -------------------------
 @app.errorhandler(404)
@@ -1852,17 +2130,27 @@ def internal_error(error):
 
 
 # -------------------------
-# Run App
+# Run App - CRITICAL INITIALIZATION
 # -------------------------
 if __name__ == '__main__':
-    print("Starting FIXED Exam Portal...")
-
-    # Initialize Google Drive service
+    print("🚀 Starting FIXED Exam Portal...")
+    
+    # CRITICAL: Force initialization during startup
+    print("🔧 Forcing Google Drive service initialization...")
     if init_drive_service():
-        print("Google Drive integration: ACTIVE")
+        print("✅ Google Drive integration: ACTIVE")
     else:
-        print("Google Drive integration: INACTIVE")
-        print("Running in fallback mode without Google Drive")
+        print("❌ Google Drive integration: INACTIVE")
+        print("⚠️ App will run in limited mode")
 
-
-    app.run()
+    app.run(debug=True if not IS_PRODUCTION else False)
+else:
+    # CRITICAL: This runs when deployed with Gunicorn
+    print("🌐 Gunicorn detected - initializing services for production...")
+    
+    # Force immediate initialization
+    if init_drive_service():
+        print("✅ Production Google Drive integration: ACTIVE")
+    else:
+        print("❌ Production Google Drive integration: FAILED")
+        print("📋 Check environment variables and credentials")
