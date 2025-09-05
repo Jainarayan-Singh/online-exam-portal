@@ -47,6 +47,37 @@ app.secret_key = os.environ.get('SECRET_KEY')
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 7200  # 2 hours
 
+
+# --- SERVER-SIDE SESSION (Flask-Session) - to avoid large cookie sizes ---
+from flask_session import Session
+import tempfile
+
+# Configure server-side sessions
+# Use filesystem for Render single-instance free tier. For multi-instance use Redis.
+SESSION_TYPE = os.environ.get("SESSION_TYPE", "filesystem")  # default to filesystem
+# session files dir
+SESSION_FILE_DIR = os.environ.get("SESSION_FILE_DIR",
+                                  os.path.join(tempfile.gettempdir(), "flask_session"))
+os.makedirs(SESSION_FILE_DIR, exist_ok=True)
+
+app.config['SESSION_TYPE'] = SESSION_TYPE
+app.config['SESSION_FILE_DIR'] = SESSION_FILE_DIR
+app.config['SESSION_PERMANENT'] = False  # keep sessions non-permanent by default
+# set lifetime if you want (seconds) — keep > exam duration, e.g., 3 hours (10800)
+from datetime import timedelta
+app.config['PERMANENT_SESSION_LIFETIME'] = timedelta(seconds=int(os.environ.get("PERMANENT_SESSION_LIFETIME", 10800)))
+# security cookies
+app.config['SESSION_COOKIE_HTTPONLY'] = True
+# In production set SESSION_COOKIE_SECURE = True if using HTTPS (Render provides HTTPS)
+app.config['SESSION_COOKIE_SECURE'] = True if os.environ.get("FORCE_SECURE_COOKIES", "1") == "1" else False
+
+# Initialize server-side session
+Session(app)
+
+print(f"✅ Server-side sessions enabled: type={app.config['SESSION_TYPE']}, dir={app.config.get('SESSION_FILE_DIR')}")
+
+
+
 # Register admin blueprint
 app.register_blueprint(admin_bp, url_prefix="/admin")
 
