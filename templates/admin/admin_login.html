@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.jpg') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Login - ExamPortal</title>
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Font Awesome -->
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+
+  <style>
+    body {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+    main {
+      flex: 1;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .login-card {
+      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
+      border: 1px solid #334155;
+      background: rgba(30,41,59,0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 1rem;
+      width: 100%;
+      max-width: 400px;
+      color: #fff;
+    }
+    .card-title { font-weight: 600; margin-bottom: .5rem; color: #fff; }
+    .form-control:focus {
+      border-color: #6366f1;
+      box-shadow: 0 0 0 .2rem rgba(99,102,241,.25);
+    }
+    .input-group-text {
+      background: rgba(30,41,59,.8);
+      border-color: #334155;
+      color: #94a3b8;
+    }
+    .btn-outline-secondary { border-color:#334155; color:#94a3b8; }
+    .btn-outline-secondary:hover { background:#334155; border-color:#334155; color:#f1f5f9; }
+    .alert-info {
+      background: rgba(59,130,246,.1);
+      border-left: 4px solid #3b82f6;
+      color: #93c5fd;
+      border: none;
+    }
+    .btn-primary {
+      background: linear-gradient(45deg, #667eea, #764ba2);
+      border: none;
+      border-radius: 25px;
+      transition: all 0.3s ease;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+    }
+    .btn-primary:disabled { opacity:.6; cursor:not-allowed; }
+
+    /* Footer styling (same as base.html) */
+    .professional-footer {
+      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+      color: #ecf0f1;
+      padding: 1.5rem 0;
+      position: relative;
+      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+      margin-top: auto;
+    }
+    .professional-footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
+    }
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .footer-brand {
+      display: flex;
+      align-items: center;
+      font-size: 1.3rem;
+      font-weight: bold;
+      color: #667eea;
+    }
+    .footer-brand i { margin-right: 0.5rem; font-size: 1.4rem; }
+    .footer-links { display:flex; gap:2rem; flex-wrap:wrap; }
+    .footer-links a { color:#ecf0f1; text-decoration:none; font-size:0.9rem; transition:.3s; }
+    .footer-links a:hover { color:#667eea; border-bottom:2px solid #667eea; }
+    .footer-social { display:flex; gap:0.8rem; }
+    .footer-social a {
+      width:35px; height:35px; display:inline-flex; align-items:center; justify-content:center;
+      background: rgba(102,126,234,0.2); border-radius:50%; color:#ecf0f1; text-decoration:none;
+      transition:.3s; font-size:0.9rem;
+    }
+    .footer-social a:hover { background:#667eea; transform:translateY(-2px); }
+    @media (max-width:768px){
+      .footer-content { flex-direction:column; text-align:center; }
+      .footer-links { justify-content:center; gap:1rem; }
+      .footer-social { justify-content:center; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <div class="card login-card p-4">
+      <div class="card-body">
+        <div class="text-center mb-4">
+          <i class="fas fa-user-shield fa-3x text-primary mb-3"></i>
+          <h3 class="card-title">Admin Login</h3>
+          <p style="color:#e9ecef;">Sign in to manage exams, questions & uploads</p>
+        </div>
+
+        <!-- Flash messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+          {% if messages %}
+            {% for category, message in messages %}
+              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show {% if category == 'tip' %}permanent-tip{% endif %}">
+                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                {{ message }}
+                {% if category != 'tip' %}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                {% endif %}
+              </div>
+            {% endfor %}
+          {% endif %}
+        {% endwith %}
+
+        <form method="POST" id="adminLoginForm">
+          <div class="mb-3">
+            <label for="username" class="form-label"><i class="fas fa-user-shield"></i> Username or Email</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-user text-primary"></i></span>
+              <input type="text" class="form-control" id="username" name="username" placeholder="Enter username or email" required autocomplete="username">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label for="password" class="form-label"><i class="fas fa-lock"></i> Password</label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="fas fa-lock text-primary"></i></span>
+              <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
+              <button class="btn btn-outline-secondary" type="button" id="toggleBtn"><i class="fas fa-eye" id="toggleIcon"></i></button>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
+            <i class="fas fa-sign-in-alt"></i>
+            <span id="loginText">Login</span>
+            <span id="loginSpinner" class="d-none"><i class="fas fa-spinner fa-spin"></i> Verifying…</span>
+          </button>
+        </form>
+
+        <div class="text-center mt-2">
+          <a href="{{ url_for('login') }}" class="text-decoration-none text-info">
+            <i class="fas fa-arrow-left"></i> Back to Student Login
+          </a>
+        </div>
+
+        <!-- Permanent Tip -->
+        <div class="mt-4">
+          <div class="alert alert-info permanent-tip">
+            <h6 class="mb-1"><i class="fas fa-info-circle"></i> Tip</h6>
+            <small class="mb-0 d-block">
+              Use your admin credentials. For student access, switch to <strong>Student Login</strong>.
+            </small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <!-- Footer (same as user portal) -->
+  <footer class="professional-footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <i class="fas fa-graduation-cap"></i> ExamPortal
+        </div>
+        <div class="footer-links">
+          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+          <a href="{{ url_for('support') }}">Support</a>
+          <a href="{{ url_for('contact') }}">Contact</a>
+        </div>
+        <div class="d-flex align-items-center gap-3">
+          <p class="footer-copyright">
+            © 2025 ExamPortal. All rights reserved.
+          </p>
+          <div class="footer-social">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-linkedin-in"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+  <script>
+  document.addEventListener('DOMContentLoaded', function () {
+    // Toggle password visibility
+    const pwd = document.getElementById('password');
+    const toggleBtn = document.getElementById('toggleBtn');
+    const toggleIcon = document.getElementById('toggleIcon');
+    toggleBtn.addEventListener('click', () => {
+      if (pwd.type === 'password') {
+        pwd.type = 'text';
+        toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+      } else {
+        pwd.type = 'password';
+        toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+      }
+    });
+
+    // Auto-dismiss flash alerts EXCEPT permanent tips
+    const ALERT_CLOSE_DELAY_MS = 1000;
+    const alerts = document.querySelectorAll('.alert:not(.permanent-tip)');
+    alerts.forEach(function (el) {
+      setTimeout(function () {
+        const bsAlert = new bootstrap.Alert(el);
+        bsAlert.close();
+      }, ALERT_CLOSE_DELAY_MS);
+    });
+  });
+  </script>
+</body>
+</html>

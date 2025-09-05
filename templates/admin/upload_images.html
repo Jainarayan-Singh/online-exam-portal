@@ -1,0 +1,168 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Upload Question Images{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-images"></i> Upload Question Images</h2>
+</div>
+
+{% if load_error %}
+  <div class="alert alert-warning">
+    <strong>Note:</strong> {{ load_error }}<br>
+    If you just added a new subject, go to <em>Publish</em> and try again.
+  </div>
+{% endif %}
+
+<div class="card shadow">
+  <div class="card-body">
+    <form id="select-subject-form" class="row g-3" onsubmit="return false;">
+      <div class="col-md-6">
+        <label class="form-label">Select Subject Folder</label>
+        <select class="form-select" id="subject_folder_id" name="subject_folder_id" required>
+          <option value="" disabled selected>-- Choose a subject folder --</option>
+          {% for subj in subjects %}
+            <option value="{{ subj.folder_id }}">{{ subj.name }}</option>
+          {% endfor %}
+        </select>
+        <div class="form-text">
+          If the subject isn’t listed, add it in <strong>Subjects</strong> and then click <strong>Publish</strong>.
+        </div>
+      </div>
+    </form>
+
+    <hr class="my-4">
+
+    <div id="uploader-section" class="d-none">
+      <label class="form-label">Select Images</label>
+
+      <div id="drop-zone" class="border rounded p-4 text-center mb-3" style="min-height: 140px;">
+        <p class="mb-2">Drag & drop images here</p>
+        <p class="text-muted">or</p>
+        <button type="button" id="pick-files" class="btn btn-outline-primary">
+          <i class="fas fa-plus"></i> Choose Files
+        </button>
+        <input type="file" id="file-input" accept="image/*" multiple hidden>
+      </div>
+
+      <div id="file-list" class="mb-3"></div>
+
+      <button id="upload-btn" class="btn btn-success" disabled>
+        <i class="fas fa-cloud-upload-alt"></i> Upload
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function() {
+  const selectEl = document.getElementById('subject_folder_id');
+  const section = document.getElementById('uploader-section');
+  const dropZone = document.getElementById('drop-zone');
+  const pickBtn = document.getElementById('pick-files');
+  const fileInput = document.getElementById('file-input');
+  const fileList = document.getElementById('file-list');
+  const uploadBtn = document.getElementById('upload-btn');
+  let selectedFiles = [];
+
+  function refreshList() {
+    fileList.innerHTML = '';
+    if (selectedFiles.length === 0) {
+      uploadBtn.disabled = true;
+      return;
+    }
+    const ul = document.createElement('ul');
+    ul.className = 'list-group';
+    selectedFiles.forEach((f, i) => {
+      const li = document.createElement('li');
+      li.className = 'list-group-item d-flex justify-content-between align-items-center';
+      li.textContent = f.name;
+      const rm = document.createElement('button');
+      rm.type = 'button';
+      rm.className = 'btn btn-sm btn-outline-danger';
+      rm.textContent = 'Remove';
+      rm.onclick = () => { selectedFiles.splice(i, 1); refreshList(); };
+      li.appendChild(rm);
+      ul.appendChild(li);
+    });
+    fileList.appendChild(ul);
+    uploadBtn.disabled = false;
+  }
+
+  function addFiles(files) {
+    for (const f of files) {
+      if (f && f.type.startsWith('image/')) selectedFiles.push(f);
+    }
+    refreshList();
+  }
+
+  selectEl.addEventListener('change', () => {
+    if (selectEl.value) section.classList.remove('d-none');
+  });
+
+  pickBtn.addEventListener('click', () => fileInput.click());
+  fileInput.addEventListener('change', (e) => addFiles(e.target.files));
+
+  dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('bg-light');
+  });
+  dropZone.addEventListener('dragleave', () => dropZone.classList.remove('bg-light'));
+  dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('bg-light');
+    addFiles(e.dataTransfer.files);
+  });
+
+  uploadBtn.addEventListener('click', async () => {
+    const folderId = selectEl.value;
+    if (!folderId || selectedFiles.length === 0) return;
+
+    const data = new FormData();
+    data.append('subject_folder_id', folderId);
+    selectedFiles.forEach(f => data.append('images', f, f.name));
+
+    uploadBtn.disabled = true;
+    uploadBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-1"></span> Uploading...';
+
+    try {
+      const resp = await fetch('{{ url_for("admin.upload_images_page") }}', {
+        method: 'POST',
+        body: data
+      });
+
+      // Ensure we handle non-JSON errors (e.g. HTML error pages) safely
+      let result = null;
+      const text = await resp.text();
+      try {
+        result = JSON.parse(text);
+      } catch {
+        alert('Unexpected error: ' + text.slice(0, 300));
+        return;
+      }
+
+      if (!result.success) {
+        alert('Upload failed: ' + (result.message || 'Unknown error'));
+      } else if (result.failed && result.failed.length > 0) {
+        const msg = [
+          `Uploaded: ${result.uploaded || 0}`,
+          `Errors: ${result.failed.length}`,
+          '',
+          ...result.failed.map(e => `• ${e.filename}: ${e.error}`)
+        ].join('\n');
+        alert(msg);
+      } else {
+        alert(`Uploaded ${result.uploaded || 0} images successfully.`);
+      }
+
+      selectedFiles = [];
+      refreshList();
+    } catch (err) {
+      alert('Unexpected error: ' + err);
+    } finally {
+      uploadBtn.disabled = false;
+      uploadBtn.innerHTML = '<i class="fas fa-cloud-upload-alt"></i> Upload';
+    }
+  });
+})();
+</script>
+{% endblock %}

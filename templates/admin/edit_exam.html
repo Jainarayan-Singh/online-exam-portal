@@ -1,0 +1,50 @@
+{% extends "admin/admin_base.html" %}
+{% block content %}
+<div class="container mt-4">
+    <h2>Edit Exam</h2>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Exam Name</label>
+            <input type="text" name="name" class="form-control" value="{{ exam.name }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Date</label>
+            <input type="date" name="date" class="form-control" value="{{ exam.date }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Start Time</label>
+            <input type="time" name="start_time" class="form-control" value="{{ exam.start_time }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Duration (minutes)</label>
+            <input type="number" name="duration" class="form-control" value="{{ exam.duration }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Total Questions</label>
+            <input type="number" name="total_questions" class="form-control" value="{{ exam.total_questions }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Status</label>
+            <select class="form-control" name="status">
+                <option value="upcoming" {% if exam.status == "upcoming" %}selected{% endif %}>Upcoming</option>
+                <option value="ongoing" {% if exam.status == "ongoing" %}selected{% endif %}>Ongoing</option>
+                <option value="completed" {% if exam.status == "completed" %}selected{% endif %}>Completed</option>
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Instructions</label>
+            <textarea name="instructions" class="form-control">{{ exam.instructions }}</textarea>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Positive Marks</label>
+            <input type="text" name="positive_marks" class="form-control" value="{{ exam.positive_marks }}">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Negative Marks</label>
+            <input type="text" name="negative_marks" class="form-control" value="{{ exam.negative_marks }}">
+        </div>
+        <button type="submit" class="btn btn-success">Update Exam</button>
+        <a href="{{ url_for('admin.exams') }}" class="btn btn-secondary">Cancel</a>
+    </form>
+</div>
+{% endblock %}

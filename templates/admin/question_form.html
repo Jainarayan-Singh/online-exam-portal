@@ -1,0 +1,67 @@
+{# expects exams list in context and (optionally) question dict #}
+<div class="row g-3">
+  <div class="col-md-4">
+    <label class="form-label">Exam</label>
+    <select name="exam_id" class="form-select" required>
+      {% for e in exams %}
+        <option value="{{ e.id }}" {% if question and question.exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <div class="col-md-8">
+    <label class="form-label">Question Text</label>
+    <input name="question_text" class="form-control" value="{{ question.question_text if question else '' }}" required>
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Option A</label>
+    <input name="option_a" class="form-control" value="{{ question.option_a if question else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Option B</label>
+    <input name="option_b" class="form-control" value="{{ question.option_b if question else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Option C</label>
+    <input name="option_c" class="form-control" value="{{ question.option_c if question else '' }}">
+  </div>
+  <div class="col-md-3">
+    <label class="form-label">Option D</label>
+    <input name="option_d" class="form-control" value="{{ question.option_d if question else '' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Correct Answer</label>
+    <input name="correct_answer" class="form-control" value="{{ question.correct_answer if question else '' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Type</label>
+    <select name="question_type" class="form-select">
+      <option value="MCQ" {% if question and question.question_type=='MCQ' %}selected{% endif %}>MCQ</option>
+      <option value="MSQ" {% if question and question.question_type=='MSQ' %}selected{% endif %}>MSQ</option>
+      <option value="NUMERIC" {% if question and question.question_type=='NUMERIC' %}selected{% endif %}>NUMERIC</option>
+    </select>
+  </div>
+
+  <div class="col-md-6">
+    <label class="form-label">Image Path (optional)</label>
+    <input name="image_path" class="form-control" value="{{ question.image_path if question else '' }}" placeholder="e.g. physics/ph-1.png">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Positive Marks</label>
+    <input name="positive_marks" class="form-control" value="{{ question.positive_marks if question else '4' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Negative Marks</label>
+    <input name="negative_marks" class="form-control" value="{{ question.negative_marks if question else '1' }}">
+  </div>
+
+  <div class="col-md-3">
+    <label class="form-label">Tolerance (for NUMERIC)</label>
+    <input name="tolerance" class="form-control" value="{{ question.tolerance if question else '' }}">
+  </div>
+</div>

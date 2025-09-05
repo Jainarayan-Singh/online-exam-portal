@@ -3,109 +3,117 @@
 {% block title %}Student Login - ExamPortal{% endblock %}
 
 {% block content %}
-<div class="container">
-    <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card login-card">
-                <div class="card-body p-4">
-                    <div class="text-center mb-4">
-                        <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
-                        <h3 class="card-title text-white">Student Login</h3>
-                        <p style="color: #e9ecef;">Access your exam portal</p>
-                    </div>
+<!-- Center wrapper: fills the available main area (so footer stays fixed at bottom) -->
+<div class="center-vert">
+  <div class="container">
+      <div class="row justify-content-center">
+          <div class="col-md-4">
+              <div class="card login-card">
+                  <div class="card-body p-4">
+                      <div class="text-center mb-4">
+                          <i class="fas fa-graduation-cap fa-3x text-primary mb-3"></i>
+                          <h3 class="card-title text-white">Student Login</h3>
+                          <p style="color: #e9ecef;">Access your exam portal</p>
+                      </div>
 
-                    <!-- Flash Messages -->
-                    {% with messages = get_flashed_messages(with_categories=true) %}
-                        {% if messages %}
-                            {% for category, message in messages %}
-                                <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
-                                    <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
-                                    {{ message }}
-                                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                                </div>
-                            {% endfor %}
-                        {% endif %}
-                    {% endwith %}
+                      <!-- Flash Messages -->
+                      {% with messages = get_flashed_messages(with_categories=true) %}
+                          {% if messages %}
+                              {% for category, message in messages %}
+                                  <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show">
+                                      <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                                      {{ message }}
+                                      <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                  </div>
+                              {% endfor %}
+                          {% endif %}
+                      {% endwith %}
 
-                    <form method="POST" id="loginForm">
-                        <div class="mb-3">
-                            <label for="username" class="form-label text-white">
-                                <i class="fas fa-user"></i> Username or Email
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-user text-primary"></i>
-                                </span>
-                                <input type="text"
-                                       class="form-control"
-                                       id="username"
-                                       name="username"
-                                       placeholder="Enter username or email"
-                                       required
-                                       autocomplete="username">
-                            </div>
-                        </div>
+                      <form method="POST" id="loginForm">
+                          <div class="mb-3">
+                              <label for="username" class="form-label text-white">
+                                  <i class="fas fa-user"></i> Username or Email
+                              </label>
+                              <div class="input-group">
+                                  <span class="input-group-text">
+                                      <i class="fas fa-user text-primary"></i>
+                                  </span>
+                                  <input type="text"
+                                         class="form-control"
+                                         id="username"
+                                         name="username"
+                                         placeholder="Enter username or email"
+                                         required
+                                         autocomplete="username">
+                              </div>
+                          </div>
 
-                        <div class="mb-3">
-                            <label for="password" class="form-label text-white">
-                                <i class="fas fa-lock"></i> Password
-                            </label>
-                            <div class="input-group">
-                                <span class="input-group-text">
-                                    <i class="fas fa-lock text-primary"></i>
-                                </span>
-                                <input type="password"
-                                       class="form-control"
-                                       id="password"
-                                       name="password"
-                                       placeholder="Enter your password"
-                                       required
-                                       autocomplete="current-password">
-                                <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
-                                    <i class="fas fa-eye" id="toggleIcon"></i>
-                                </button>
-                            </div>
-                        </div>
+                          <div class="mb-3">
+                              <label for="password" class="form-label text-white">
+                                  <i class="fas fa-lock"></i> Password
+                              </label>
+                              <div class="input-group">
+                                  <span class="input-group-text">
+                                      <i class="fas fa-lock text-primary"></i>
+                                  </span>
+                                  <input type="password"
+                                         class="form-control"
+                                         id="password"
+                                         name="password"
+                                         placeholder="Enter your password"
+                                         required
+                                         autocomplete="current-password">
+                                  <button class="btn btn-outline-secondary" type="button" onclick="togglePassword()">
+                                      <i class="fas fa-eye" id="toggleIcon"></i>
+                                  </button>
+                              </div>
+                          </div>
 
-                        <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
-                            <i class="fas fa-sign-in-alt"></i>
-                            <span id="loginText">Login</span>
-                            <span id="loginSpinner" class="d-none">
-                                <i class="fas fa-spinner fa-spin"></i> Logging in...
-                            </span>
-                        </button>
-                    </form>
+                          <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
+                              <i class="fas fa-sign-in-alt"></i>
+                              <span id="loginText">Login</span>
+                              <span id="loginSpinner" class="d-none">
+                                  <i class="fas fa-spinner fa-spin"></i> Logging in...
+                              </span>
+                          </button>
+                      </form>
 
-                    <!-- Links Section -->
-<!-- Links Section - UPDATED -->
-<div class="text-center mt-3">
-    <a href="{{ url_for('forgot_password') }}" class="text-decoration-none text-info">
-        <i class="fas fa-user-plus"></i> Register New Account
-    </a>
-</div>
+                      <!-- Links Section -->
+                      <div class="text-center mt-3">
+                          <a href="{{ url_for('forgot_password') }}" class="text-decoration-none text-info">
+                              <i class="fas fa-user-plus"></i> Register New Account
+                          </a>
+                      </div>
 
-<!-- Help Section - UPDATED -->
-<div class="mt-4">
-    <div class="alert alert-info">
-        <h6><i class="fas fa-info-circle"></i> Need Help?</h6>
-        <ul class="mb-0 small">
-            <li><strong>New Student:</strong> Click "Register New Account" to create account</li>
-            <li><strong>Existing Student:</strong> Use your username/email and password</li>
-            <li><strong>Login Issues:</strong> Contact your administrator</li>
-        </ul>
-    </div>
-</div>
+                      <div class="text-center mt-3">
+                        <a href="{{ url_for('admin.login') }}" class="btn btn-sm btn-outline-dark" style="color: #e9ecef;">
+                          <i class="fas fa-user-shield"></i> Login as Admin
+                        </a>
+                      </div>
 
-                    <div class="text-center mt-3">
-<small style="color: #60a5fa;">  <!-- Light white -->
-    <i class="fas fa-shield-alt" style="color: #60a5fa;"></i>  <!-- Pure white -->
-    Secure login powered by ExamPortal
-</small>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+                      <!-- Help Section -->
+                      <div class="mt-4">
+                          <div class="alert alert-info">
+                              <h6><i class="fas fa-info-circle"></i> Need Help?</h6>
+                              <ul class="mb-0 small">
+                                  <li><strong>New Student:</strong> Click "Register New Account" to create account</li>
+                                  <li><strong>Existing Student:</strong> Use your username/email and password</li>
+                                  <li><strong>Login Issues:</strong> Contact your administrator</li>
+                              </ul>
+                          </div>
+                      </div>
+
+                      <div class="text-center mt-3">
+                          <small style="color: #60a5fa;">
+                              <i class="fas fa-shield-alt" style="color: #60a5fa;"></i>
+                              Secure login powered by ExamPortal
+                          </small>
+                      </div>
+                  </div>
+              </div>
+          </div>
+      </div>
+  </div>
 </div>
 
 <script>
@@ -143,7 +151,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const bsAlert = new bootstrap.Alert(alert);
             bsAlert.close();
         });
-    }, 5000);
+    }, 500);
 
     // Enter key handling
     document.addEventListener('keypress', function(e) {
@@ -155,6 +163,15 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <style>
+/* Ensure the center wrapper takes the available main height and centers content */
+.center-vert {
+  min-height: calc(105vh - 160px); /* shrink for header+footer; tweak 160px if your header/footer heights differ */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* keep the rest of your original styles unchanged */
 .login-card {
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.3);
     border: 1px solid #334155;

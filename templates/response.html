@@ -4,6 +4,18 @@
 
 {% block content %}
 <div class="container mt-4" id="responseContainer">
+
+    {% if from_history %}
+    <div class="row mb-3">
+        <div class="col text-center">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-sm"
+               style="border:1px solid #fff; color:#fff;">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Header Section -->
     <div class="row mb-4" id="examHeader">
         <div class="col-md-12">

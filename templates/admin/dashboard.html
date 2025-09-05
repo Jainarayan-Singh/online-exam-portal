@@ -1,0 +1,158 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<style>
+  /* Professional, light-touch styling for the guide */
+  .guide-card .step-badge{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:28px;height:28px;border-radius:50%;
+    background:#0d6efd;color:#fff;font-weight:600;font-size:14px;
+    margin-right:.5rem;
+  }
+  .guide-card h6{margin:0;font-weight:600;}
+  .guide-card .step{border-left:3px solid #e9ecef;padding-left:1rem;margin-left:.3rem}
+  .guide-card .step + .step{margin-top:1rem;}
+  .muted{color:#6c757d}
+  .kbd{padding:.15rem .4rem;border:1px solid #ced4da;border-bottom-width:2px;border-radius:.25rem;font-family:ui-monospace, SFMono-Regular, Menlo, monospace;background:#f8f9fa}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, monospace}
+  .tip{border-left:3px solid #198754;background:#f8fff9;padding:.5rem .75rem;border-radius:.25rem}
+  .warn{border-left:3px solid #dc3545;background:#fff8f8;padding:.5rem .75rem;border-radius:.25rem}
+</style>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h2 class="mb-0"><i class="fas fa-home"></i> Admin Dashboard</h2>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-file-alt fa-lg text-primary me-2"></i>
+          <div>
+            <div class="muted">Total Exams</div>
+            <div class="h4 mb-0">{{ stats.total_exams }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-users fa-lg text-primary me-2"></i>
+          <div>
+            <div class="muted">Total Users</div>
+            <div class="h4 mb-0">{{ stats.total_users }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <div class="d-flex align-items-center">
+          <i class="fas fa-user-shield fa-lg text-primary me-2"></i>
+          <div>
+            <div class="muted">Admins</div>
+            <div class="h4 mb-0">{{ stats.total_admins }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Quick actions -->
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2">
+      <a class="btn btn-primary" href="{{ url_for('admin.exams') }}"><i class="fas fa-file-alt me-1"></i> Manage Exams</a>
+      <a class="btn btn-primary" href="{{ url_for('admin.questions_index') }}"><i class="fas fa-question-circle me-1"></i> Manage Questions</a>
+      <a class="btn btn-primary" href="{{ url_for('admin.subjects') }}"><i class="fas fa-book me-1"></i> Manage Subjects</a>
+      <a class="btn btn-primary" href="{{ url_for('admin.upload_images_page') }}"><i class="fas fa-images me-1"></i> Upload Images</a>
+      <a class="btn btn-success" href="{{ url_for('admin.publish') }}"><i class="fas fa-bolt me-1"></i> Publish</a>
+    </div>
+  </div>
+</div>
+
+<!-- Admin Guide (on the dashboard itself) -->
+<div class="card guide-card shadow-sm">
+  <div class="card-body">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5 class="mb-0"><i class="fas fa-compass me-2 text-primary"></i>Admin Guide — Running an Exam</h5>
+      <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#guideBody">
+        Toggle
+      </button>
+    </div>
+    <div id="guideBody" class="collapse show">
+      <div class="step">
+        <div class="d-flex align-items-center mb-1">
+          <span class="step-badge">1</span><h6>Create the Exam</h6>
+        </div>
+        <div class="muted">
+          Go to <span class="kbd">Exams</span> → <span class="kbd">Create</span>. Fill <span class="mono">Name</span>, <span class="mono">Date</span>, <span class="mono">Start Time</span>, <span class="mono">Duration</span>, 
+          <span class="mono">Total Questions</span>, <span class="mono">Instructions</span>, and marking (<span class="mono">Positive</span>/<span class="mono">Negative</span>).
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="d-flex align-items-center mb-1">
+          <span class="step-badge">2</span><h6>Add Questions</h6>
+        </div>
+        <div class="muted">
+          Go to <span class="kbd">Questions</span>. Select an exam from the dropdown.
+          <ul class="mb-2">
+            <li><strong>Single Add:</strong> Use <span class="kbd">Add Question</span> to add one at a time.</li>
+            <li><strong>Batch Add:</strong> Use the “Batch Add Questions” panel. 
+              Click <span class="kbd">Add Row</span> to create lines, fill details, then <span class="kbd">Add All</span> to append everything to <span class="mono">questions.csv</span> in a single save.
+            </li>
+          </ul>
+          Supported types: <span class="mono">MCQ</span>, <span class="mono">MSQ</span>, <span class="mono">NUMERIC</span>.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="d-flex align-items-center mb-1">
+          <span class="step-badge">3</span><h6>Upload Images (optional)</h6>
+        </div>
+        <div class="muted">
+          Go to <span class="kbd">Upload Images</span>. Choose an existing subject folder or create one under <span class="kbd">Subjects</span> first.
+          In your question, set <span class="mono">image_path</span> like:
+          <div class="mt-1">
+            <code class="mono">Physics/ph-1.png</code> or <code class="mono">math/dt-1.png</code>
+          </div>
+          <div class="tip mt-2">
+            <strong>Tip:</strong> The path format is <span class="mono">&lt;SubjectName&gt;/&lt;fileNameWithExtension&gt;</span>.  
+            Ensure the image actually exists in that subject’s Drive folder.
+          </div>
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="d-flex align-items-center mb-1">
+          <span class="step-badge">4</span><h6>Review & Edit</h6>
+        </div>
+        <div class="muted">
+          In <span class="kbd">Questions</span>, use the list to edit or delete any row. You can filter by exam using the dropdown and <span class="kbd">Load</span>.
+        </div>
+      </div>
+
+      <div class="step">
+        <div class="d-flex align-items-center mb-1">
+          <span class="step-badge">5</span><h6>Publish</h6>
+        </div>
+        <div class="muted">
+          When you’re done with changes, open <span class="kbd">Publish</span> and press <span class="kbd">Publish</span>.  
+          This clears caches so students see the latest data.
+          <div class="warn mt-2"><strong>Important:</strong> If you skip Publish, students may not see your updates immediately.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+
+{% block title %}Results History - ExamPortal{% endblock %}
+
+{% block content %}
+<div class="container mt-5 pt-4">
+    <!-- Page Heading -->
+    <div class="row mb-4">
+        <div class="col-md-12 text-center">
+            <h2 class="text-white">
+                <i class="fas fa-history"></i> Results History
+            </h2>
+            <p class="text-white-50">Track your past exam performances and detailed responses</p>
+        </div>
+    </div>
+
+    <!-- Back Button on purple background -->
+    <div class="text-center mb-3">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm"
+           style="border:1px solid #fff; color:#fff;">
+            <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+    </div>
+
+    <!-- Card -->
+    <div class="card shadow-lg">
+        <div class="card-body">
+
+            <!-- Filter Row -->
+            <div class="row mb-3">
+                <div class="col-md-3">
+                    <input type="text" id="filterDate" class="form-control" placeholder="Search Date">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="filterExam" class="form-control" placeholder="Search Exam">
+                </div>
+                <div class="col-md-3">
+                    <input type="text" id="filterSubject" class="form-control" placeholder="Search Subject">
+                </div>
+                <div class="col-md-3">
+                    <button id="applyFilter" class="btn btn-primary w-100">
+                        <i class="fas fa-search"></i> Apply Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Results Table -->
+            <div class="table-responsive">
+                <table id="resultsTable" class="table table-striped table-hover align-middle">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Date</th>
+                            <th>Exam</th>
+                            <th>Subject</th>
+                            <th>Correct</th>
+                            <th>Incorrect</th>
+                            <th>Unanswered</th>
+                            <th>Score</th>
+                            <th>Percentage</th>
+                            <th>Grade</th>
+                            <th>Time Taken</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for result in results %}
+                        <tr>
+                            <td>{{ result.completed_at }}</td>
+                            <td>{{ result.exam_name }}</td>
+                            <td>{{ result.subject }}</td>
+                            <td><span class="text-success fw-bold">{{ result.correct_answers }}</span></td>
+                            <td><span class="text-danger fw-bold">{{ result.incorrect_answers }}</span></td>
+                            <td><span class="text-muted fw-bold">{{ result.unanswered_questions }}</span></td>
+                            <td>{{ result.score }} / {{ result.max_score }}</td>
+                            <td>
+                                <span class="badge 
+                                    {% if result.percentage >= 80 %} bg-success
+                                    {% elif result.percentage >= 60 %} bg-info
+                                    {% elif result.percentage >= 40 %} bg-warning
+                                    {% else %} bg-danger {% endif %}">
+                                    {{ result.percentage }}%
+                                </span>
+                            </td>
+                            <td><span class="badge bg-primary">{{ result.grade }}</span></td>
+                            <td>{{ result.time_taken_minutes }} mins</td>
+                            <td>
+<a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" 
+   class="btn btn-sm btn-outline-primary">
+   <i class="fas fa-eye"></i> Result
+</a>
+
+<a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" 
+   class="btn btn-sm btn-outline-success">
+   <i class="fas fa-clipboard-check"></i> Response
+</a>
+
+
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById("applyFilter").addEventListener("click", function () {
+    let dateVal = document.getElementById("filterDate").value.toLowerCase();
+    let examVal = document.getElementById("filterExam").value.toLowerCase();
+    let subjectVal = document.getElementById("filterSubject").value.toLowerCase();
+
+    let rows = document.querySelectorAll("#resultsTable tbody tr");
+
+    rows.forEach(row => {
+        let dateText = row.cells[0].textContent.toLowerCase();
+        let examText = row.cells[1].textContent.toLowerCase();
+        let subjectText = row.cells[2].textContent.toLowerCase();
+
+        let matchDate = !dateVal || dateText.includes(dateVal);
+        let matchExam = !examVal || examText.includes(examVal);
+        let matchSubject = !subjectVal || subjectText.includes(subjectVal);
+
+        row.style.display = (matchDate && matchExam && matchSubject) ? "" : "none";
+    });
+});
+</script>
+{% endblock %}
