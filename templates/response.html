@@ -99,7 +99,7 @@
                 </div>
                 <div class="card-body">
                     <h6><strong>Question:</strong></h6>
-                    <p>{{ response.question.question_text }}</p>
+                    <p>{{ response.question.question_text | safe }}</p>
 
                     <!-- Fixed Image Display -->
                     {% if response.question.has_image and response.question.image_url %}
@@ -137,7 +137,7 @@
                                         {% elif response.is_attempted and opt.id == response.given_answer and opt.id != response.correct_answer %}bg-danger text-white
                                         {% elif opt.id == response.correct_answer %}bg-success text-white
                                         {% else %}bg-light{% endif %}">
-                                        <strong>{{ opt.id }}.</strong> {{ opt.text }}
+                                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe}}
                                         {% if response.is_attempted and opt.id == response.given_answer %}
                                             <i class="fas fa-arrow-left ms-2"></i> <small>Your Choice</small>
                                         {% endif %}
@@ -199,7 +199,7 @@
                                         {% elif in_given and not in_correct %}bg-danger text-white
                                         {% elif not in_given and in_correct %}bg-warning text-dark
                                         {% else %}bg-light{% endif %}">
-                                        <strong>{{ opt.id }}.</strong> {{ opt.text }}
+                                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe }}
                                         {% if in_given %}
                                             <i class="fas fa-check-square ms-2"></i> <small>Your Choice</small>
                                         {% endif %}
