@@ -10,6 +10,7 @@
   </div>
 </div>
 
+<!-- Exam selector -->
 <div class="card mb-3">
   <div class="card-body">
     <form id="exam-select-form" class="row g-2 align-items-center">
@@ -30,13 +31,48 @@
   </div>
 </div>
 
+<!-- Questions listing + controls -->
 <div class="card mb-3">
   <div class="card-body">
-    <h5>Questions ({{ questions|length }})</h5>
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <h5>Questions ({{ questions|length }})</h5>
+      <div>
+        <button id="delete-selected" class="btn btn-sm btn-danger me-2"><i class="fas fa-trash"></i> Delete Selected</button>
+        <button id="select-none" class="btn btn-sm btn-outline-secondary">Clear Selection</button>
+      </div>
+    </div>
+
+    <!-- Apply controls for listing -->
+    <div class="card mb-3 p-2">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto"><label class="form-label mb-0">Apply to rows of type</label></div>
+        <div class="col-auto">
+          <select id="list-type" class="form-select form-select-sm">
+            <option value="MCQ">MCQ</option>
+            <option value="MSQ">MSQ</option>
+            <option value="NUMERIC">NUMERIC</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <input id="list-pos" class="form-control form-control-sm" placeholder="Positive marks (e.g. 4)">
+        </div>
+        <div class="col-auto">
+          <input id="list-neg" class="form-control form-control-sm" placeholder="Negative marks (e.g. 1)">
+        </div>
+        <div class="col-auto">
+          <input id="list-tol" class="form-control form-control-sm" placeholder="Tolerance (for NUMERIC)">
+        </div>
+        <div class="col-auto">
+          <button id="apply-list" class="btn btn-sm btn-outline-primary">Apply</button>
+        </div>
+      </div>
+    </div>
+
     {% if questions %}
       <table class="table table-sm table-striped">
         <thead>
           <tr>
+            <th style="width:40px"><input id="select-all" type="checkbox" title="Select all"></th>
             <th>ID</th>
             <th>Question</th>
             <th>Type</th>
@@ -48,11 +84,12 @@
         <tbody>
           {% for q in questions %}
             <tr>
+              <td><input class="row-checkbox" data-id="{{ q.id }}" type="checkbox"></td>
               <td>{{ q.id }}</td>
               <td style="max-width:420px;">{{ q.question_text }}</td>
               <td>{{ q.question_type }}</td>
               <td>{% if q.image_path %}<small>{{ q.image_path }}</small>{% endif %}</td>
-              <td>{{ q.positive_marks }}/{{ q.negative_marks }}</td>
+              <td>{{ q.positive_marks }}/{{ q.negative_marks }} {% if q.tolerance %} (tol: {{ q.tolerance }}){% endif %}</td>
               <td class="text-end">
                 <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_question', question_id=q.id) }}"><i class="fas fa-edit"></i></a>
 
@@ -78,10 +115,38 @@
       <small class="text-muted">Add many rows below, then click "Add All" to append them to questions.csv in one operation.</small>
     </div>
 
-    <div class="mb-2">
+    <div class="mb-2 d-flex gap-2 align-items-center">
       <button id="add-row" class="btn btn-sm btn-outline-success"><i class="fas fa-plus"></i> Add Row</button>
       <button id="clear-rows" class="btn btn-sm btn-outline-secondary">Clear</button>
       <button id="batch-submit" class="btn btn-sm btn-primary"><i class="fas fa-upload"></i> Add All</button>
+    </div>
+
+    <!-- Global apply controls for batch rows -->
+    <div class="card my-2 p-2">
+      <div class="row g-2 align-items-center">
+        <div class="col-auto">
+          <label class="form-label mb-0">Apply to rows of type</label>
+        </div>
+        <div class="col-auto">
+          <select id="global-type" class="form-select form-select-sm">
+            <option value="MCQ">MCQ</option>
+            <option value="MSQ">MSQ</option>
+            <option value="NUMERIC">NUMERIC</option>
+          </select>
+        </div>
+        <div class="col-auto">
+          <input id="global-pos" class="form-control form-control-sm" placeholder="Positive marks (e.g. 4)">
+        </div>
+        <div class="col-auto">
+          <input id="global-neg" class="form-control form-control-sm" placeholder="Negative marks (e.g. 1)">
+        </div>
+        <div class="col-auto">
+          <input id="global-tol" class="form-control form-control-sm" placeholder="Tolerance (for NUMERIC)">
+        </div>
+        <div class="col-auto">
+          <button id="apply-global" class="btn btn-sm btn-outline-primary">Apply</button>
+        </div>
+      </div>
     </div>
 
     <div id="batch-rows" class="mt-3"></div>
@@ -90,16 +155,15 @@
 
 <script>
 (function(){
+  // Exam select + reload
   const examSelect = document.getElementById('exam-select');
   const reloadBtn = document.getElementById('reload-btn');
-
   reloadBtn.addEventListener('click', () => {
     const id = examSelect.value;
-    // Build a proper quoted URL string (avoid unquoted Jinja output which breaks JS)
     window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(id);
   });
 
-  // Batch UI
+  // ---------------- Batch UI ----------------
   const addRowBtn = document.getElementById('add-row');
   const clearRowsBtn = document.getElementById('clear-rows');
   const rowsDiv = document.getElementById('batch-rows');
@@ -139,11 +203,22 @@
           <option value="NUMERIC">NUMERIC</option>
         </select>
       </div>
+
+      <!-- New: marks & tolerance per row -->
+      <div class="col-md-2 mt-2">
+        <input class="form-control form-control-sm q-pos" placeholder="Pos marks" value="4">
+      </div>
+      <div class="col-md-2 mt-2">
+        <input class="form-control form-control-sm q-neg" placeholder="Neg marks" value="1">
+      </div>
+      <div class="col-md-2 mt-2">
+        <input class="form-control form-control-sm q-tol" placeholder="Tolerance (NUMERIC)">
+      </div>
+
       <div class="col-auto mt-2">
         <button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>
       </div>
     `;
-    // remove handler
     div.querySelector('.remove-row').addEventListener('click', () => div.remove());
     return div;
   }
@@ -156,6 +231,28 @@
   clearRowsBtn.addEventListener('click', (e) => {
     e.preventDefault();
     rowsDiv.innerHTML = '';
+  });
+
+  // Apply global marks/tolerance to rows of selected type
+  const applyGlobalBtn = document.getElementById('apply-global');
+  applyGlobalBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    const selType = document.getElementById('global-type').value;
+    const pos = document.getElementById('global-pos').value.trim();
+    const neg = document.getElementById('global-neg').value.trim();
+    const tol = document.getElementById('global-tol').value.trim();
+
+    const rows = Array.from(rowsDiv.querySelectorAll('.batch-row'));
+    rows.forEach(r => {
+      const t = r.querySelector('.q-type').value;
+      if (t === selType) {
+        if (pos !== '') r.querySelector('.q-pos').value = pos;
+        if (neg !== '') r.querySelector('.q-neg').value = neg;
+        if (tol !== '') r.querySelector('.q-tol').value = tol;
+      }
+    });
+    applyGlobalBtn.innerText = 'Applied ✓';
+    setTimeout(()=> applyGlobalBtn.innerText = 'Apply', 900);
   });
 
   submitBtn.addEventListener('click', async (e) => {
@@ -177,11 +274,10 @@
         correct_answer: (r.querySelector('.q-corr')?.value || '').trim(),
         question_type: (r.querySelector('.q-type')?.value || 'MCQ'),
         image_path: (r.querySelector('.q-img')?.value || '').trim(),
-        positive_marks: "4",
-        negative_marks: "1",
-        tolerance: ""
+        positive_marks: (r.querySelector('.q-pos')?.value || '4').toString(),
+        negative_marks: (r.querySelector('.q-neg')?.value || '1').toString(),
+        tolerance: (r.querySelector('.q-tol')?.value || '').toString()
       };
-      // skip empty rows (no text & no options)
       if (!q.question_text && !q.option_a && !q.option_b && !q.option_c && !q.option_d) continue;
       payload.questions.push(q);
     }
@@ -202,7 +298,6 @@
         alert('Batch add failed: ' + (data.message || 'Unknown'));
       } else {
         alert(`Added ${data.added} question(s). Reloading...`);
-        // reload to show newly added questions for the selected exam
         window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(exam_id);
       }
     } catch (err) {
@@ -211,6 +306,107 @@
     } finally {
       submitBtn.disabled = false;
       submitBtn.innerText = previousText;
+    }
+  });
+
+  // ---------------- Multi-delete & selection ----------------
+  const selectAll = document.getElementById('select-all');
+  const deleteSelectedBtn = document.getElementById('delete-selected');
+  const clearSelectionBtn = document.getElementById('select-none');
+
+  selectAll.addEventListener('change', (e) => {
+    const checked = selectAll.checked;
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = checked);
+  });
+
+  clearSelectionBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    selectAll.checked = false;
+    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = false);
+  });
+
+  deleteSelectedBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const checked = Array.from(document.querySelectorAll('.row-checkbox:checked'));
+    if (checked.length === 0) { alert('No questions selected'); return; }
+
+    if (!confirm(`Delete ${checked.length} selected question(s)? This cannot be undone.`)) return;
+
+    const ids = checked.map(cb => parseInt(cb.dataset.id,10));
+    try {
+      deleteSelectedBtn.disabled = true;
+      deleteSelectedBtn.innerText = 'Deleting...';
+      const resp = await fetch("{{ url_for('admin.delete_multiple_questions') }}", {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({ ids })
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert('Delete failed: ' + (data.message || 'Unknown'));
+      } else {
+        alert(`Deleted ${data.deleted} question(s). Reloading...`);
+        window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(examSelect.value);
+      }
+    } catch (err) {
+      alert('Unexpected error: ' + err);
+      console.error(err);
+    } finally {
+      deleteSelectedBtn.disabled = false;
+      deleteSelectedBtn.innerText = 'Delete Selected';
+    }
+  });
+
+  // ---------------- Apply on listing ----------------
+  const applyListBtn = document.getElementById('apply-list');
+  applyListBtn.addEventListener('click', async (e) => {
+    e.preventDefault();
+    const exam_id = document.getElementById('exam-select').value;
+    if (!exam_id) { alert('Pick an exam first'); return; }
+
+    const qtype = document.getElementById('list-type').value;
+    const pos = document.getElementById('list-pos').value.trim();
+    const neg = document.getElementById('list-neg').value.trim();
+    const tol = document.getElementById('list-tol').value; // allow empty to skip
+
+    if (!qtype) { alert('Pick a question type'); return; }
+    if (pos === '' && neg === '' && tol === '') {
+      if (!confirm('You did not provide any values. Do you want to continue (no changes will be applied)?')) return;
+    }
+
+    if (!confirm(`Apply changes to all ${qtype} questions for this exam?`)) return;
+
+    applyListBtn.disabled = true;
+    const prev = applyListBtn.innerText;
+    applyListBtn.innerText = 'Applying...';
+
+    try {
+      const payload = {
+        exam_id: parseInt(exam_id, 10),
+        question_type: qtype,
+        positive_marks: pos === '' ? null : pos,
+        negative_marks: neg === '' ? null : neg,
+        tolerance: tol === '' ? null : tol
+      };
+
+      const resp = await fetch("{{ url_for('admin.questions_bulk_update') }}", {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify(payload)
+      });
+      const data = await resp.json();
+      if (!data.success) {
+        alert('Update failed: ' + (data.message || 'Unknown'));
+      } else {
+        alert(`Updated ${data.updated} question(s). Reloading...`);
+        window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(exam_id);
+      }
+    } catch (err) {
+      alert('Unexpected error: ' + err);
+      console.error(err);
+    } finally {
+      applyListBtn.disabled = false;
+      applyListBtn.innerText = prev;
     }
   });
 
