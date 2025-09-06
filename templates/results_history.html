@@ -16,8 +16,7 @@
 
     <!-- Back Button on purple background -->
     <div class="text-center mb-3">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-sm"
-           style="border:1px solid #fff; color:#fff;">
+        <a href="{{ url_for('dashboard') }}" class="btn btn-sm" style="border:1px solid #fff; color:#fff;">
             <i class="fas fa-arrow-left"></i> Back to Dashboard
         </a>
     </div>
@@ -25,6 +24,13 @@
     <!-- Card -->
     <div class="card shadow-lg">
         <div class="card-body">
+
+            {% if not results %}
+                <div class="alert alert-info text-center">
+                    <strong>No results found.</strong><br>
+                    You haven't completed any exams or results are not yet recorded.
+                </div>
+            {% endif %}
 
             <!-- Filter Row -->
             <div class="row mb-3">
@@ -73,28 +79,25 @@
                             <td><span class="text-muted fw-bold">{{ result.unanswered_questions }}</span></td>
                             <td>{{ result.score }} / {{ result.max_score }}</td>
                             <td>
-                                <span class="badge 
-                                    {% if result.percentage >= 80 %} bg-success
-                                    {% elif result.percentage >= 60 %} bg-info
-                                    {% elif result.percentage >= 40 %} bg-warning
+                                {% set pct = (result.percentage if result.percentage is not none else 0)|float %}
+                                <span class="badge
+                                    {% if pct >= 80 %} bg-success
+                                    {% elif pct >= 60 %} bg-info
+                                    {% elif pct >= 40 %} bg-warning
                                     {% else %} bg-danger {% endif %}">
-                                    {{ result.percentage }}%
+                                    {{ "%.2f"|format(pct) }}%
                                 </span>
                             </td>
                             <td><span class="badge bg-primary">{{ result.grade }}</span></td>
                             <td>{{ result.time_taken_minutes }} mins</td>
                             <td>
-<a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" 
-   class="btn btn-sm btn-outline-primary">
-   <i class="fas fa-eye"></i> Result
-</a>
+                                <a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Result
+                                </a>
 
-<a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" 
-   class="btn btn-sm btn-outline-success">
-   <i class="fas fa-clipboard-check"></i> Response
-</a>
-
-
+                                <a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="btn btn-sm btn-outline-success">
+                                    <i class="fas fa-clipboard-check"></i> Response
+                                </a>
                             </td>
                         </tr>
                         {% endfor %}
