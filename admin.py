@@ -12,6 +12,12 @@ import pandas as pd
 from flask import request, jsonify, render_template
 import os, json
 from flask import session, redirect, url_for, request
+from markupsafe import escape
+import html
+
+# New imports for sanitization
+import bleach
+from markupsafe import Markup
 
 from google_drive_service import (
     create_drive_service,         # SA (read/write CSV)
@@ -23,14 +29,10 @@ from google_drive_service import (
     get_drive_service_for_upload  # USER OAUTH (token.json) — for image uploads & folder ops
 )
 
-# ==========
-# Blueprint
-# ==========
+# ========== Blueprint ==========
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
 
-# ==========
-# Config
-# ==========
+# ========== Config ==========
 USERS_FILE_ID     = os.environ.get("USERS_FILE_ID")
 EXAMS_FILE_ID     = os.environ.get("EXAMS_FILE_ID")
 QUESTIONS_FILE_ID = os.environ.get("QUESTIONS_FILE_ID")
@@ -42,9 +44,11 @@ os.makedirs(UPLOAD_TMP_DIR, exist_ok=True)
 ALLOWED_IMAGE_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".webp", ".bmp"}
 MAX_FILE_SIZE_MB = 15
 
-# ==========
-# Helpers
-# ==========
+# Allowed HTML tags for question text (very limited)
+BLEACH_ALLOWED_TAGS = ["br", "b", "i", "u", "sup", "sub", "strong", "em"]
+BLEACH_ALLOWED_ATTRIBUTES = {}  # no attributes allowed
+
+# ========== Helpers ==========
 def admin_required(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
@@ -82,9 +86,36 @@ def _get_subject_folders(service):
     out.sort(key=lambda x: x["name"].lower())
     return out
 
-# ==========
-# Auth
-# ==========
+
+def sanitize_for_display(text):
+    if not text:
+        return ""
+    # HTML escape sab kuch
+    safe = html.escape(str(text))
+    # But allow <br> and mathjax ($$...$$)
+    safe = safe.replace("&lt;br&gt;", "<br>")
+    safe = safe.replace("&lt;br/&gt;", "<br>")
+    safe = safe.replace("&dollar;&dollar;", "$$")
+    return safe
+
+
+def sanitize_html(s):
+    """
+    Lightweight sanitizer used by admin listing.
+    - Normalizes newlines (CRLF -> LF)
+    - Escapes HTML special chars to prevent injection
+    - Returns a plain string (safe for template rendering without |safe)
+    """
+    if s is None:
+        return ""
+    s = str(s)
+    # normalize newlines
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+    # escape HTML special chars
+    return str(escape(s))
+
+
+# ========== Auth ==========
 @admin_bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -120,12 +151,7 @@ def logout():
     flash("Logged out successfully.", "info")
     return redirect(url_for("admin.login"))
 
-# ==========
-# Dashboard
-# ==========
-# ========== 
-# Dashboard
-# ==========
+# ========== Dashboard ==========
 @admin_bp.route("/dashboard")
 @admin_required
 def dashboard():
@@ -134,11 +160,9 @@ def dashboard():
     exams_df = load_csv_from_drive(sa, EXAMS_FILE_ID)
     users_df = load_csv_from_drive(sa, USERS_FILE_ID)
 
-    # Safe lengths
     total_exams = 0 if exams_df is None or exams_df.empty else len(exams_df)
     total_users = 0 if users_df is None or users_df.empty else len(users_df)
 
-    # IMPORTANT: exact match 'admin' (ignores strings like "not admin")
     admins_count = 0
     if users_df is not None and not users_df.empty and "role" in users_df.columns:
         admins_count = (
@@ -157,14 +181,10 @@ def dashboard():
     }
     return render_template("admin/dashboard.html", stats=stats)
 
-
-# ==========
-# Subjects
-# ==========
+# ========== Subjects ==========
 @admin_bp.route("/subjects", methods=["GET", "POST"])
 @admin_required
 def subjects():
-    # SA for CSV work
     sa = create_drive_service()
     subjects_df = load_csv_from_drive(sa, SUBJECTS_FILE_ID)
 
@@ -179,14 +199,12 @@ def subjects():
             flash("Subject already exists.", "warning")
             return redirect(url_for("admin.subjects"))
 
-        # IMPORTANT: create the Drive folder with the USER (owner) client
         try:
             drive_owner = get_drive_service_for_upload()
         except Exception as e:
             flash(f"Cannot create folder: {e}", "danger")
             return redirect(url_for("admin.subjects"))
 
-        # Create subject folder under IMAGES_FOLDER_ID/ROOT_FOLDER_ID
         folder_id, created_at = create_subject_folder(drive_owner, subject_name)
 
         new_id = 1 if subjects_df.empty else int(subjects_df["id"].max()) + 1
@@ -221,7 +239,6 @@ def edit_subject(subject_id):
     row = subjects_df[subjects_df["id"] == subject_id].iloc[0]
     folder_id = row["subject_folder_id"]
 
-    # Rename with USER client (owner)
     try:
         drive_owner = get_drive_service_for_upload()
         drive_owner.files().update(fileId=folder_id, body={"name": new_name}).execute()
@@ -239,40 +256,32 @@ def edit_subject(subject_id):
 @admin_required
 def delete_subject(subject_id):
     service = create_drive_service()
-
-    # Always load fresh, then coerce id column to integer for safe matching
     subjects_df = load_csv_from_drive(service, SUBJECTS_FILE_ID)
     if subjects_df is None or subjects_df.empty:
         flash("No subjects found.", "warning")
         return redirect(url_for("admin.subjects"))
 
-    # Normalize id dtype → Int64 (nullable int)
     if "id" not in subjects_df.columns:
         flash("Subjects file is missing 'id' column.", "danger")
         return redirect(url_for("admin.subjects"))
     working_df = subjects_df.copy()
     working_df["id"] = pd.to_numeric(working_df["id"], errors="coerce").astype("Int64")
 
-    # Locate the row to delete
     hit = working_df[working_df["id"] == int(subject_id)]
     if hit.empty:
         flash("Subject not found.", "danger")
         return redirect(url_for("admin.subjects"))
 
-    # Determine folder id column name
     folder_id_col = "subject_folder_id" if "subject_folder_id" in working_df.columns else "folder_id"
     folder_id = str(hit.iloc[0].get(folder_id_col, "")).strip()
 
     if folder_id:
-        # First: try using the USER OAUTH (owner) client - this usually has permission
         try:
             drive_owner = get_drive_service_for_upload()
             try:
-                # Try delete (works if we have permission)
                 drive_owner.files().delete(fileId=folder_id, supportsAllDrives=True).execute()
                 print(f"✅ Deleted folder {folder_id} using owner OAuth client.")
             except Exception as e_del:
-                # If delete fails, try moving to trash (safer fallback)
                 print(f"⚠ Owner delete failed for {folder_id}: {e_del} — trying to trash it instead.")
                 try:
                     drive_owner.files().update(fileId=folder_id, body={"trashed": True}, supportsAllDrives=True).execute()
@@ -280,19 +289,14 @@ def delete_subject(subject_id):
                 except Exception as e_trash:
                     print(f"❌ Failed to trash folder {folder_id} with owner client: {e_trash}")
         except Exception as e_owner:
-            # Could not create owner client (token missing/invalid) — try SA as fallback
             print(f"⚠ get_drive_service_for_upload() failed: {e_owner}. Trying service-account client as fallback.")
             try:
                 service.files().delete(fileId=folder_id, supportsAllDrives=True).execute()
                 print(f"✅ Deleted folder {folder_id} using service-account client (fallback).")
             except Exception as e_sa:
                 print(f"❌ Fallback SA delete also failed for {folder_id}: {e_sa}")
-                # Do not stop — we'll still remove CSV row below so UI remains consistent
 
-    # Now drop the row from the CSV using normalized ids
     new_df = working_df[working_df["id"] != int(subject_id)].copy()
-
-    # Save back to Drive and clear caches
     ok = save_csv_to_drive(service, new_df, SUBJECTS_FILE_ID)
     if ok:
         clear_cache()
@@ -302,10 +306,7 @@ def delete_subject(subject_id):
 
     return redirect(url_for("admin.subjects"))
 
-
-# ==========
-# Exams
-# ==========
+# ========== Exams ==========
 @admin_bp.route("/exams", methods=["GET", "POST"])
 @admin_required
 def exams():
@@ -373,305 +374,30 @@ def delete_exam(exam_id):
     flash("Exam deleted.", "info")
     return redirect(url_for("admin.exams"))
 
-# ==========
-# Questions (unchanged for now)
-# ==========
-@admin_bp.route("/questions/<int:exam_id>", methods=["GET", "POST"])
-@admin_required
-def questions(exam_id):
-    service = create_drive_service()
-    questions_df = load_csv_from_drive(service, QUESTIONS_FILE_ID)
-    exam_questions = questions_df[questions_df["exam_id"] == exam_id]
-    if request.method == "POST":
-        form = request.form
-        new_id = questions_df["id"].max() + 1 if not questions_df.empty else 1
-        questions_df.loc[len(questions_df)] = [
-            new_id,
-            exam_id,
-            form["question_text"],
-            form.get("option_a", ""),
-            form.get("option_b", ""),
-            form.get("option_c", ""),
-            form.get("option_d", ""),
-            form.get("correct_answer", ""),
-            form["question_type"],
-            form.get("image_path", ""),
-            form.get("positive_marks", "4"),
-            form.get("negative_marks", "1"),
-            form.get("tolerance", "")
-        ]
-        save_csv_to_drive(service, questions_df, QUESTIONS_FILE_ID)
-        flash("Question added successfully.", "success")
-        return redirect(url_for("admin.questions", exam_id=exam_id))
-    return render_template("admin/questions.html",
-                           questions=exam_questions.to_dict(orient="records"),
-                           exam_id=exam_id)
-
-
-
-# -----------------------
-# New: delete multiple questions
-# -----------------------
-@admin_bp.route("/questions/delete-multiple", methods=["POST"])
-@admin_required
-def delete_multiple_questions():
-    """
-    Accepts JSON: { "ids": [1,2,3] }
-    Returns JSON: { success: True, deleted: N }
-    """
-    try:
-        payload = request.get_json(force=True)
-        if not payload or "ids" not in payload:
-            return jsonify({"success": False, "message": "Invalid payload"}), 400
-
-        ids = payload.get("ids") or []
-        if not isinstance(ids, list) or not ids:
-            return jsonify({"success": False, "message": "No IDs provided"}), 400
-
-        # Normalise to strings for safe comparison
-        ids_str = set([str(int(i)) for i in ids if str(i).strip()])
-
-        sa = create_drive_service()
-        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
-        qdf = _ensure_questions_df(qdf)
-
-        before_count = len(qdf)
-        # filter out rows whose id in ids_str
-        new_df = qdf[~qdf["id"].astype(str).isin(ids_str)].copy()
-        after_count = len(new_df)
-        deleted_count = before_count - after_count
-
-        ok = save_csv_to_drive(sa, new_df, QUESTIONS_FILE_ID)
-        if not ok:
-            return jsonify({"success": False, "message": "Failed to save updated questions CSV"}), 500
-
-        clear_cache()
-        return jsonify({"success": True, "deleted": deleted_count})
-
-    except Exception as e:
-        print(f"❌ delete_multiple_questions error: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-
-
-@admin_bp.route("/questions/bulk-update", methods=["POST"])
-@admin_required
-def questions_bulk_update():
-    """
-    Accepts JSON:
-    {
-      "exam_id": 1,
-      "question_type": "MCQ",
-      "positive_marks": "4",     # optional (string)
-      "negative_marks": "1",     # optional (string)
-      "tolerance": "0.5"         # optional (string). If present it will be set (can be empty string to clear)
-    }
-    Updates matching rows and returns {"success": True, "updated": N}
-    """
-    try:
-        payload = request.get_json(force=True)
-        if not payload:
-            return jsonify({"success": False, "message": "Empty payload"}), 400
-
-        exam_id = payload.get("exam_id")
-        qtype = str(payload.get("question_type") or "").strip()
-        pos = payload.get("positive_marks")
-        neg = payload.get("negative_marks")
-        tol = payload.get("tolerance")
-
-        if not exam_id:
-            return jsonify({"success": False, "message": "exam_id required"}), 400
-        if not qtype:
-            return jsonify({"success": False, "message": "question_type required"}), 400
-
-        # Normalise inputs
-        pos_str = None if pos is None else str(pos).strip()
-        neg_str = None if neg is None else str(neg).strip()
-        tol_str = None if tol is None else str(tol)
-
-        sa = create_drive_service()
-        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
-        qdf = _ensure_questions_df(qdf)
-
-        # create mask for exam_id and question_type (case-insensitive)
-        mask_exam = qdf["exam_id"].astype(str) == str(exam_id)
-        mask_type = qdf["question_type"].astype(str).str.strip().str.upper() == qtype.upper()
-        mask = mask_exam & mask_type
-
-        if not mask.any():
-            return jsonify({"success": True, "updated": 0, "message": "No matching questions found"}), 200
-
-        idxs = qdf[mask].index.tolist()
-        for idx in idxs:
-            if pos_str is not None and pos_str != "":
-                qdf.at[idx, "positive_marks"] = pos_str
-            if neg_str is not None and neg_str != "":
-                qdf.at[idx, "negative_marks"] = neg_str
-            # If tolerance key is present in payload, set it (even empty string to clear)
-            if tol is not None:
-                qdf.at[idx, "tolerance"] = tol_str
-
-        ok = save_csv_to_drive(sa, qdf, QUESTIONS_FILE_ID)
-        if not ok:
-            return jsonify({"success": False, "message": "Failed to save CSV"}), 500
-
-        clear_cache()
-        return jsonify({"success": True, "updated": len(idxs)}), 200
-
-    except Exception as e:
-        print(f"❌ questions_bulk_update error: {e}")
-        return jsonify({"success": False, "message": str(e)}), 500
-
-
-
-
-
-# ==========
-# Upload Images (GET -> page, POST -> JSON upload)
-# ==========
-from googleapiclient.http import MediaIoBaseUpload  # add near other imports
-import io
-
-@admin_bp.route("/upload-images", methods=["GET", "POST"])
-@admin_required
-def upload_images_page():
-    if request.method == "POST":
-        try:
-            folder_id = request.form.get("subject_folder_id", "").strip()
-            files = request.files.getlist("images")
-
-            if not folder_id:
-                return jsonify({"success": False, "message": "No folder selected."}), 400
-            if not files:
-                return jsonify({"success": False, "message": "No files received."}), 400
-
-            # USER OAUTH client for uploads (token.json)
-            try:
-                drive_upload = get_drive_service_for_upload()
-            except Exception as e:
-                return jsonify({"success": False, "message": str(e)}), 500
-
-            uploaded = 0
-            failed = []
-
-            for f in files:
-                if not f or not f.filename:
-                    continue
-                safe_name = secure_filename(f.filename)
-                ext = os.path.splitext(safe_name)[1].lower()
-                if ext not in ALLOWED_IMAGE_EXTS:
-                    failed.append({"filename": safe_name, "error": f"Not allowed type ({ext})"})
-                    continue
-
-                # size check
-                f.seek(0, os.SEEK_END)
-                size_mb = f.tell() / (1024 * 1024)
-                f.seek(0)
-                if size_mb > MAX_FILE_SIZE_MB:
-                    failed.append({"filename": safe_name, "error": f"Exceeds {MAX_FILE_SIZE_MB} MB"})
-                    continue
-
-                # save temp (use unique name to avoid collisions)
-                temp_path = os.path.join(UPLOAD_TMP_DIR, safe_name)
-                f.save(temp_path)
-
-                # We'll open the file and pass the file-object to MediaIoBaseUpload,
-                # and make sure to close the file-object in finally so Windows lock is released.
-                fh = None
-                try:
-                    existing_id = find_file_by_name(drive_upload, safe_name, folder_id)
-                    mime, _ = mimetypes.guess_type(safe_name)
-                    # open file in binary mode
-                    fh = open(temp_path, "rb")
-                    media = MediaIoBaseUpload(fh, mimetype=mime or "application/octet-stream", resumable=True)
-
-                    if existing_id:
-                        drive_upload.files().update(fileId=existing_id, media_body=media).execute()
-                    else:
-                        drive_upload.files().create(
-                            body={"name": safe_name, "parents": [folder_id]},
-                            media_body=media,
-                            fields="id"
-                        ).execute()
-                    uploaded += 1
-                except HttpError as e:
-                    failed.append({"filename": safe_name, "error": str(e)})
-                except Exception as e:
-                    failed.append({"filename": safe_name, "error": str(e)})
-                finally:
-                    # ensure file handle is closed before we try to remove the temp file
-                    try:
-                        if fh and not fh.closed:
-                            fh.close()
-                    except Exception as _close_err:
-                        print(f"⚠ Could not close temp file handle for {temp_path}: {_close_err}")
-
-                    # now try to remove the temp file (best-effort)
-                    try:
-                        if os.path.exists(temp_path):
-                            os.remove(temp_path)
-                    except Exception as rm_err:
-                        # Windows may transiently keep file locked by antivirus or indexing — log it
-                        print(f"⚠ Could not remove temp file {temp_path}: {rm_err}")
-
-            return jsonify({"success": True, "uploaded": uploaded, "failed": failed}), 200
-
-        except Exception as e:
-            return jsonify({"success": False, "message": f"Unexpected error: {str(e)}"}), 500
-
-    # GET -> render page (uses SA to read CSV)
-    sa = create_drive_service()
-    subjects = _get_subject_folders(sa)
-    load_error = None if subjects else "No subjects found (or subjects.csv missing)."
-    return render_template(
-        "admin/upload_images.html",
-        subjects=subjects,
-        load_error=load_error
-    )
-
-
-# ---------- QUESTIONS CRUD & Batch Add (paste into admin.py) ----------
-
-
-# Columns canonical order
+# ========== Questions helpers & CRUD ==========
 QUESTIONS_COLUMNS = [
     "id", "exam_id", "question_text", "option_a", "option_b", "option_c", "option_d",
     "correct_answer", "question_type", "image_path", "positive_marks", "negative_marks", "tolerance"
 ]
 
-# admin.py  -- replace existing _ensure_questions_df implementation with this
 def _ensure_questions_df(df):
-    """Return a DataFrame guaranteed to have QUESTIONS_COLUMNS in order and safe dtypes.
-
-    Ensures marks/tolerance columns exist and are string/object dtype to avoid pandas
-    setting-with-different-dtype FutureWarning on assignment in edit/add flows.
-    """
+    """Return a DataFrame guaranteed to have QUESTIONS_COLUMNS in order and safe dtypes."""
     if df is None or df.empty:
         df = pd.DataFrame(columns=QUESTIONS_COLUMNS)
 
-    # add any missing columns
     for c in QUESTIONS_COLUMNS:
         if c not in df.columns:
             df[c] = ""
 
-    # Normalize dtype for marking and tolerance columns to string/object to avoid dtype warnings.
     for col in ("positive_marks", "negative_marks", "tolerance"):
         if col in df.columns:
-            # convert NaN -> empty string first then to str type
             df[col] = df[col].fillna("").astype(str)
 
-    # return columns in canonical order (safe copy)
     return df[QUESTIONS_COLUMNS].copy()
-
-
 
 @admin_bp.route("/questions", methods=["GET"])
 @admin_required
 def questions_index():
-    """
-    List questions for a selected exam. Query param: ?exam_id=#
-    Endpoint name: admin.questions_index
-    Renders: templates/admin/questions.html
-    """
     sa = create_drive_service()
     exams_df = load_csv_from_drive(sa, EXAMS_FILE_ID)
     exams = []
@@ -682,32 +408,30 @@ def questions_index():
                 "name": r.get("name") if "name" in exams_df.columns else f"Exam {r.get('id')}"
             })
 
-    # choose selected exam from query or default to first exam id
     selected_exam_id = request.args.get("exam_id", type=int)
     if not selected_exam_id and exams:
         selected_exam_id = exams[0]["id"]
 
-    # load questions
     questions_df = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
     questions_df = _ensure_questions_df(questions_df)
 
-    # filter by exam
     if selected_exam_id:
         filtered = questions_df[questions_df["exam_id"].astype(str) == str(selected_exam_id)]
     else:
         filtered = questions_df.copy()
 
-    # prepare list for template
     questions = []
     for _, r in filtered.iterrows():
+        # sanitize server-side and keep markup safe for templates
+        qtext = sanitize_html(r.get("question_text", ""))
         questions.append({
             "id": int(r["id"]) if str(r["id"]).strip() else None,
             "exam_id": int(r["exam_id"]) if str(r["exam_id"]).strip() else None,
-            "question_text": r.get("question_text", ""),
-            "option_a": r.get("option_a", ""),
-            "option_b": r.get("option_b", ""),
-            "option_c": r.get("option_c", ""),
-            "option_d": r.get("option_d", ""),
+            "question_text": qtext,
+            "option_a": sanitize_html(r.get("option_a", "")),
+            "option_b": sanitize_html(r.get("option_b", "")),
+            "option_c": sanitize_html(r.get("option_c", "")),
+            "option_d": sanitize_html(r.get("option_d", "")),
             "correct_answer": r.get("correct_answer", ""),
             "question_type": r.get("question_type", ""),
             "image_path": r.get("image_path", ""),
@@ -724,11 +448,6 @@ def questions_index():
 @admin_bp.route("/questions/add", methods=["GET", "POST"])
 @admin_required
 def add_question():
-    """
-    Add single question (form).
-    Endpoint name: admin.add_question
-    Renders: templates/admin/add_question.html
-    """
     sa = create_drive_service()
     exams_df = load_csv_from_drive(sa, EXAMS_FILE_ID)
     exams = []
@@ -738,11 +457,9 @@ def add_question():
                           "name": r.get("name") if "name" in exams_df.columns else f"Exam {r.get('id')}"})
 
     if request.method == "POST":
-        # load existing questions
         qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
         qdf = _ensure_questions_df(qdf)
 
-        # determine next id
         try:
             next_id = int(qdf["id"].max()) + 1 if not qdf.empty and qdf["id"].astype(str).str.strip().any() else 1
         except Exception:
@@ -775,17 +492,11 @@ def add_question():
             flash("Failed to save question.", "danger")
             return redirect(url_for("admin.add_question"))
 
-    # GET -> render form
     return render_template("admin/add_question.html", exams=exams, question=None, form_mode="add")
 
 @admin_bp.route("/questions/edit/<int:question_id>", methods=["GET", "POST"])
 @admin_required
 def edit_question(question_id):
-    """
-    Edit single question
-    Endpoint name: admin.edit_question
-    Renders: templates/admin/edit_question.html
-    """
     sa = create_drive_service()
     exams_df = load_csv_from_drive(sa, EXAMS_FILE_ID)
     exams = []
@@ -797,7 +508,6 @@ def edit_question(question_id):
     qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
     qdf = _ensure_questions_df(qdf)
 
-    # find question row
     hit = qdf[qdf["id"].astype(str) == str(question_id)]
     if hit.empty:
         flash("Question not found.", "danger")
@@ -828,24 +538,17 @@ def edit_question(question_id):
             flash("Failed to save changes.", "danger")
             return redirect(url_for("admin.edit_question", question_id=question_id))
 
-    # GET -> provide question dict to template
     qrow = hit.iloc[0].to_dict()
+    # Provide sanitized markup to the edit form (it will be shown inside textarea - we send raw string)
     return render_template("admin/edit_question.html", exams=exams, question=qrow, form_mode="edit")
 
 @admin_bp.route("/questions/delete/<int:question_id>", methods=["POST"])
 @admin_required
 def delete_question(question_id):
-    """
-    Delete question (POST).
-    Endpoint name: admin.delete_question
-    """
     sa = create_drive_service()
     qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
     qdf = _ensure_questions_df(qdf)
-
-    # drop rows where id matches
     new_df = qdf[qdf["id"].astype(str) != str(question_id)].copy()
-
     ok = save_csv_to_drive(sa, new_df, QUESTIONS_FILE_ID)
     if ok:
         clear_cache()
@@ -854,15 +557,187 @@ def delete_question(question_id):
         flash("Failed to delete question.", "danger")
     return redirect(url_for("admin.questions_index"))
 
+@admin_bp.route("/questions/delete-multiple", methods=["POST"])
+@admin_required
+def delete_multiple_questions():
+    try:
+        payload = request.get_json(force=True)
+        if not payload or "ids" not in payload:
+            return jsonify({"success": False, "message": "Invalid payload"}), 400
+
+        ids = payload.get("ids") or []
+        if not isinstance(ids, list) or not ids:
+            return jsonify({"success": False, "message": "No IDs provided"}), 400
+
+        ids_str = set([str(int(i)) for i in ids if str(i).strip()])
+
+        sa = create_drive_service()
+        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
+        qdf = _ensure_questions_df(qdf)
+
+        before_count = len(qdf)
+        new_df = qdf[~qdf["id"].astype(str).isin(ids_str)].copy()
+        after_count = len(new_df)
+        deleted_count = before_count - after_count
+
+        ok = save_csv_to_drive(sa, new_df, QUESTIONS_FILE_ID)
+        if not ok:
+            return jsonify({"success": False, "message": "Failed to save updated questions CSV"}), 500
+
+        clear_cache()
+        return jsonify({"success": True, "deleted": deleted_count})
+
+    except Exception as e:
+        print(f"❌ delete_multiple_questions error: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+@admin_bp.route("/questions/bulk-update", methods=["POST"])
+@admin_required
+def questions_bulk_update():
+    try:
+        payload = request.get_json(force=True)
+        if not payload:
+            return jsonify({"success": False, "message": "Empty payload"}), 400
+
+        exam_id = payload.get("exam_id")
+        qtype = str(payload.get("question_type") or "").strip()
+        pos = payload.get("positive_marks")
+        neg = payload.get("negative_marks")
+        tol = payload.get("tolerance")
+
+        if not exam_id:
+            return jsonify({"success": False, "message": "exam_id required"}), 400
+        if not qtype:
+            return jsonify({"success": False, "message": "question_type required"}), 400
+
+        pos_str = None if pos is None else str(pos).strip()
+        neg_str = None if neg is None else str(neg).strip()
+        tol_str = None if tol is None else str(tol)
+
+        sa = create_drive_service()
+        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
+        qdf = _ensure_questions_df(qdf)
+
+        mask_exam = qdf["exam_id"].astype(str) == str(exam_id)
+        mask_type = qdf["question_type"].astype(str).str.strip().str.upper() == qtype.upper()
+        mask = mask_exam & mask_type
+
+        if not mask.any():
+            return jsonify({"success": True, "updated": 0, "message": "No matching questions found"}), 200
+
+        idxs = qdf[mask].index.tolist()
+        for idx in idxs:
+            if pos_str is not None and pos_str != "":
+                qdf.at[idx, "positive_marks"] = pos_str
+            if neg_str is not None and neg_str != "":
+                qdf.at[idx, "negative_marks"] = neg_str
+            if tol is not None:
+                qdf.at[idx, "tolerance"] = tol_str
+
+        ok = save_csv_to_drive(sa, qdf, QUESTIONS_FILE_ID)
+        if not ok:
+            return jsonify({"success": False, "message": "Failed to save CSV"}), 500
+
+        clear_cache()
+        return jsonify({"success": True, "updated": len(idxs)}), 200
+
+    except Exception as e:
+        print(f"❌ questions_bulk_update error: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+# ========== Upload Images ==========
+from googleapiclient.http import MediaIoBaseUpload  # add near other imports
+import io
+
+@admin_bp.route("/upload-images", methods=["GET", "POST"])
+@admin_required
+def upload_images_page():
+    if request.method == "POST":
+        try:
+            folder_id = request.form.get("subject_folder_id", "").strip()
+            files = request.files.getlist("images")
+
+            if not folder_id:
+                return jsonify({"success": False, "message": "No folder selected."}), 400
+            if not files:
+                return jsonify({"success": False, "message": "No files received."}), 400
+
+            try:
+                drive_upload = get_drive_service_for_upload()
+            except Exception as e:
+                return jsonify({"success": False, "message": str(e)}), 500
+
+            uploaded = 0
+            failed = []
+
+            for f in files:
+                if not f or not f.filename:
+                    continue
+                safe_name = secure_filename(f.filename)
+                ext = os.path.splitext(safe_name)[1].lower()
+                if ext not in ALLOWED_IMAGE_EXTS:
+                    failed.append({"filename": safe_name, "error": f"Not allowed type ({ext})"})
+                    continue
+
+                f.seek(0, os.SEEK_END)
+                size_mb = f.tell() / (1024 * 1024)
+                f.seek(0)
+                if size_mb > MAX_FILE_SIZE_MB:
+                    failed.append({"filename": safe_name, "error": f"Exceeds {MAX_FILE_SIZE_MB} MB"})
+                    continue
+
+                temp_path = os.path.join(UPLOAD_TMP_DIR, safe_name)
+                f.save(temp_path)
+
+                fh = None
+                try:
+                    existing_id = find_file_by_name(drive_upload, safe_name, folder_id)
+                    mime, _ = mimetypes.guess_type(safe_name)
+                    fh = open(temp_path, "rb")
+                    media = MediaIoBaseUpload(fh, mimetype=mime or "application/octet-stream", resumable=True)
+
+                    if existing_id:
+                        drive_upload.files().update(fileId=existing_id, media_body=media).execute()
+                    else:
+                        drive_upload.files().create(
+                            body={"name": safe_name, "parents": [folder_id]},
+                            media_body=media,
+                            fields="id"
+                        ).execute()
+                    uploaded += 1
+                except HttpError as e:
+                    failed.append({"filename": safe_name, "error": str(e)})
+                except Exception as e:
+                    failed.append({"filename": safe_name, "error": str(e)})
+                finally:
+                    try:
+                        if fh and not fh.closed:
+                            fh.close()
+                    except Exception as _close_err:
+                        print(f"⚠ Could not close temp file handle for {temp_path}: {_close_err}")
+                    try:
+                        if os.path.exists(temp_path):
+                            os.remove(temp_path)
+                    except Exception as rm_err:
+                        print(f"⚠ Could not remove temp file {temp_path}: {rm_err}")
+
+            return jsonify({"success": True, "uploaded": uploaded, "failed": failed}), 200
+
+        except Exception as e:
+            return jsonify({"success": False, "message": f"Unexpected error: {str(e)}"}), 500
+
+    sa = create_drive_service()
+    subjects = _get_subject_folders(sa)
+    load_error = None if subjects else "No subjects found (or subjects.csv missing)."
+    return render_template(
+        "admin/upload_images.html",
+        subjects=subjects,
+        load_error=load_error
+    )
+
 @admin_bp.route("/questions/batch-add", methods=["POST"])
 @admin_required
 def questions_batch_add():
-    """
-    Accepts JSON:
-    { "exam_id": 1, "questions": [ {question_text, option_a, ...}, ... ] }
-    Returns JSON: { success: True, added: N }
-    Endpoint name: admin.questions_batch_add
-    """
     try:
         payload = request.get_json(force=True)
         if not payload or "questions" not in payload or "exam_id" not in payload:
@@ -877,7 +752,6 @@ def questions_batch_add():
         qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
         qdf = _ensure_questions_df(qdf)
 
-        # compute next id
         try:
             next_id = int(qdf["id"].max()) + 1 if not qdf.empty and qdf["id"].astype(str).str.strip().any() else 1
         except Exception:
@@ -923,14 +797,7 @@ def questions_batch_add():
         print(f"❌ questions_batch_add error: {e}")
         return jsonify({"success": False, "message": str(e)}), 500
 
-# ------------------------------------------------------------------------
-# End of Questions routes
-# ------------------------------------------------------------------------
-
-
-# ==========
-# Publish
-# ==========
+# ========== Publish ==========
 @admin_bp.route("/publish", methods=["GET", "POST"])
 @admin_required
 def publish():
@@ -945,9 +812,6 @@ def publish():
         flash("✅ All caches cleared. Fresh data will load now!", "success")
         return redirect(url_for("admin.dashboard"))
     return render_template("admin/publish.html")
-
-
-
 
 # --- START: Web OAuth routes for admin (paste into admin.py) ---
 

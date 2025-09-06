@@ -173,51 +173,7 @@ def clear_user_cache():
 
 
 
-def init_drive_service():
-    """Initialize the Google Drive service with better error handling"""
-    global drive_service
-    try:
-        print("🔧 Initializing Google Drive service...")
-        
-        # Check if JSON string exists
-        json_string = os.environ.get('GOOGLE_SERVICE_ACCOUNT_JSON')
-        if not json_string:
-            print("❌ GOOGLE_SERVICE_ACCOUNT_JSON environment variable not found")
-            return False
-            
-        print(f"📝 JSON string length: {len(json_string)} characters")
-        
-        # Try to parse JSON to check if it's valid
-        try:
-            json_data = json.loads(json_string)
-            print("✅ JSON string is valid")
-            print(f"📧 Service account email: {json_data.get('client_email', 'Unknown')}")
-        except json.JSONDecodeError as e:
-            print(f"❌ Invalid JSON string: {e}")
-            return False
-        
-        drive_service = create_drive_service()
-        if drive_service:
-            print("✅ Google Drive service initialized successfully!")
-            
-            # Test the service with a simple API call
-            try:
-                about = drive_service.about().get(fields="user").execute()
-                print(f"👤 Connected as: {about.get('user', {}).get('emailAddress', 'Unknown')}")
-            except Exception as test_error:
-                print(f"⚠️ Service created but test failed: {test_error}")
-            
-            # Ensure all required files exist
-            ensure_required_files()
-            return True
-        else:
-            print("❌ Failed to create Google Drive service")
-            return False
-    except Exception as e:
-        print(f"❌ Failed to initialize Google Drive service: {e}")
-        import traceback
-        traceback.print_exc()
-        return False
+
 
 def ensure_required_files():
     """Ensure all required CSV files exist in Google Drive"""
@@ -1408,30 +1364,54 @@ def preload_exam_route(exam_id):
         }), 500
 
 
+from markupsafe import Markup, escape
+from datetime import datetime
+from flask import render_template, request, session, flash, redirect, url_for
+
+def sanitize_for_display(s):
+    """
+    Escape HTML-special characters but preserve safe <br>.
+    Convert newlines to actual <br> tags so they render correctly.
+    """
+    from markupsafe import Markup, escape
+    if s is None:
+        return Markup("")
+    s = str(s)
+
+    # Normalize CRLF -> LF
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+
+    # Escape HTML to prevent injection
+    escaped = escape(s)
+
+    # ✅ Fix: Convert newlines to real <br> tags
+    with_breaks = escaped.replace("\n", Markup("<br>"))
+
+    return Markup(with_breaks)
+
+
+
 @app.route('/exam/<int:exam_id>')
 @login_required
 def exam_page(exam_id):
-    """COMPLETELY FIXED exam page with comprehensive error handling"""
+    """COMPLETELY FIXED exam page with comprehensive error handling and sanitization"""
     print(f"Loading exam page for exam_id: {exam_id}")
 
     try:
-        # Check if this is a navigation or new attempt
-        is_navigation = 'q' in request.args
+        # Navigation / new attempt flags
         is_new_attempt = 'new_attempt' in request.args
 
-        # Clear session only for new attempts
         if is_new_attempt:
             session.pop('exam_answers', None)
             session.pop('marked_for_review', None)
             session.pop('exam_start_time', None)
-            # Clear exam cache for new attempt
+            # optional: clear any exam cache key in session
             cache_key = f'exam_data_{exam_id}'
             session.pop(cache_key, None)
             print("Cleared session data for new attempt")
 
-        # Get cached data or preload
+        # Attempt to get cached exam data (function must exist in your code)
         cached_data = get_cached_exam_data(exam_id)
-
         if not cached_data:
             print("No cached data found, preloading...")
             success, message = preload_exam_data_fixed(exam_id)
@@ -1446,38 +1426,43 @@ def exam_page(exam_id):
             flash("Failed to load exam data! Please try again.", "error")
             return redirect(url_for('dashboard'))
 
-        exam_data = cached_data['exam_info']
-        questions = cached_data['questions']
+        exam_data = cached_data.get('exam_info')
+        questions = cached_data.get('questions') or []
 
         if not questions:
             print("No questions in cached data")
             flash("No questions found for this exam!", "error")
             return redirect(url_for('dashboard'))
 
-        # Validate question index
-        q_index = int(request.args.get('q', 0))
+        # Validate and clamp q index
+        q_index = int(request.args.get('q', 0) or 0)
         if q_index < 0:
             q_index = 0
-        elif q_index >= len(questions):
+        if q_index >= len(questions):
             q_index = len(questions) - 1
 
-        current_question = questions[q_index]
+        current_question = questions[q_index].copy() if isinstance(questions[q_index], dict) else dict(questions[q_index])
 
-        # Initialize session for storing answers if not exists
-        if 'exam_answers' not in session:
-            session['exam_answers'] = {}
-        if 'marked_for_review' not in session:
-            session['marked_for_review'] = []
-        if 'exam_start_time' not in session:
-            session['exam_start_time'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        # Initialize session structures
+        session.setdefault('exam_answers', {})
+        session.setdefault('marked_for_review', [])
+        session.setdefault('exam_start_time', datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
 
-        # Get selected answer for current question
-        selected_answer = session['exam_answers'].get(str(current_question['id']), None)
+        # sanitize question text + options so template can use |safe
+        # only modify the display fields, do not change stored canonical fields
+        current_question['question_text'] = sanitize_for_display(current_question.get('question_text', ''))
+        current_question['option_a'] = sanitize_for_display(current_question.get('option_a', ''))
+        current_question['option_b'] = sanitize_for_display(current_question.get('option_b', ''))
+        current_question['option_c'] = sanitize_for_display(current_question.get('option_c', ''))
+        current_question['option_d'] = sanitize_for_display(current_question.get('option_d', ''))
 
-        # Create question palette status
+        # get selected answer for this question (stored as plain text in session)
+        selected_answer = session['exam_answers'].get(str(current_question.get('id')), None)
+
+        # Build palette statuses
         palette = {}
         for i, q in enumerate(questions):
-            qid = str(q['id'])
+            qid = str(q.get('id'))
             if qid in session['marked_for_review']:
                 palette[i] = 'review'
             elif qid in session['exam_answers']:
@@ -1485,8 +1470,8 @@ def exam_page(exam_id):
             else:
                 palette[i] = 'not-visited'
 
-        # Mark current question as visited
-        if palette.get(q_index, 'not-visited') == 'not-visited':
+        # mark this question visited if it was not visited
+        if palette.get(q_index) == 'not-visited':
             palette[q_index] = 'visited'
 
         print(f"Successfully loaded exam page: Q{q_index + 1}/{len(questions)}")
@@ -1508,6 +1493,7 @@ def exam_page(exam_id):
         traceback.print_exc()
         flash(f"Critical error loading exam page: {str(e)}", "error")
         return redirect(url_for('dashboard'))
+
 
 
 @app.route('/exam/<int:exam_id>/navigate', methods=['POST'])
@@ -1962,7 +1948,7 @@ def response_page(exam_id, result_id):
             return redirect(url_for('dashboard'))
         exam_data = exam_record.iloc[0].to_dict()
 
-        # Get responses for this result (safe handling even if column names vary)
+        # Get responses for this result
         if 'exam_id' in responses_df.columns:
             user_responses = responses_df[
                 (responses_df['result_id'].astype('Int64') == result_id) &
@@ -2001,20 +1987,27 @@ def response_page(exam_id, result_id):
                 questions_dict[int(q['id'])] = q_dict
 
         # Build question response objects
+        from markupsafe import Markup
         question_responses = []
         for _, response in user_responses.iterrows():
             qid = int(response['question_id'])
             qdata = questions_dict.get(qid, {})
 
             if not qdata:
-                # In case question metadata is missing, skip gracefully
                 continue
+
+            # 🔹 Sanitize question + options (same as exam_page)
+            qdata['question_text'] = sanitize_for_display(qdata.get('question_text', ''))
+            qdata['option_a'] = sanitize_for_display(qdata.get('option_a', ''))
+            qdata['option_b'] = sanitize_for_display(qdata.get('option_b', ''))
+            qdata['option_c'] = sanitize_for_display(qdata.get('option_c', ''))
+            qdata['option_d'] = sanitize_for_display(qdata.get('option_d', ''))
 
             given_answer_str = str(response.get('given_answer') or '')
             correct_answer_str = str(response.get('correct_answer') or '')
             qtype = response.get('question_type') or qdata.get('question_type', 'MCQ')
 
-            # Parse given and correct answers robustly
+            # Parse answers
             try:
                 if qtype == 'MSQ' and given_answer_str.strip():
                     if given_answer_str.startswith('[') and given_answer_str.endswith(']'):
