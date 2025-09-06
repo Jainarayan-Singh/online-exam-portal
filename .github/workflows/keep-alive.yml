@@ -7,4 +7,4 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Ping website
-        run: curl https://your-render-url.onrender.com
+        run: curl https://online-exam-desk.onrender.com/
