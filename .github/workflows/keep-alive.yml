@@ -1,9 +1,10 @@
 name: Keep Alive
 on:
   schedule:
-    - cron: '*/5 * * * *'  jobs:
+    - cron: '*/5 * * * *'
+jobs:
   keep-alive:
     runs-on: ubuntu-latest
     steps:
       - name: Ping website
-        run: curl https://online-exam-desk.onrender.com/
+        run: curl https://your-render-url.onrender.com
