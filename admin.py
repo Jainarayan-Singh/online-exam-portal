@@ -409,6 +409,122 @@ def questions(exam_id):
 
 
 
+# -----------------------
+# New: delete multiple questions
+# -----------------------
+@admin_bp.route("/questions/delete-multiple", methods=["POST"])
+@admin_required
+def delete_multiple_questions():
+    """
+    Accepts JSON: { "ids": [1,2,3] }
+    Returns JSON: { success: True, deleted: N }
+    """
+    try:
+        payload = request.get_json(force=True)
+        if not payload or "ids" not in payload:
+            return jsonify({"success": False, "message": "Invalid payload"}), 400
+
+        ids = payload.get("ids") or []
+        if not isinstance(ids, list) or not ids:
+            return jsonify({"success": False, "message": "No IDs provided"}), 400
+
+        # Normalise to strings for safe comparison
+        ids_str = set([str(int(i)) for i in ids if str(i).strip()])
+
+        sa = create_drive_service()
+        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
+        qdf = _ensure_questions_df(qdf)
+
+        before_count = len(qdf)
+        # filter out rows whose id in ids_str
+        new_df = qdf[~qdf["id"].astype(str).isin(ids_str)].copy()
+        after_count = len(new_df)
+        deleted_count = before_count - after_count
+
+        ok = save_csv_to_drive(sa, new_df, QUESTIONS_FILE_ID)
+        if not ok:
+            return jsonify({"success": False, "message": "Failed to save updated questions CSV"}), 500
+
+        clear_cache()
+        return jsonify({"success": True, "deleted": deleted_count})
+
+    except Exception as e:
+        print(f"❌ delete_multiple_questions error: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+@admin_bp.route("/questions/bulk-update", methods=["POST"])
+@admin_required
+def questions_bulk_update():
+    """
+    Accepts JSON:
+    {
+      "exam_id": 1,
+      "question_type": "MCQ",
+      "positive_marks": "4",     # optional (string)
+      "negative_marks": "1",     # optional (string)
+      "tolerance": "0.5"         # optional (string). If present it will be set (can be empty string to clear)
+    }
+    Updates matching rows and returns {"success": True, "updated": N}
+    """
+    try:
+        payload = request.get_json(force=True)
+        if not payload:
+            return jsonify({"success": False, "message": "Empty payload"}), 400
+
+        exam_id = payload.get("exam_id")
+        qtype = str(payload.get("question_type") or "").strip()
+        pos = payload.get("positive_marks")
+        neg = payload.get("negative_marks")
+        tol = payload.get("tolerance")
+
+        if not exam_id:
+            return jsonify({"success": False, "message": "exam_id required"}), 400
+        if not qtype:
+            return jsonify({"success": False, "message": "question_type required"}), 400
+
+        # Normalise inputs
+        pos_str = None if pos is None else str(pos).strip()
+        neg_str = None if neg is None else str(neg).strip()
+        tol_str = None if tol is None else str(tol)
+
+        sa = create_drive_service()
+        qdf = load_csv_from_drive(sa, QUESTIONS_FILE_ID)
+        qdf = _ensure_questions_df(qdf)
+
+        # create mask for exam_id and question_type (case-insensitive)
+        mask_exam = qdf["exam_id"].astype(str) == str(exam_id)
+        mask_type = qdf["question_type"].astype(str).str.strip().str.upper() == qtype.upper()
+        mask = mask_exam & mask_type
+
+        if not mask.any():
+            return jsonify({"success": True, "updated": 0, "message": "No matching questions found"}), 200
+
+        idxs = qdf[mask].index.tolist()
+        for idx in idxs:
+            if pos_str is not None and pos_str != "":
+                qdf.at[idx, "positive_marks"] = pos_str
+            if neg_str is not None and neg_str != "":
+                qdf.at[idx, "negative_marks"] = neg_str
+            # If tolerance key is present in payload, set it (even empty string to clear)
+            if tol is not None:
+                qdf.at[idx, "tolerance"] = tol_str
+
+        ok = save_csv_to_drive(sa, qdf, QUESTIONS_FILE_ID)
+        if not ok:
+            return jsonify({"success": False, "message": "Failed to save CSV"}), 500
+
+        clear_cache()
+        return jsonify({"success": True, "updated": len(idxs)}), 200
+
+    except Exception as e:
+        print(f"❌ questions_bulk_update error: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
+
+
+
+
 # ==========
 # Upload Images (GET -> page, POST -> JSON upload)
 # ==========

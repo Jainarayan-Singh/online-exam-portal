@@ -3,7 +3,6 @@ from flask import Flask, render_template, request, redirect, url_for, session, f
 import pandas as pd
 import os
 from datetime import datetime
-import hashlib
 from functools import wraps
 import json
 import time
@@ -1181,7 +1180,8 @@ def forgot_password():
                 'username': username,
                 'email': email,
                 'password': password,
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                'role': 'user'
             }
 
             # Add to users DataFrame
