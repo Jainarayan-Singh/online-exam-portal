@@ -638,16 +638,31 @@ QUESTIONS_COLUMNS = [
     "correct_answer", "question_type", "image_path", "positive_marks", "negative_marks", "tolerance"
 ]
 
+# admin.py  -- replace existing _ensure_questions_df implementation with this
 def _ensure_questions_df(df):
-    """Return a DataFrame guaranteed to have QUESTIONS_COLUMNS in order."""
+    """Return a DataFrame guaranteed to have QUESTIONS_COLUMNS in order and safe dtypes.
+
+    Ensures marks/tolerance columns exist and are string/object dtype to avoid pandas
+    setting-with-different-dtype FutureWarning on assignment in edit/add flows.
+    """
     if df is None or df.empty:
-        return pd.DataFrame(columns=QUESTIONS_COLUMNS)
-    # ensure all columns present
+        df = pd.DataFrame(columns=QUESTIONS_COLUMNS)
+
+    # add any missing columns
     for c in QUESTIONS_COLUMNS:
         if c not in df.columns:
             df[c] = ""
-    # reorder to canonical order
+
+    # Normalize dtype for marking and tolerance columns to string/object to avoid dtype warnings.
+    for col in ("positive_marks", "negative_marks", "tolerance"):
+        if col in df.columns:
+            # convert NaN -> empty string first then to str type
+            df[col] = df[col].fillna("").astype(str)
+
+    # return columns in canonical order (safe copy)
     return df[QUESTIONS_COLUMNS].copy()
+
+
 
 @admin_bp.route("/questions", methods=["GET"])
 @admin_required

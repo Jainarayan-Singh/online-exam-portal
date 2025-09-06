@@ -1273,63 +1273,83 @@ def results_history():
         return redirect(url_for("login"))
 
     try:
-        # Load from Google Drive
-        results_raw = load_csv_from_drive("results.csv", DRIVE_FILE_IDS["results"])
-        exams_raw = load_csv_from_drive("exams.csv", DRIVE_FILE_IDS["exams"])
+        # Use cache-loading helper (consistent behaviour across app)
+        results_df = load_csv_with_cache('results.csv')
+        exams_df = load_csv_with_cache('exams.csv')
 
-        results_df = pd.DataFrame(results_raw) if not isinstance(results_raw, pd.DataFrame) else results_raw
-        exams_df = pd.DataFrame(exams_raw) if not isinstance(exams_raw, pd.DataFrame) else exams_raw
+        # Defensive: if either DataFrame is None or empty, render page with empty results list
+        if results_df is None or (hasattr(results_df, "empty") and results_df.empty):
+            # render an empty results page with informative flash
+            flash("No results found for your account yet.", "info")
+            return render_template("results_history.html", results=[])
+
+        if exams_df is None or (hasattr(exams_df, "empty") and exams_df.empty):
+            # We can still show results but won't have exam names; show message and render empty
+            flash("Exam metadata missing. Contact admin.", "warning")
+            return render_template("results_history.html", results=[])
 
         student_id = str(session["user_id"])
-        student_results = results_df[results_df["student_id"].astype(str) == student_id]
 
+        # safe column checks
+        if "student_id" not in results_df.columns or "exam_id" not in results_df.columns:
+            flash("Results file is missing required columns. Contact admin.", "error")
+            return render_template("results_history.html", results=[])
+
+        # filter results for this user
+        student_results = results_df[results_df["student_id"].astype(str) == student_id]
         if student_results.empty:
             flash("No results found for your account yet.", "info")
-            return redirect(url_for("dashboard"))
+            return render_template("results_history.html", results=[])
 
+        # merge with exams to get exam names (safe merge - fill missing names)
         merged = student_results.merge(
-            exams_df, left_on="exam_id", right_on="id", suffixes=("_result", "_exam")
+            exams_df.rename(columns={"id": "exam_id", "name": "exam_name"}),
+            left_on="exam_id", right_on="exam_id", how="left", suffixes=("_result", "_exam")
         )
 
         results = []
         for _, row in merged.iterrows():
+            # safe extraction using .get / fallback defaults
+            completed_at = row.get("completed_at") or row.get("completed_at_result") or ""
+            exam_name = row.get("exam_name") or row.get("name") or f"Exam {row.get('exam_id')}"
+            # other numeric fields may be missing; coerce to sensible defaults
+            score = row.get("score") if row.get("score") is not None else 0
+            max_score = row.get("max_score") if row.get("max_score") is not None else row.get("total_questions", 0)
+            percentage = float(row.get("percentage") or 0.0)
             results.append({
-                "id": row.get("id_result", row.get("id")),
-                "exam_id": row["exam_id"],
-                "exam_name": row["name"],
-                "subject": row["name"],  # adjust if you have a separate subject column
-                "completed_at": row.get("completed_at", ""),
-                "score": row.get("score", 0),
-                "max_score": row.get("max_score", row.get("total_questions", 0)),
-                "percentage": float(row.get("percentage", 0)),
-                "grade": row.get("grade", "N/A"),
-                "time_taken_minutes": row.get("time_taken_minutes", 0),
-                "correct_answers": row.get("correct_answers", 0),
-                "incorrect_answers": row.get("incorrect_answers", 0),
-                "unanswered_questions": row.get("unanswered_questions", 0),
+                "id": int(row.get("id_result") or row.get("id") or 0),
+                "exam_id": int(row.get("exam_id") or 0),
+                "exam_name": exam_name,
+                "subject": row.get("name") or exam_name,
+                "completed_at": completed_at,
+                "score": score,
+                "max_score": max_score,
+                "percentage": round(percentage, 2),
+                "grade": row.get("grade") or "N/A",
+                "time_taken_minutes": row.get("time_taken_minutes") or 0,
+                "correct_answers": int(row.get("correct_answers") or 0),
+                "incorrect_answers": int(row.get("incorrect_answers") or 0),
+                "unanswered_questions": int(row.get("unanswered_questions") or 0),
             })
 
-        # Sort by completed_at newest first
-        def parse_date(date_str):
+        # Sort by completed_at (safe parsing)
+        def _parse_date_safe(s):
             try:
-                return datetime.strptime(date_str, "%Y-%m-%d %H:%M:%S")
+                return datetime.strptime(str(s), "%Y-%m-%d %H:%M:%S")
             except Exception:
                 return datetime.min
 
-        results.sort(key=lambda r: parse_date(r.get("completed_at", "")), reverse=True)
+        results.sort(key=lambda r: _parse_date_safe(r.get("completed_at", "")), reverse=True)
 
         return render_template("results_history.html", results=results)
 
     except Exception as e:
         print("Error in results_history:", str(e))
+        import traceback
+        traceback.print_exc()
         flash("Could not load results history.", "danger")
-        return redirect(url_for("dashboard"))
+        return render_template("results_history.html", results=[])
 
-
-    except Exception as e:
-        print("Error in results_history:", str(e))
-        flash("Could not load results history.", "danger")
-        return redirect(url_for("dashboard"))
 
 
 
@@ -1893,12 +1913,23 @@ def result(exam_id, result_id):
 @app.route('/response/<int:exam_id>/<int:result_id>')
 @login_required
 def response_page(exam_id, result_id):
-    """Response analysis page with support for history view"""
+    """Response analysis page with support for history view (robust against missing CSVs)"""
     from_history = request.args.get("from_history", "0") == "1"
     try:
         results_df = load_csv_with_cache('results.csv')
         responses_df = load_csv_with_cache('responses.csv')
         exams_df = load_csv_with_cache('exams.csv')
+
+        # Defensive checks
+        if results_df is None or (hasattr(results_df, "empty") and results_df.empty):
+            flash('No results available.', 'info')
+            return redirect(url_for('dashboard'))
+        if responses_df is None or (hasattr(responses_df, "empty") and responses_df.empty):
+            flash('No responses available.', 'info')
+            return redirect(url_for('dashboard'))
+        if exams_df is None or (hasattr(exams_df, "empty") and exams_df.empty):
+            flash('Exam metadata missing. Contact admin.', 'warning')
+            return redirect(url_for('dashboard'))
 
         user_id = int(session['user_id'])
 
@@ -1931,7 +1962,7 @@ def response_page(exam_id, result_id):
             return redirect(url_for('dashboard'))
         exam_data = exam_record.iloc[0].to_dict()
 
-        # Get responses for this result
+        # Get responses for this result (safe handling even if column names vary)
         if 'exam_id' in responses_df.columns:
             user_responses = responses_df[
                 (responses_df['result_id'].astype('Int64') == result_id) &
@@ -1942,10 +1973,14 @@ def response_page(exam_id, result_id):
                 responses_df['result_id'].astype('Int64') == result_id
             ].sort_values('question_id')
 
+        if user_responses.empty:
+            flash('No detailed responses saved for this result.', 'info')
+            return redirect(url_for('dashboard'))
+
         # Collect attempted question IDs
         question_ids = set(user_responses['question_id'].astype(int).tolist())
 
-        # Try cache first
+        # Try cache first for exam questions
         cached_data = get_cached_exam_data(exam_id)
         questions_dict = {}
         if cached_data:
@@ -1954,6 +1989,9 @@ def response_page(exam_id, result_id):
                     questions_dict[int(q['id'])] = q
         else:
             questions_df = load_csv_with_cache('questions.csv')
+            if questions_df is None or (hasattr(questions_df, "empty") and questions_df.empty):
+                flash('Questions metadata missing. Contact admin.', 'error')
+                return redirect(url_for('dashboard'))
             filtered_questions = questions_df[questions_df['id'].astype(int).isin(question_ids)]
             for _, q in filtered_questions.iterrows():
                 q_dict = q.to_dict()
@@ -1969,13 +2007,14 @@ def response_page(exam_id, result_id):
             qdata = questions_dict.get(qid, {})
 
             if not qdata:
+                # In case question metadata is missing, skip gracefully
                 continue
 
-            given_answer_str = str(response['given_answer']) if response['given_answer'] is not None else ''
-            correct_answer_str = str(response['correct_answer']) if response['correct_answer'] is not None else ''
-            qtype = response['question_type']
+            given_answer_str = str(response.get('given_answer') or '')
+            correct_answer_str = str(response.get('correct_answer') or '')
+            qtype = response.get('question_type') or qdata.get('question_type', 'MCQ')
 
-            # Parse given answer
+            # Parse given and correct answers robustly
             try:
                 if qtype == 'MSQ' and given_answer_str.strip():
                     if given_answer_str.startswith('[') and given_answer_str.endswith(']'):
@@ -1987,7 +2026,6 @@ def response_page(exam_id, result_id):
             except Exception:
                 given_answer = given_answer_str if given_answer_str not in ['None', '', None] else None
 
-            # Parse correct answer
             try:
                 if qtype == 'MSQ' and correct_answer_str.strip():
                     if correct_answer_str.startswith('[') and correct_answer_str.endswith(']'):
@@ -1999,7 +2037,6 @@ def response_page(exam_id, result_id):
             except Exception:
                 correct_answer = correct_answer_str if correct_answer_str not in ['None', '', None] else None
 
-            # Check if attempted
             is_attempted = response.get('is_attempted', True)
             if pd.isna(is_attempted):
                 if given_answer_str in [None, "", "null", "None"]:
@@ -2013,9 +2050,9 @@ def response_page(exam_id, result_id):
                 'question': qdata,
                 'given_answer': given_answer,
                 'correct_answer': correct_answer,
-                'is_correct': bool(response['is_correct']),
+                'is_correct': bool(response.get('is_correct', False)),
                 'is_attempted': is_attempted,
-                'marks_obtained': float(response['marks_obtained']),
+                'marks_obtained': float(response.get('marks_obtained') or 0),
                 'question_type': qtype
             }
             question_responses.append(response_data)
@@ -2034,6 +2071,7 @@ def response_page(exam_id, result_id):
         traceback.print_exc()
         flash('Error loading response analysis.', 'error')
         return redirect(url_for('dashboard'))
+
 
 
 
