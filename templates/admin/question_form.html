@@ -1,67 +1,201 @@
-{# expects exams list in context and (optionally) question dict #}
-<div class="row g-3">
-  <div class="col-md-4">
-    <label class="form-label">Exam</label>
-    <select name="exam_id" class="form-select" required>
-      {% for e in exams %}
-        <option value="{{ e.id }}" {% if question and question.exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
-      {% endfor %}
-    </select>
-  </div>
+<style>
+  .form-section {
+    background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+  }
+  
+  .section-title {
+    color: #2d3748;
+    font-weight: 700;
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    padding-bottom: 8px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+  
+  .form-control, .form-select {
+    border: 2px solid #cbd5e0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 14px;
+    font-weight: 500;
+    background: #fff;
+    color: #2d3748;
+    transition: all 0.3s ease;
+  }
+  
+  .form-control:focus, .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+    background: #fff;
+  }
+  
+  .form-label {
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+    font-size: 14px;
+  }
+  
+  .form-control::placeholder {
+    color: #a0aec0;
+    font-weight: 400;
+  }
+  
+  textarea.form-control {
+    resize: vertical;
+    min-height: 80px;
+  }
+  
+  .option-input {
+    background: linear-gradient(135deg, #fff 0%, #f8faff 100%);
+  }
+  
+  .required-field {
+    position: relative;
+  }
+  
+  .required-field .form-label::after {
+    content: '*';
+    color: #e53e3e;
+    margin-left: 4px;
+    font-weight: 700;
+  }
+</style>
 
-  <div class="col-md-8">
-    <label class="form-label">Question Text</label>
-    <input name="question_text" class="form-control" value="{{ question.question_text if question else '' }}" required>
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Option A</label>
-    <input name="option_a" class="form-control" value="{{ question.option_a if question else '' }}">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Option B</label>
-    <input name="option_b" class="form-control" value="{{ question.option_b if question else '' }}">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Option C</label>
-    <input name="option_c" class="form-control" value="{{ question.option_c if question else '' }}">
-  </div>
-  <div class="col-md-3">
-    <label class="form-label">Option D</label>
-    <input name="option_d" class="form-control" value="{{ question.option_d if question else '' }}">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Correct Answer</label>
-    <input name="correct_answer" class="form-control" value="{{ question.correct_answer if question else '' }}">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Type</label>
-    <select name="question_type" class="form-select">
-      <option value="MCQ" {% if question and question.question_type=='MCQ' %}selected{% endif %}>MCQ</option>
-      <option value="MSQ" {% if question and question.question_type=='MSQ' %}selected{% endif %}>MSQ</option>
-      <option value="NUMERIC" {% if question and question.question_type=='NUMERIC' %}selected{% endif %}>NUMERIC</option>
-    </select>
-  </div>
-
-  <div class="col-md-6">
-    <label class="form-label">Image Path (optional)</label>
-    <input name="image_path" class="form-control" value="{{ question.image_path if question else '' }}" placeholder="e.g. physics/ph-1.png">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Positive Marks</label>
-    <input name="positive_marks" class="form-control" value="{{ question.positive_marks if question else '4' }}">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Negative Marks</label>
-    <input name="negative_marks" class="form-control" value="{{ question.negative_marks if question else '1' }}">
-  </div>
-
-  <div class="col-md-3">
-    <label class="form-label">Tolerance (for NUMERIC)</label>
-    <input name="tolerance" class="form-control" value="{{ question.tolerance if question else '' }}">
+<div class="form-section">
+  <h5 class="section-title">
+    <i class="fas fa-cog me-2" style="color: #667eea;"></i>Basic Information
+  </h5>
+  <div class="row g-3">
+    <div class="col-md-12 required-field">
+      <label class="form-label">Select Exam</label>
+      <select name="exam_id" class="form-select" required>
+        <option value="" disabled {% if not question %}selected{% endif %}>Choose an exam...</option>
+        {% for e in exams %}
+          <option value="{{ e.id }}" {% if question and question.exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
   </div>
 </div>
+
+<div class="form-section">
+  <h5 class="section-title">
+    <i class="fas fa-question-circle me-2" style="color: #667eea;"></i>Question Content
+  </h5>
+  <div class="row g-3">
+    <div class="col-md-12 required-field">
+      <label class="form-label">Question Text</label>
+      <textarea name="question_text" class="form-control" rows="4" placeholder="Enter your question here..." required>{{ question.question_text if question else '' }}</textarea>
+    </div>
+
+    <div class="col-md-6">
+      <label class="form-label">Option A</label>
+      <textarea name="option_a" class="form-control option-input" rows="2" placeholder="Enter option A...">{{ question.option_a if question else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option B</label>
+      <textarea name="option_b" class="form-control option-input" rows="2" placeholder="Enter option B...">{{ question.option_b if question else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option C</label>
+      <textarea name="option_c" class="form-control option-input" rows="2" placeholder="Enter option C...">{{ question.option_c if question else '' }}</textarea>
+    </div>
+    <div class="col-md-6">
+      <label class="form-label">Option D</label>
+      <textarea name="option_d" class="form-control option-input" rows="2" placeholder="Enter option D...">{{ question.option_d if question else '' }}</textarea>
+    </div>
+  </div>
+</div>
+
+<div class="form-section">
+  <h5 class="section-title">
+    <i class="fas fa-check-circle me-2" style="color: #198754;"></i>Answer & Settings
+  </h5>
+  <div class="row g-3">
+    <div class="col-md-4 required-field">
+      <label class="form-label">Correct Answer</label>
+      <input name="correct_answer" class="form-control" placeholder="e.g. A, B, C, D or numerical value" value="{{ question.correct_answer if question else '' }}" required>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Question Type</label>
+      <select name="question_type" class="form-select">
+        <option value="MCQ" {% if question and question.question_type=='MCQ' %}selected{% endif %}>Multiple Choice (MCQ)</option>
+        <option value="MSQ" {% if question and question.question_type=='MSQ' %}selected{% endif %}>Multiple Select (MSQ)</option>
+        <option value="NUMERIC" {% if question and question.question_type=='NUMERIC' %}selected{% endif %}>Numerical Answer</option>
+      </select>
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Tolerance <small class="text-muted">(for NUMERIC only)</small></label>
+      <input name="tolerance" class="form-control" placeholder="e.g. 0.1" value="{{ question.tolerance if question else '' }}">
+    </div>
+  </div>
+</div>
+
+<div class="form-section">
+  <h5 class="section-title">
+    <i class="fas fa-star me-2" style="color: #ffc107;"></i>Scoring & Media
+  </h5>
+  <div class="row g-3">
+    <div class="col-md-4">
+      <label class="form-label">Positive Marks</label>
+      <input name="positive_marks" class="form-control" placeholder="e.g. 4" value="{{ question.positive_marks if question else '4' }}">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Negative Marks</label>
+      <input name="negative_marks" class="form-control" placeholder="e.g. 1" value="{{ question.negative_marks if question else '1' }}">
+    </div>
+
+    <div class="col-md-4">
+      <label class="form-label">Image Path <small class="text-muted">(optional)</small></label>
+      <input name="image_path" class="form-control" placeholder="e.g. physics/ph-1.png" value="{{ question.image_path if question else '' }}">
+      <div class="form-text">
+        <i class="fas fa-info-circle me-1"></i>Format: SubjectName/filename.extension
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Add visual feedback for required fields
+  const requiredInputs = document.querySelectorAll('input[required], select[required], textarea[required]');
+  requiredInputs.forEach(input => {
+    input.addEventListener('invalid', function() {
+      this.style.borderColor = '#e53e3e';
+      this.style.boxShadow = '0 0 0 4px rgba(229, 62, 62, 0.1)';
+    });
+    
+    input.addEventListener('input', function() {
+      if (this.validity.valid) {
+        this.style.borderColor = '#198754';
+        this.style.boxShadow = '0 0 0 4px rgba(25, 135, 84, 0.1)';
+      }
+    });
+  });
+  
+  // Show/hide tolerance field based on question type
+  const questionType = document.querySelector('select[name="question_type"]');
+  const toleranceField = document.querySelector('input[name="tolerance"]').closest('.col-md-4');
+  
+  function toggleTolerance() {
+    if (questionType.value === 'NUMERIC') {
+      toleranceField.style.display = 'block';
+    } else {
+      toleranceField.style.display = 'none';
+    }
+  }
+  
+  questionType.addEventListener('change', toggleTolerance);
+  toggleTolerance(); // Initial check
+});
+</script>

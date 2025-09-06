@@ -2,181 +2,511 @@
 {% block title %}Manage Exams{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-  <h2><i class="fas fa-file-alt"></i> Exams</h2>
-  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addExamModal">
-    <i class="fas fa-plus"></i> Add Exam
-  </button>
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 28px 32px;
+    margin: -32px -32px 32px -32px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+  
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  
+  .add-btn {
+    background: rgba(255, 255, 255, 0.2);
+    color: rgba(36, 35, 35, 0.849);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 900;
+    font-size: 16px;
+    transition: all 0.3s ease;
+  }
+  
+  .add-btn:hover {
+    background: rgba(255, 255, 255, 0.3);
+    border-color: rgba(255, 255, 255, 0.5);
+    color: white;
+    transform: translateY(-2px);
+  }
+  
+  .exams-table {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.08);
+    border: none;
+  }
+  
+  .exams-table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 700;
+    padding: 20px 16px;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .exams-table tbody td {
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 20px 16px;
+    color: #4a5568;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+  
+  .exams-table tbody tr:hover {
+    background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+  }
+  
+  .exams-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .exam-id {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+    display: inline-block;
+  }
+  
+  .exam-name {
+    font-weight: 700;
+    color: #2d3748;
+    font-size: 15px;
+  }
+  
+  .exam-date {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e6f2ff 100%);
+    color: #667eea;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-block;
+  }
+  
+  .exam-time {
+    color: #4a5568;
+    font-weight: 600;
+  }
+  
+  .exam-duration {
+    background: linear-gradient(135deg, #fff8e6 0%, #ffeaa7 100%);
+    color: #d68910;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-block;
+  }
+  
+  .question-count {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #2e7d32;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+    display: inline-block;
+  }
+  
+  .status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .status-upcoming {
+    background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+    color: #1565c0;
+  }
+  
+  .status-ongoing {
+    background: linear-gradient(135deg, #e8f5e8 0%, #c8e6c9 100%);
+    color: #2e7d32;
+  }
+  
+  .status-completed {
+    background: linear-gradient(135deg, #fce4ec 0%, #f8bbd9 100%);
+    color: #c2185b;
+  }
+  
+  .marks-info {
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 13px;
+  }
+  
+  .marks-positive {
+    color: #198754;
+    font-weight: 700;
+  }
+  
+  .marks-negative {
+    color: #dc3545;
+    font-weight: 700;
+  }
+  
+  .instructions-cell {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    color: #6c757d;
+    font-style: italic;
+  }
+  
+  .action-buttons .btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    margin: 0 2px;
+    transition: all 0.2s ease;
+  }
+  
+  .action-buttons .btn:hover {
+    transform: translateY(-1px);
+  }
+  
+  /* Modal Styling - Simplified */
+  .modal-content {
+    border-radius: 20px;
+    border: none;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    overflow: hidden;
+  }
+  
+  .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    padding: 24px 28px;
+  }
+  
+  .modal-title {
+    font-weight: 800;
+    font-size: 20px;
+    margin: 0;
+  }
+  
+  .btn-close {
+    filter: brightness(0) invert(1);
+    opacity: 0.8;
+  }
+  
+  .btn-close:hover {
+    opacity: 1;
+  }
+  
+  .modal-body {
+    padding: 28px;
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+  }
+  
+  .modal-footer {
+    border: none;
+    padding: 24px 28px;
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+  }
+  
+  .modal .form-control, .modal .form-select {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-weight: 500;
+  }
+  
+  .modal .form-control:focus, .modal .form-select:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    background: white;
+    outline: none;
+  }
+  
+  .modal .form-label {
+    font-weight: 700;
+    color: #2d3748;
+    margin-bottom: 8px;
+  }
+
+  /* Fix modal backdrop issues */
+  .modal {
+    z-index: 1055;
+  }
+  
+  .modal-backdrop {
+    z-index: 1050;
+  }
+</style>
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+      <i class="fas fa-file-alt me-3"></i>Exams Management
+    </h1>
+    <button class="add-btn" data-bs-toggle="modal" data-bs-target="#addExamModal">
+      <i class="fas fa-plus me-2"></i>Add New Exam
+    </button>
+  </div>
 </div>
 
-<!-- Exams Table -->
-<div class="card shadow">
-  <div class="card-body">
-    <table class="table table-striped align-middle">
+<!-- Enhanced Exams Table -->
+<div class="card border-0 shadow-lg">
+  <div class="card-body p-0">
+    <table class="table exams-table mb-0">
       <thead>
         <tr>
           <th>ID</th>
-          <th>Name</th>
-          <th>Date</th>
-          <th>Start Time</th>
+          <th>Exam Name</th>
+          <th>Date & Time</th>
           <th>Duration</th>
-          <th>Total Questions</th>
+          <th>Questions</th>
           <th>Status</th>
           <th>Instructions</th>
-          <th>Positive Marks</th>
-          <th>Negative Marks</th>
-          <th>Actions</th>
+          <th>Marks</th>
+          <th style="width: 120px;">Actions</th>
         </tr>
       </thead>
       <tbody>
         {% for exam in exams %}
         <tr>
-          <td>{{ exam.id }}</td>
-          <td>{{ exam.name }}</td>
-          <td>{{ exam.date }}</td>
-          <td>{{ exam.start_time }}</td>
-          <td>{{ exam.duration }} mins</td>
-          <td>{{ exam.total_questions }}</td>
-          <td>{{ exam.status }}</td>
-          <td>{{ exam.instructions }}</td>
-          <td>{{ exam.positive_marks }}</td>
-          <td>{{ exam.negative_marks }}</td>
           <td>
-            <button class="btn btn-sm btn-warning"
+            <span class="exam-id">{{ exam.id }}</span>
+          </td>
+          <td>
+            <div class="exam-name">{{ exam.name }}</div>
+          </td>
+          <td>
+            <div class="exam-date">{{ exam.date }}</div>
+            <div class="exam-time mt-1">{{ exam.start_time }}</div>
+          </td>
+          <td>
+            <span class="exam-duration">{{ exam.duration }} mins</span>
+          </td>
+          <td>
+            <span class="question-count">{{ exam.total_questions }}</span>
+          </td>
+          <td>
+            <span class="status-badge status-{{ exam.status }}">{{ exam.status }}</span>
+          </td>
+          <td>
+            <div class="instructions-cell" title="{{ exam.instructions }}">
+              {{ exam.instructions or 'No instructions' }}
+            </div>
+          </td>
+          <td>
+            <div class="marks-info">
+              <span class="marks-positive">+{{ exam.positive_marks }}</span> / 
+              <span class="marks-negative">-{{ exam.negative_marks }}</span>
+            </div>
+          </td>
+          <td class="action-buttons">
+            <button class="btn btn-warning btn-sm edit-exam-btn"
                     data-bs-toggle="modal"
-                    data-bs-target="#editExamModal{{ exam.id }}">
+                    data-bs-target="#editExamModal{{ exam.id }}"
+                    title="Edit Exam">
               <i class="fas fa-edit"></i>
             </button>
             <a href="{{ url_for('admin.delete_exam', exam_id=exam.id) }}"
-               class="btn btn-sm btn-danger"
-               onclick="return confirm('Are you sure you want to delete this exam?');">
+               class="btn btn-danger btn-sm"
+               onclick="return confirm('Are you sure you want to delete this exam? This action cannot be undone.');"
+               title="Delete Exam">
               <i class="fas fa-trash"></i>
             </a>
           </td>
         </tr>
-
-        <!-- Edit Exam Modal -->
-        <div class="modal fade" id="editExamModal{{ exam.id }}" tabindex="-1">
-          <div class="modal-dialog">
-            <div class="modal-content">
-              <form method="POST" action="{{ url_for('admin.edit_exam', exam_id=exam.id) }}">
-                <div class="modal-header">
-                  <h5 class="modal-title">Edit Exam</h5>
-                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-                </div>
-                <div class="modal-body">
-                  <div class="mb-3">
-                    <label class="form-label">Exam Name</label>
-                    <input type="text" class="form-control" name="name" value="{{ exam.name }}" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Date</label>
-                    <input type="date" class="form-control" name="date" value="{{ exam.date }}" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Start Time</label>
-                    <input type="time" class="form-control" name="start_time" value="{{ exam.start_time }}" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Duration (minutes)</label>
-                    <input type="number" class="form-control" name="duration" value="{{ exam.duration }}" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Total Questions</label>
-                    <input type="number" class="form-control" name="total_questions" value="{{ exam.total_questions }}" required>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Status</label>
-                    <select class="form-control" name="status">
-                      <option value="upcoming" {% if exam.status == "upcoming" %}selected{% endif %}>Upcoming</option>
-                      <option value="ongoing" {% if exam.status == "ongoing" %}selected{% endif %}>Ongoing</option>
-                      <option value="completed" {% if exam.status == "completed" %}selected{% endif %}>Completed</option>
-                    </select>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Instructions</label>
-                    <textarea class="form-control" name="instructions">{{ exam.instructions }}</textarea>
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Positive Marks</label>
-                    <input type="text" class="form-control" name="positive_marks" value="{{ exam.positive_marks }}">
-                  </div>
-                  <div class="mb-3">
-                    <label class="form-label">Negative Marks</label>
-                    <input type="text" class="form-control" name="negative_marks" value="{{ exam.negative_marks }}">
-                  </div>
-                </div>
-                <div class="modal-footer">
-                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-                  <button type="submit" class="btn btn-success">Save Changes</button>
-                </div>
-              </form>
-            </div>
-          </div>
-        </div>
         {% endfor %}
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- Add Exam Modal -->
-<div class="modal fade" id="addExamModal" tabindex="-1">
-  <div class="modal-dialog">
+<!-- Edit Exam Modals -->
+{% for exam in exams %}
+<div class="modal fade" id="editExamModal{{ exam.id }}" tabindex="-1" aria-labelledby="editExamModalLabel{{ exam.id }}" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
     <div class="modal-content">
-      <form method="POST" action="{{ url_for('admin.exams') }}">
+      <form method="POST" action="{{ url_for('admin.edit_exam', exam_id=exam.id) }}">
         <div class="modal-header">
-          <h5 class="modal-title">Add Exam</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          <h5 class="modal-title" id="editExamModalLabel{{ exam.id }}">
+            <i class="fas fa-edit me-2"></i>Edit Exam: {{ exam.name }}
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          <div class="mb-3">
-            <label class="form-label">Exam Name</label>
-            <input type="text" class="form-control" name="name" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Date</label>
-            <input type="date" class="form-control" name="date" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Start Time</label>
-            <input type="time" class="form-control" name="start_time" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Duration (minutes)</label>
-            <input type="number" class="form-control" name="duration" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Total Questions</label>
-            <input type="number" class="form-control" name="total_questions" required>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Status</label>
-            <select class="form-control" name="status">
-              <option value="upcoming">Upcoming</option>
-              <option value="ongoing">Ongoing</option>
-              <option value="completed">Completed</option>
-            </select>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Instructions</label>
-            <textarea class="form-control" name="instructions"></textarea>
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Positive Marks</label>
-            <input type="text" class="form-control" name="positive_marks">
-          </div>
-          <div class="mb-3">
-            <label class="form-label">Negative Marks</label>
-            <input type="text" class="form-control" name="negative_marks">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Exam Name</label>
+              <input type="text" class="form-control" name="name" value="{{ exam.name }}" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" name="date" value="{{ exam.date }}" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Start Time</label>
+              <input type="time" class="form-control" name="start_time" value="{{ exam.start_time }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-control" name="duration" value="{{ exam.duration }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Total Questions</label>
+              <input type="number" class="form-control" name="total_questions" value="{{ exam.total_questions }}" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <select class="form-select" name="status">
+                <option value="upcoming" {% if exam.status == "upcoming" %}selected{% endif %}>Upcoming</option>
+                <option value="ongoing" {% if exam.status == "ongoing" %}selected{% endif %}>Ongoing</option>
+                <option value="completed" {% if exam.status == "completed" %}selected{% endif %}>Completed</option>
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Instructions</label>
+              <textarea class="form-control" name="instructions" rows="3">{{ exam.instructions }}</textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Positive Marks</label>
+              <input type="text" class="form-control" name="positive_marks" value="{{ exam.positive_marks }}">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Negative Marks</label>
+              <input type="text" class="form-control" name="negative_marks" value="{{ exam.negative_marks }}">
+            </div>
           </div>
         </div>
         <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-          <button type="submit" class="btn btn-primary">Add Exam</button>
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-warning">
+            <i class="fas fa-save me-1"></i>Save Changes
+          </button>
         </div>
       </form>
     </div>
   </div>
 </div>
+{% endfor %}
+
+<!-- Add Exam Modal -->
+<div class="modal fade" id="addExamModal" tabindex="-1" aria-labelledby="addExamModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.exams') }}">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addExamModalLabel">
+            <i class="fas fa-plus me-2"></i>Add New Exam
+          </h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="row g-3">
+            <div class="col-md-6">
+              <label class="form-label">Exam Name</label>
+              <input type="text" class="form-control" name="name" placeholder="Enter exam name" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Date</label>
+              <input type="date" class="form-control" name="date" required>
+            </div>
+            <div class="col-md-3">
+              <label class="form-label">Start Time</label>
+              <input type="time" class="form-control" name="start_time" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Duration (minutes)</label>
+              <input type="number" class="form-control" name="duration" placeholder="e.g. 180" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Total Questions</label>
+              <input type="number" class="form-control" name="total_questions" placeholder="e.g. 100" required>
+            </div>
+            <div class="col-md-4">
+              <label class="form-label">Status</label>
+              <select class="form-select" name="status">
+                <option value="upcoming" selected>Upcoming</option>
+                <option value="ongoing">Ongoing</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
+            <div class="col-md-12">
+              <label class="form-label">Instructions</label>
+              <textarea class="form-control" name="instructions" rows="3" placeholder="Enter exam instructions..."></textarea>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Positive Marks</label>
+              <input type="text" class="form-control" name="positive_marks" placeholder="e.g. 4" value="4">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Negative Marks</label>
+              <input type="text" class="form-control" name="negative_marks" placeholder="e.g. 1" value="1">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+            <i class="fas fa-times me-1"></i>Cancel
+          </button>
+          <button type="submit" class="btn btn-primary">
+            <i class="fas fa-plus me-1"></i>Add Exam
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  // Simple loading states for form submissions
+  const forms = document.querySelectorAll('form');
+  forms.forEach(form => {
+    form.addEventListener('submit', function(e) {
+      const submitBtn = this.querySelector('button[type="submit"]');
+      if (submitBtn && !submitBtn.disabled) {
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
+        submitBtn.disabled = true;
+      }
+    });
+  });
+
+  // Ensure modals are properly handled
+  const modals = document.querySelectorAll('.modal');
+  modals.forEach(modal => {
+    modal.addEventListener('hidden.bs.modal', function() {
+      // Reset any form data if needed
+      const forms = this.querySelectorAll('form');
+      forms.forEach(form => {
+        const submitBtn = form.querySelector('button[type="submit"]');
+        if (submitBtn) {
+          submitBtn.disabled = false;
+          if (submitBtn.innerHTML.includes('Processing')) {
+            submitBtn.innerHTML = submitBtn.innerHTML.replace('<i class="fas fa-spinner fa-spin me-1"></i>Processing...', submitBtn.getAttribute('data-original-text') || 'Submit');
+          }
+        }
+      });
+    });
+  });
+});
+</script>
 {% endblock %}

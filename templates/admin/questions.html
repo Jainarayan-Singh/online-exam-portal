@@ -2,99 +2,362 @@
 {% block title %}Questions{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-3">
-  <h2><i class="fas fa-question-circle"></i> Questions</h2>
-  <div>
-    <a class="btn btn-outline-primary" href="{{ url_for('admin.add_question') }}"><i class="fas fa-plus"></i> Add Question</a>
-    <a class="btn btn-outline-secondary" href="{{ url_for('admin.questions_index') }}"><i class="fas fa-list"></i> Back to list</a>
+<style>
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 28px 32px;
+    margin: -32px -32px 32px -32px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+  }
+  
+  .page-title {
+    font-size: 2.2rem;
+    font-weight: 800;
+    margin: 0;
+  }
+  
+  .control-card {
+    background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+  }
+  
+  .batch-card {
+    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+  }
+  
+  .batch-header {
+    color: #2d3748;
+    font-weight: 800;
+    font-size: 1.3rem;
+    margin-bottom: 12px;
+  }
+  
+  .batch-description {
+    color: #4a5568;
+    font-weight: 500;
+    margin-bottom: 20px;
+    padding: 12px 16px;
+    background: linear-gradient(135deg, #f0f4ff 0%, #e6f2ff 100%);
+    border-radius: 10px;
+    border-left: 4px solid #667eea;
+  }
+  
+  .apply-controls {
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+  }
+  
+  .batch-row {
+    background: white;
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 16px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+  }
+  
+  .batch-row:hover {
+    border-color: #667eea;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.1);
+    transform: translateY(-2px);
+  }
+  
+  .enhanced-table {
+    background: white;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.08);
+    border: none;
+  }
+  
+  .enhanced-table thead th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    font-weight: 700;
+    padding: 20px 16px;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+  
+  .enhanced-table tbody td {
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+    padding: 16px;
+    color: #4a5568;
+    font-weight: 500;
+    vertical-align: middle;
+  }
+  
+  .enhanced-table tbody tr:hover {
+    background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+  }
+  
+  .enhanced-table tbody tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .question-text {
+    max-width: 420px;
+    white-space: pre-wrap;
+    line-height: 1.5;
+    color: #2d3748;
+    font-weight: 500;
+  }
+  
+  .question-id {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 12px;
+  }
+  
+  .question-type {
+    background: linear-gradient(135deg, #198754 0%, #20c997 100%);
+    color: white;
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-weight: 600;
+    font-size: 12px;
+  }
+  
+  .marks-info {
+    background: linear-gradient(135deg, #ffc107 0%, #ffb300 100%);
+    color: blue;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-weight: 700;
+    font-size: 13px;
+  }
+  
+  .image-path {
+    color: #667eea;
+    background: #f0f4ff;
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: monospace;
+  }
+  
+  .action-buttons .btn {
+    padding: 8px 12px;
+    border-radius: 8px;
+    font-weight: 600;
+    font-size: 12px;
+    margin: 0 2px;
+  }
+  
+  .selection-controls {
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+  
+  .enhanced-checkbox {
+    width: 20px;
+    height: 20px;
+    accent-color: #667eea;
+    cursor: pointer;
+    border-radius: 4px;
+  }
+  
+  .batch-controls {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+  }
+  
+  .batch-btn {
+    border-radius: 10px;
+    padding: 10px 20px;
+    font-weight: 600;
+    border: 2px solid;
+    transition: all 0.3s ease;
+  }
+  
+  .batch-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .load-btn {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-weight: 600;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+    transition: all 0.3s ease;
+  }
+  
+  .load-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    color: white;
+  }
+</style>
+
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+      <i class="fas fa-question-circle me-3"></i>Questions Management
+    </h1>
+    <div>
+      <a class="btn btn-light me-2" href="{{ url_for('admin.add_question') }}" style="border-radius: 10px; font-weight: 900;">
+        <i class="fas fa-plus me-2"></i>Add Question
+      </a>
+      <a class="btn btn-outline-light" href="{{ url_for('admin.questions_index') }}" style="border-radius: 10px; font-weight: 600;">
+        <i class="fas fa-list me-2"></i>Back to List
+      </a>
+    </div>
   </div>
 </div>
 
-<!-- Exam selector -->
-<div class="card mb-3">
-  <div class="card-body">
-    <form id="exam-select-form" class="row g-2 align-items-center">
-      <div class="col-auto">
-        <label class="form-label mb-0">Select Exam</label>
-      </div>
-      <div class="col-auto">
-        <select id="exam-select" class="form-select" name="exam_id">
-          {% for e in exams %}
-            <option value="{{ e.id }}" {% if selected_exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="col-auto">
-        <button id="reload-btn" type="button" class="btn btn-primary">Load</button>
-      </div>
-    </form>
-  </div>
+<!-- Enhanced Exam selector -->
+<div class="control-card">
+  <form id="exam-select-form" class="row g-3 align-items-end">
+    <div class="col-md-8">
+      <label class="form-label fw-bold" style="color: #2d3748;">Select Exam to Manage</label>
+      <select id="exam-select" class="form-select" name="exam_id" style="font-weight: 500;">
+        {% for e in exams %}
+          <option value="{{ e.id }}" {% if selected_exam_id == e.id %}selected{% endif %}>{{ e.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-4">
+      <button id="reload-btn" type="button" class="load-btn w-100">
+        <i class="fas fa-sync-alt me-2"></i>Load Questions
+      </button>
+    </div>
+  </form>
 </div>
 
-<!-- Questions listing + controls -->
-<div class="card mb-3">
-  <div class="card-body">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <h5>Questions ({{ questions|length }})</h5>
-      <div>
-        <button id="delete-selected" class="btn btn-sm btn-danger me-2"><i class="fas fa-trash"></i> Delete Selected</button>
-        <button id="select-none" class="btn btn-sm btn-outline-secondary">Clear Selection</button>
+<!-- Enhanced Questions listing + controls -->
+<div class="card border-0 shadow-lg mb-4">
+  <div class="card-header" style="background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%); border: none;">
+    <div class="d-flex justify-content-between align-items-center">
+      <h4 class="mb-0" style="color: #2d3748; font-weight: 700;">
+        <i class="fas fa-list-alt me-2" style="color: #667eea;"></i>
+        Questions List ({{ questions|length }})
+      </h4>
+      <div class="d-flex gap-2">
+        <button id="delete-selected" class="btn btn-danger">
+          <i class="fas fa-trash me-1"></i>Delete Selected
+        </button>
+        <button id="select-none" class="btn btn-outline-secondary">
+          <i class="fas fa-times me-1"></i>Clear Selection
+        </button>
       </div>
     </div>
-
+  </div>
+  
+  <div class="card-body p-0">
     <!-- Apply controls for listing -->
-    <div class="card mb-3 p-2">
-      <div class="row g-2 align-items-center">
-        <div class="col-auto"><label class="form-label mb-0">Apply to rows of type</label></div>
+    <div class="selection-controls m-4">
+      <h6 class="mb-3 fw-bold" style="color: #2d3748;">
+        <i class="fas fa-cogs me-2" style="color: #667eea;"></i>Bulk Update Settings
+      </h6>
+      <div class="row g-3 align-items-end">
         <div class="col-auto">
-          <select id="list-type" class="form-select form-select-sm">
+          <label class="form-label fw-bold">Question Type</label>
+          <select id="list-type" class="form-select">
             <option value="MCQ">MCQ</option>
             <option value="MSQ">MSQ</option>
             <option value="NUMERIC">NUMERIC</option>
           </select>
         </div>
         <div class="col-auto">
-          <input id="list-pos" class="form-control form-control-sm" placeholder="Positive marks (e.g. 4)">
+          <label class="form-label fw-bold">Positive Marks</label>
+          <input id="list-pos" class="form-control" placeholder="e.g. 4">
         </div>
         <div class="col-auto">
-          <input id="list-neg" class="form-control form-control-sm" placeholder="Negative marks (e.g. 1)">
+          <label class="form-label fw-bold">Negative Marks</label>
+          <input id="list-neg" class="form-control" placeholder="e.g. 1">
         </div>
         <div class="col-auto">
-          <input id="list-tol" class="form-control form-control-sm" placeholder="Tolerance (for NUMERIC)">
+          <label class="form-label fw-bold">Tolerance</label>
+          <input id="list-tol" class="form-control" placeholder="For NUMERIC">
         </div>
         <div class="col-auto">
-          <button id="apply-list" class="btn btn-sm btn-outline-primary">Apply</button>
+          <button id="apply-list" class="btn btn-primary">
+            <i class="fas fa-magic me-1"></i>Apply Changes
+          </button>
         </div>
       </div>
     </div>
 
     {% if questions %}
-      <table class="table table-sm table-striped">
+      <table class="table enhanced-table mb-0">
         <thead>
           <tr>
-            <th style="width:40px"><input id="select-all" type="checkbox" title="Select all"></th>
+            <th style="width:50px">
+              <input id="select-all" type="checkbox" class="enhanced-checkbox" title="Select all">
+            </th>
             <th>ID</th>
             <th>Question</th>
             <th>Type</th>
             <th>Image</th>
             <th>Marks</th>
-            <th></th>
+            <th style="width:120px">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for q in questions %}
             <tr>
-              <td><input class="row-checkbox" data-id="{{ q.id }}" type="checkbox"></td>
-              <td>{{ q.id }}</td>
-              <td style="max-width:420px;">{{ q.question_text }}</td>
-              <td>{{ q.question_type }}</td>
-              <td>{% if q.image_path %}<small>{{ q.image_path }}</small>{% endif %}</td>
-              <td>{{ q.positive_marks }}/{{ q.negative_marks }} {% if q.tolerance %} (tol: {{ q.tolerance }}){% endif %}</td>
-              <td class="text-end">
-                <a class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin.edit_question', question_id=q.id) }}"><i class="fas fa-edit"></i></a>
-
+              <td>
+                <input class="row-checkbox enhanced-checkbox" data-id="{{ q.id }}" type="checkbox">
+              </td>
+              <td>
+                <span class="question-id">{{ q.id }}</span>
+              </td>
+              <td>
+                <div class="question-text">{{ q.question_text }}</div>
+              </td>
+              <td>
+                <span class="question-type">{{ q.question_type }}</span>
+              </td>
+              <td>
+                {% if q.image_path %}
+                  <span class="image-path">{{ q.image_path }}</span>
+                {% else %}
+                  <span class="text-muted">-</span>
+                {% endif %}
+              </td>
+              <td>
+                <span class="marks-info">+{{ q.positive_marks }}/-{{ q.negative_marks }}</span>
+                {% if q.tolerance %}
+                  <br><small class="text-info fw-bold">(tol: {{ q.tolerance }})</small>
+                {% endif %}
+              </td>
+              <td class="action-buttons">
+                <a class="btn btn-warning btn-sm" href="{{ url_for('admin.edit_question', question_id=q.id) }}" title="Edit">
+                  <i class="fas fa-edit"></i>
+                </a>
                 <form method="post" action="{{ url_for('admin.delete_question', question_id=q.id) }}" style="display:inline" onsubmit="return confirm('Delete question #{{ q.id }}?');">
-                  <button class="btn btn-sm btn-outline-danger" type="submit"><i class="fas fa-trash"></i></button>
+                  <button class="btn btn-danger btn-sm" type="submit" title="Delete">
+                    <i class="fas fa-trash"></i>
+                  </button>
                 </form>
               </td>
             </tr>
@@ -102,55 +365,72 @@
         </tbody>
       </table>
     {% else %}
-      <div class="alert alert-info">No questions for this exam yet.</div>
+      <div class="p-5 text-center">
+        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+        <h5 class="text-muted">No questions found for this exam</h5>
+        <p class="text-muted">Start by adding some questions using the "Add Question" button above.</p>
+      </div>
     {% endif %}
   </div>
 </div>
 
-<!-- Batch add panel -->
-<div class="card">
-  <div class="card-body">
-    <h5 class="mb-3">Batch Add Questions</h5>
-    <div class="mb-2">
-      <small class="text-muted">Add many rows below, then click "Add All" to append them to questions.csv in one operation.</small>
-    </div>
+<!-- Enhanced Batch add panel -->
+<div class="batch-card">
+  <h4 class="batch-header">
+    <i class="fas fa-layer-group me-2" style="color: #667eea;"></i>Batch Add Questions
+  </h4>
+  <div class="batch-description">
+    <i class="fas fa-info-circle me-2"></i>
+    Add multiple questions at once! Create rows below, fill in the details, then click "Add All" to save everything in one operation.
+  </div>
 
-    <div class="mb-2 d-flex gap-2 align-items-center">
-      <button id="add-row" class="btn btn-sm btn-outline-success"><i class="fas fa-plus"></i> Add Row</button>
-      <button id="clear-rows" class="btn btn-sm btn-outline-secondary">Clear</button>
-      <button id="batch-submit" class="btn btn-sm btn-primary"><i class="fas fa-upload"></i> Add All</button>
-    </div>
+  <div class="batch-controls">
+    <button id="add-row" class="btn btn-success batch-btn">
+      <i class="fas fa-plus me-1"></i>Add Row
+    </button>
+    <button id="clear-rows" class="btn btn-outline-secondary batch-btn">
+      <i class="fas fa-broom me-1"></i>Clear All
+    </button>
+    <button id="batch-submit" class="btn btn-primary batch-btn">
+      <i class="fas fa-upload me-1"></i>Add All Questions
+    </button>
+  </div>
 
-    <!-- Global apply controls for batch rows -->
-    <div class="card my-2 p-2">
-      <div class="row g-2 align-items-center">
-        <div class="col-auto">
-          <label class="form-label mb-0">Apply to rows of type</label>
-        </div>
-        <div class="col-auto">
-          <select id="global-type" class="form-select form-select-sm">
-            <option value="MCQ">MCQ</option>
-            <option value="MSQ">MSQ</option>
-            <option value="NUMERIC">NUMERIC</option>
-          </select>
-        </div>
-        <div class="col-auto">
-          <input id="global-pos" class="form-control form-control-sm" placeholder="Positive marks (e.g. 4)">
-        </div>
-        <div class="col-auto">
-          <input id="global-neg" class="form-control form-control-sm" placeholder="Negative marks (e.g. 1)">
-        </div>
-        <div class="col-auto">
-          <input id="global-tol" class="form-control form-control-sm" placeholder="Tolerance (for NUMERIC)">
-        </div>
-        <div class="col-auto">
-          <button id="apply-global" class="btn btn-sm btn-outline-primary">Apply</button>
-        </div>
+  <!-- Global apply controls for batch rows -->
+  <div class="apply-controls mb-4">
+    <h6 class="mb-3 fw-bold" style="color: #2d3748;">
+      <i class="fas fa-magic me-2" style="color: #667eea;"></i>Quick Apply Settings
+    </h6>
+    <div class="row g-3 align-items-end">
+      <div class="col-auto">
+        <label class="form-label fw-bold">Apply to Type</label>
+        <select id="global-type" class="form-select">
+          <option value="MCQ">MCQ</option>
+          <option value="MSQ">MSQ</option>
+          <option value="NUMERIC">NUMERIC</option>
+        </select>
+      </div>
+      <div class="col-auto">
+        <label class="form-label fw-bold">Positive Marks</label>
+        <input id="global-pos" class="form-control" placeholder="e.g. 4">
+      </div>
+      <div class="col-auto">
+        <label class="form-label fw-bold">Negative Marks</label>
+        <input id="global-neg" class="form-control" placeholder="e.g. 1">
+      </div>
+      <div class="col-auto">
+        <label class="form-label fw-bold">Tolerance</label>
+        <input id="global-tol" class="form-control" placeholder="For NUMERIC">
+      </div>
+      <div class="col-auto">
+        <button id="apply-global" class="btn btn-outline-primary">
+          <i class="fas fa-wand-magic-sparkles me-1"></i>Apply to Rows
+        </button>
       </div>
     </div>
-
-    <div id="batch-rows" class="mt-3"></div>
   </div>
+
+  <div id="batch-rows"></div>
 </div>
 
 <script>
@@ -160,6 +440,7 @@
   const reloadBtn = document.getElementById('reload-btn');
   reloadBtn.addEventListener('click', () => {
     const id = examSelect.value;
+    reloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Loading...';
     window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(id);
   });
 
@@ -172,51 +453,71 @@
   function makeRow() {
     const idx = Date.now().toString(36).slice(-6);
     const div = document.createElement('div');
-    div.className = 'row g-2 align-items-center mb-2 batch-row';
+    div.className = 'batch-row';
     div.dataset.idx = idx;
     div.innerHTML = `
-      <div class="col-md-4">
-        <input class="form-control form-control-sm q-text" placeholder="Question text">
+      <div class="row g-3 align-items-center">
+        <div class="col-md-6">
+          <label class="form-label fw-bold">Question Text</label>
+          <textarea class="form-control q-text" placeholder="Enter your question here..." rows="3"></textarea>
+        </div>
+        <div class="col-md-6">
+          <div class="row g-2">
+            <div class="col-6">
+              <label class="form-label fw-bold">Option A</label>
+              <textarea class="form-control q-a" placeholder="Option A" rows="1"></textarea>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Option B</label>
+              <textarea class="form-control q-b" placeholder="Option B" rows="1"></textarea>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Option C</label>
+              <textarea class="form-control q-c" placeholder="Option C" rows="1"></textarea>
+            </div>
+            <div class="col-6">
+              <label class="form-label fw-bold">Option D</label>
+              <textarea class="form-control q-d" placeholder="Option D" rows="1"></textarea>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="col-md-2">
-        <input class="form-control form-control-sm q-a" placeholder="Option A">
-      </div>
-      <div class="col-md-2">
-        <input class="form-control form-control-sm q-b" placeholder="Option B">
-      </div>
-      <div class="col-md-2">
-        <input class="form-control form-control-sm q-c" placeholder="Option C">
-      </div>
-      <div class="col-md-2">
-        <input class="form-control form-control-sm q-d" placeholder="Option D">
-      </div>
-      <div class="col-md-2 mt-2">
-        <input class="form-control form-control-sm q-corr" placeholder="Correct (A/B/C/D)">
-      </div>
-      <div class="col-md-2 mt-2">
-        <input class="form-control form-control-sm q-img" placeholder="image_path (optional)">
-      </div>
-      <div class="col-md-2 mt-2">
-        <select class="form-select form-select-sm q-type">
-          <option value="MCQ">MCQ</option>
-          <option value="MSQ">MSQ</option>
-          <option value="NUMERIC">NUMERIC</option>
-        </select>
-      </div>
-
-      <!-- New: marks & tolerance per row -->
-      <div class="col-md-2 mt-2">
-        <input class="form-control form-control-sm q-pos" placeholder="Pos marks" value="4">
-      </div>
-      <div class="col-md-2 mt-2">
-        <input class="form-control form-control-sm q-neg" placeholder="Neg marks" value="1">
-      </div>
-      <div class="col-md-2 mt-2">
-        <input class="form-control form-control-sm q-tol" placeholder="Tolerance (NUMERIC)">
-      </div>
-
-      <div class="col-auto mt-2">
-        <button type="button" class="btn btn-sm btn-danger remove-row">Remove</button>
+      
+      <div class="row g-3 align-items-center mt-3">
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Correct Answer</label>
+          <input class="form-control q-corr" placeholder="A/B/C/D">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Type</label>
+          <select class="form-select q-type">
+            <option value="MCQ">MCQ</option>
+            <option value="MSQ">MSQ</option>
+            <option value="NUMERIC">NUMERIC</option>
+          </select>
+        </div>
+        <div class="col-md-3">
+          <label class="form-label fw-bold">Image Path</label>
+          <input class="form-control q-img" placeholder="e.g. physics/ph-1.png">
+        </div>
+        <div class="col-md-1">
+          <label class="form-label fw-bold">Pos.</label>
+          <input class="form-control q-pos" placeholder="4" value="4">
+        </div>
+        <div class="col-md-1">
+          <label class="form-label fw-bold">Neg.</label>
+          <input class="form-control q-neg" placeholder="1" value="1">
+        </div>
+        <div class="col-md-2">
+          <label class="form-label fw-bold">Tolerance</label>
+          <input class="form-control q-tol" placeholder="For NUMERIC">
+        </div>
+        <div class="col-md-1">
+          <label class="form-label fw-bold">&nbsp;</label>
+          <button type="button" class="btn btn-danger w-100 remove-row">
+            <i class="fas fa-times"></i>
+          </button>
+        </div>
       </div>
     `;
     div.querySelector('.remove-row').addEventListener('click', () => div.remove());
@@ -226,10 +527,16 @@
   addRowBtn.addEventListener('click', (e) => {
     e.preventDefault();
     rowsDiv.appendChild(makeRow());
+    // scroll the new row into view for usability
+    setTimeout(()=> {
+      const last = rowsDiv.querySelector('.batch-row:last-child');
+      if (last) last.scrollIntoView({behavior: 'smooth', block: 'center'});
+    }, 50);
   });
 
   clearRowsBtn.addEventListener('click', (e) => {
     e.preventDefault();
+    if (!confirm('Clear all batch rows?')) return;
     rowsDiv.innerHTML = '';
   });
 
@@ -251,8 +558,8 @@
         if (tol !== '') r.querySelector('.q-tol').value = tol;
       }
     });
-    applyGlobalBtn.innerText = 'Applied ✓';
-    setTimeout(()=> applyGlobalBtn.innerText = 'Apply', 900);
+    applyGlobalBtn.innerHTML = '<i class="fas fa-check me-1"></i>Applied ✓';
+    setTimeout(()=> applyGlobalBtn.innerHTML = '<i class="fas fa-wand-magic-sparkles me-1"></i>Apply to Rows', 1500);
   });
 
   submitBtn.addEventListener('click', async (e) => {
@@ -278,6 +585,7 @@
         negative_marks: (r.querySelector('.q-neg')?.value || '1').toString(),
         tolerance: (r.querySelector('.q-tol')?.value || '').toString()
       };
+      // require at least question_text or at least one option to avoid blank rows
       if (!q.question_text && !q.option_a && !q.option_b && !q.option_c && !q.option_d) continue;
       payload.questions.push(q);
     }
@@ -285,8 +593,8 @@
     if (payload.questions.length === 0) { alert('No valid question rows'); return; }
 
     submitBtn.disabled = true;
-    const previousText = submitBtn.innerText;
-    submitBtn.innerText = 'Adding...';
+    const previousText = submitBtn.innerHTML;
+    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Adding Questions...';
     try {
       const resp = await fetch("{{ url_for('admin.questions_batch_add') }}", {
         method: 'POST',
@@ -297,7 +605,7 @@
       if (!data.success) {
         alert('Batch add failed: ' + (data.message || 'Unknown'));
       } else {
-        alert(`Added ${data.added} question(s). Reloading...`);
+        alert(`Successfully added ${data.added} question(s)! Reloading page...`);
         window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(exam_id);
       }
     } catch (err) {
@@ -305,7 +613,7 @@
       console.error(err);
     } finally {
       submitBtn.disabled = false;
-      submitBtn.innerText = previousText;
+      submitBtn.innerHTML = previousText;
     }
   });
 
@@ -330,12 +638,12 @@
     const checked = Array.from(document.querySelectorAll('.row-checkbox:checked'));
     if (checked.length === 0) { alert('No questions selected'); return; }
 
-    if (!confirm(`Delete ${checked.length} selected question(s)? This cannot be undone.`)) return;
+    if (!confirm(`Delete ${checked.length} selected question(s)? This action cannot be undone.`)) return;
 
     const ids = checked.map(cb => parseInt(cb.dataset.id,10));
     try {
       deleteSelectedBtn.disabled = true;
-      deleteSelectedBtn.innerText = 'Deleting...';
+      deleteSelectedBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Deleting...';
       const resp = await fetch("{{ url_for('admin.delete_multiple_questions') }}", {
         method: 'POST',
         headers: {'Content-Type':'application/json'},
@@ -345,7 +653,7 @@
       if (!data.success) {
         alert('Delete failed: ' + (data.message || 'Unknown'));
       } else {
-        alert(`Deleted ${data.deleted} question(s). Reloading...`);
+        alert(`Successfully deleted ${data.deleted} question(s)! Reloading page...`);
         window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(examSelect.value);
       }
     } catch (err) {
@@ -353,7 +661,7 @@
       console.error(err);
     } finally {
       deleteSelectedBtn.disabled = false;
-      deleteSelectedBtn.innerText = 'Delete Selected';
+      deleteSelectedBtn.innerHTML = '<i class="fas fa-trash me-1"></i>Delete Selected';
     }
   });
 
@@ -377,8 +685,8 @@
     if (!confirm(`Apply changes to all ${qtype} questions for this exam?`)) return;
 
     applyListBtn.disabled = true;
-    const prev = applyListBtn.innerText;
-    applyListBtn.innerText = 'Applying...';
+    const prev = applyListBtn.innerHTML;
+    applyListBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Applying...';
 
     try {
       const payload = {
@@ -398,7 +706,7 @@
       if (!data.success) {
         alert('Update failed: ' + (data.message || 'Unknown'));
       } else {
-        alert(`Updated ${data.updated} question(s). Reloading...`);
+        alert(`Successfully updated ${data.updated} question(s)! Reloading page...`);
         window.location = "{{ url_for('admin.questions_index') }}" + '?exam_id=' + encodeURIComponent(exam_id);
       }
     } catch (err) {
@@ -406,7 +714,7 @@
       console.error(err);
     } finally {
       applyListBtn.disabled = false;
-      applyListBtn.innerText = prev;
+      applyListBtn.innerHTML = prev;
     }
   });
 
