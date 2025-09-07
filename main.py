@@ -798,15 +798,12 @@ def debug_env_check():
         'drive_service_status': 'Initialized' if drive_service else 'Not Initialized'
     })
 
+
+
 @app.route('/')
-def index():
-    if 'user_id' in session:
-        return redirect(url_for('dashboard'))
-    elif 'admin_id' in session:   
-        return redirect(url_for('admin.dashboard'))
-    return redirect(url_for('login'))
-
-
+def home():
+    """Landing page route"""
+    return render_template('index.html')
 
 @app.route("/login", methods=["GET", "POST"])
 def login():
