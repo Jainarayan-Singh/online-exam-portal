@@ -118,6 +118,70 @@
 </head>
 <body>
   <main>
+<div class="top-navigation-minimal">
+    <a href="{{ url_for('home') }}" class="minimal-btn" title="Home">
+        <i class="fas fa-home"></i>
+        <span class="btn-label">Home</span>
+    </a>
+    <a href="{{ url_for('login') }}" class="minimal-btn" title="Login">
+        <i class="fas fa-sign-in-alt"></i>
+        <span class="btn-label">Login</span>
+    </a>
+</div>
+
+<style>
+.top-navigation-minimal {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 1000;
+    display: flex;
+    gap: 0.5rem;
+}
+
+.minimal-btn {
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.95);
+    color: #374151;
+    text-decoration: none;
+    border-radius: 50%;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+    font-size: 1.1rem;
+    position: relative;
+}
+
+.minimal-btn:hover {
+    transform: translateY(-2px) scale(1.05);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.btn-label {
+    position: absolute;
+    right: 55px;
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-size: 12px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    white-space: nowrap;
+}
+
+.minimal-btn:hover .btn-label {
+    opacity: 1;
+}
+</style>
     <div class="card login-card p-4">
       <div class="card-body">
         <div class="text-center mb-4">
