@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.jpg') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ExamPortal - Professional Online Examination System</title>
@@ -17,18 +18,43 @@
             line-height: 1.6;
             color: #333;
             overflow-x: hidden;
+            background: #0f0f23;
         }
+
+        /* Floating Particles Background */
+        .particles {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+        }
+
+        .particle {
+            position: absolute;
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border-radius: 50%;
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { width: 4px; height: 4px; top: 20%; left: 10%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 6px; height: 6px; top: 60%; left: 80%; animation-delay: 1s; }
+        .particle:nth-child(3) { width: 3px; height: 3px; top: 80%; left: 20%; animation-delay: 2s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; top: 40%; left: 60%; animation-delay: 3s; }
+        .particle:nth-child(5) { width: 4px; height: 4px; top: 30%; left: 90%; animation-delay: 4s; }
 
         /* Header */
         .header {
             position: fixed;
             top: 0;
             width: 100%;
-            background: rgba(255, 255, 255, 0.95);
-            backdrop-filter: blur(10px);
+            background: rgba(15, 15, 35, 0.95);
+            backdrop-filter: blur(20px);
             z-index: 1000;
             padding: 1rem 0;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            border-bottom: 1px solid rgba(102, 126, 234, 0.2);
             transition: all 0.3s ease;
         }
 
@@ -42,12 +68,13 @@
         }
 
         .logo {
-            font-size: 1.8rem;
-            font-weight: 700;
+            font-size: 2rem;
+            font-weight: 800;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
+            text-shadow: 0 0 30px rgba(102, 126, 234, 0.5);
         }
 
         .nav-buttons {
@@ -66,35 +93,54 @@
             display: inline-flex;
             align-items: center;
             gap: 0.5rem;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .btn:hover::before {
+            left: 100%;
         }
 
         .btn-outline {
             background: transparent;
             color: #667eea;
             border: 2px solid #667eea;
+            box-shadow: 0 0 20px rgba(102, 126, 234, 0.3);
         }
 
         .btn-outline:hover {
             background: #667eea;
             color: white;
-            transform: translateY(-2px);
-            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.3);
+            transform: translateY(-3px);
+            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
             border: none;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.4);
         }
 
         .btn-primary:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 15px 35px rgba(102, 126, 234, 0.4);
+            transform: translateY(-3px);
+            box-shadow: 0 20px 40px rgba(102, 126, 234, 0.6);
         }
 
         /* Hero Section */
         .hero {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d2d5f 100%);
             min-height: 100vh;
             display: flex;
             align-items: center;
@@ -109,8 +155,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="a" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23ffffff" stop-opacity="0.1"/><stop offset="100%" stop-color="%23ffffff" stop-opacity="0"/></radialGradient></defs><circle cx="200" cy="200" r="100" fill="url(%23a)"/><circle cx="800" cy="300" r="150" fill="url(%23a)"/><circle cx="400" cy="700" r="120" fill="url(%23a)"/></svg>');
-            animation: float 20s ease-in-out infinite;
+            background: radial-gradient(circle at 20% 30%, rgba(102, 126, 234, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 70%, rgba(118, 75, 162, 0.1) 0%, transparent 50%);
         }
 
         .hero-container {
@@ -126,90 +172,129 @@
         }
 
         .hero-content h1 {
-            font-size: 3.5rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 1.5rem;
-            line-height: 1.2;
+            font-size: 4rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 0%, #667eea 50%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
+            line-height: 1.1;
+            text-shadow: 0 0 50px rgba(102, 126, 234, 0.3);
         }
 
         .hero-content p {
-            font-size: 1.25rem;
-            color: rgba(255, 255, 255, 0.9);
-            margin-bottom: 2.5rem;
-            line-height: 1.6;
+            font-size: 1.3rem;
+            color: rgba(255, 255, 255, 0.8);
+            margin-bottom: 3rem;
+            line-height: 1.7;
         }
 
         .hero-buttons {
             display: flex;
-            gap: 1.5rem;
+            gap: 2rem;
             flex-wrap: wrap;
         }
 
         .btn-white {
-            background: white;
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
             color: #667eea;
-            padding: 1rem 2rem;
-            font-size: 1.1rem;
+            padding: 1.2rem 2.5rem;
+            font-size: 1.2rem;
+            font-weight: 700;
+            box-shadow: 0 15px 40px rgba(255, 255, 255, 0.2);
         }
 
         .btn-white:hover {
-            background: rgba(255, 255, 255, 0.9);
-            transform: translateY(-3px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+            transform: translateY(-4px);
+            box-shadow: 0 25px 50px rgba(255, 255, 255, 0.3);
         }
 
         .hero-visual {
             display: flex;
             justify-content: center;
             align-items: center;
+            position: relative;
         }
 
         .exam-card {
-            background: rgba(255, 255, 255, 0.15);
-            backdrop-filter: blur(10px);
-            border-radius: 20px;
-            padding: 2.5rem;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border-radius: 24px;
+            padding: 3rem;
             border: 1px solid rgba(255, 255, 255, 0.2);
-            animation: float-card 6s ease-in-out infinite;
-            max-width: 400px;
+            animation: float-card 8s ease-in-out infinite;
+            max-width: 450px;
+            position: relative;
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .exam-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            border-radius: 24px;
+            padding: 2px;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: exclude;
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask-composite: exclude;
         }
 
         .exam-card h3 {
             color: white;
-            font-size: 1.5rem;
-            margin-bottom: 1rem;
+            font-size: 1.8rem;
+            margin-bottom: 2rem;
+            font-weight: 700;
         }
 
         .exam-stats {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 1rem;
-            margin-bottom: 1.5rem;
+            gap: 1.5rem;
+            margin-bottom: 2rem;
         }
 
         .stat {
             background: rgba(255, 255, 255, 0.1);
-            padding: 1rem;
-            border-radius: 10px;
+            padding: 1.5rem;
+            border-radius: 16px;
             text-align: center;
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
 
         .stat-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: white;
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: #667eea;
         }
 
         .stat-label {
-            color: rgba(255, 255, 255, 0.8);
-            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            font-size: 1rem;
+            margin-top: 0.5rem;
         }
 
         /* Features Section */
         .features {
-            padding: 6rem 0;
-            background: #f8fafc;
+            padding: 8rem 0;
+            background: linear-gradient(135deg, #f8faff 0%, #ffffff 50%, #f0f4ff 100%);
+            position: relative;
+        }
+
+        .features::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><circle cx="20" cy="20" r="2" fill="%23667eea" opacity="0.1"/><circle cx="80" cy="40" r="3" fill="%23764ba2" opacity="0.1"/><circle cx="40" cy="80" r="2.5" fill="%23667eea" opacity="0.1"/></svg>');
         }
 
         .container {
@@ -220,75 +305,99 @@
 
         .section-header {
             text-align: center;
-            margin-bottom: 4rem;
+            margin-bottom: 5rem;
         }
 
         .section-header h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: #1a202c;
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #1a202c 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 1.5rem;
         }
 
         .section-header p {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: #64748b;
-            max-width: 600px;
+            max-width: 700px;
             margin: 0 auto;
         }
 
         .features-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-            gap: 2.5rem;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 3rem;
         }
 
         .feature-card {
-            background: white;
-            padding: 2.5rem;
-            border-radius: 16px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
-            transition: all 0.3s ease;
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+            padding: 3rem;
+            border-radius: 24px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transition: all 0.4s ease;
             border: 1px solid #e2e8f0;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .feature-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .feature-card:hover::before {
+            opacity: 1;
         }
 
         .feature-card:hover {
-            transform: translateY(-8px);
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 30px 60px rgba(102, 126, 234, 0.2);
+            border-color: #667eea;
         }
 
         .feature-icon {
-            width: 60px;
-            height: 60px;
+            width: 80px;
+            height: 80px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border-radius: 12px;
+            border-radius: 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            margin-bottom: 1.5rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
         }
 
         .feature-icon i {
-            font-size: 1.5rem;
+            font-size: 2rem;
             color: white;
         }
 
         .feature-card h3 {
-            font-size: 1.3rem;
-            font-weight: 600;
+            font-size: 1.5rem;
+            font-weight: 700;
             color: #1a202c;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
 
         .feature-card p {
             color: #64748b;
-            line-height: 1.6;
+            line-height: 1.7;
+            font-size: 1.1rem;
         }
 
         /* CTA Section */
         .cta {
-            background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
-            padding: 6rem 0;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 100%);
+            padding: 8rem 0;
             text-align: center;
             position: relative;
             overflow: hidden;
@@ -301,7 +410,8 @@
             left: 0;
             right: 0;
             bottom: 0;
-            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 1000"><defs><radialGradient id="b" cx="50%" cy="50%" r="50%"><stop offset="0%" stop-color="%23667eea" stop-opacity="0.1"/><stop offset="100%" stop-color="%23667eea" stop-opacity="0"/></radialGradient></defs><circle cx="100" cy="100" r="80" fill="url(%23b)"/><circle cx="900" cy="200" r="100" fill="url(%23b)"/><circle cx="300" cy="800" r="90" fill="url(%23b)"/></svg>');
+            background: radial-gradient(circle at 30% 20%, rgba(102, 126, 234, 0.2) 0%, transparent 50%),
+                        radial-gradient(circle at 70% 80%, rgba(118, 75, 162, 0.2) 0%, transparent 50%);
         }
 
         .cta-content {
@@ -310,29 +420,31 @@
         }
 
         .cta h2 {
-            font-size: 2.5rem;
-            font-weight: 700;
-            color: white;
-            margin-bottom: 1rem;
+            font-size: 3rem;
+            font-weight: 900;
+            background: linear-gradient(135deg, #ffffff 0%, #667eea 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 2rem;
         }
 
         .cta p {
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             color: rgba(255, 255, 255, 0.8);
-            margin-bottom: 2.5rem;
-            max-width: 600px;
+            margin-bottom: 3rem;
+            max-width: 700px;
             margin-left: auto;
             margin-right: auto;
         }
 
-        /* Compact Professional Footer */
+        /* Professional Footer */
         .professional-footer {
-            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            background: linear-gradient(135deg, #1a1a3e 0%, #0f0f23 100%);
             color: #ecf0f1;
-            padding: 1.5rem 0;
-            margin-top: auto; /* keeps footer at bottom when main grows */
+            padding: 2rem 0;
             position: relative;
-            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.3);
         }
 
         .professional-footer::before {
@@ -341,7 +453,7 @@
             top: 0;
             left: 0;
             right: 0;
-            height: 2px;
+            height: 3px;
             background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
         }
 
@@ -350,31 +462,31 @@
             justify-content: space-between;
             align-items: center;
             flex-wrap: wrap;
-            gap: 1rem;
+            gap: 1.5rem;
         }
 
         .footer-brand {
             display: flex;
             align-items: center;
-            font-size: 1.3rem;
-            font-weight: bold;
+            font-size: 1.5rem;
+            font-weight: 800;
             color: #667eea;
         }
 
         .footer-brand i {
-            margin-right: 0.5rem;
-            font-size: 1.4rem;
+            margin-right: 0.8rem;
+            font-size: 1.6rem;
         }
 
         .footer-copyright {
             color: #bdc3c7;
-            font-size: 0.9rem;
+            font-size: 1rem;
             margin: 0;
         }
 
         .footer-links {
             display: flex;
-            gap: 2rem;
+            gap: 2.5rem;
             align-items: center;
             flex-wrap: wrap;
         }
@@ -382,20 +494,22 @@
         .footer-links a {
             color: #ecf0f1;
             text-decoration: none;
-            font-size: 0.9rem;
+            font-size: 1rem;
             transition: all 0.3s ease;
-            padding: 0.3rem 0;
+            padding: 0.5rem 0;
             border-bottom: 2px solid transparent;
+            font-weight: 500;
         }
 
         .footer-links a:hover {
             color: #667eea;
             border-bottom-color: #667eea;
+            transform: translateY(-2px);
         }
 
         .footer-social {
             display: flex;
-            gap: 0.8rem;
+            gap: 1rem;
             align-items: center;
         }
 
@@ -403,62 +517,37 @@
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 35px;
-            height: 35px;
-            background: rgba(102, 126, 234, 0.2);
+            width: 45px;
+            height: 45px;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
             border-radius: 50%;
             color: #ecf0f1;
             text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 0.9rem;
+            transition: all 0.4s ease;
+            font-size: 1.1rem;
         }
 
         .footer-social a:hover {
-            background: #667eea;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            transform: translateY(-3px) scale(1.1);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.4);
         }
-
-        @media (max-width: 768px) {
-            .question-palette .btn {
-                width: 35px;
-                height: 35px;
-                margin: 2px;
-            }
-
-            .result-card {
-                padding: 2rem 1rem;
-                margin: 1rem;
-            }
-
-            .professional-footer {
-                padding: 1rem 0;
-                text-align: center;
-            }
-
-            .footer-content {
-                flex-direction: column;
-                gap: 0.8rem;
-            }
-
-            .footer-links {
-                gap: 1rem;
-                justify-content: center;
-            }
-
-            .footer-social {
-                justify-content: center;
-            }
 
         /* Animations */
         @keyframes float {
             0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-20px); }
+            50% { transform: translateY(-30px); }
         }
 
         @keyframes float-card {
-            0%, 100% { transform: translateY(0px) rotateY(0deg); }
-            50% { transform: translateY(-10px) rotateY(5deg); }
+            0%, 100% { 
+                transform: translateY(0px) rotateY(0deg); 
+                box-shadow: 0 30px 60px rgba(0, 0, 0, 0.3);
+            }
+            50% { 
+                transform: translateY(-15px) rotateY(3deg); 
+                box-shadow: 0 40px 80px rgba(102, 126, 234, 0.4);
+            }
         }
 
         /* Mobile Responsive */
@@ -466,10 +555,11 @@
             .hero-container {
                 grid-template-columns: 1fr;
                 text-align: center;
+                gap: 2rem;
             }
             
             .hero-content h1 {
-                font-size: 2.5rem;
+                font-size: 2.8rem;
             }
             
             .nav-buttons {
@@ -479,11 +569,45 @@
             
             .hero-buttons {
                 justify-content: center;
+                flex-direction: column;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+                gap: 2rem;
+            }
+
+            .professional-footer {
+                padding: 1.5rem 0;
+                text-align: center;
+            }
+
+            .footer-content {
+                flex-direction: column;
+                gap: 1rem;
+            }
+
+            .footer-links {
+                gap: 1.5rem;
+                justify-content: center;
+            }
+
+            .footer-social {
+                justify-content: center;
             }
         }
     </style>
 </head>
 <body>
+    <!-- Floating Particles -->
+    <div class="particles">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+    </div>
+
     <!-- Header -->
     <header class="header">
         <div class="nav-container">
@@ -505,11 +629,11 @@
     <section class="hero">
         <div class="hero-container">
             <div class="hero-content">
-                <h1>Professional Online Examination System</h1>
-                <p>Streamline your assessment process with our secure, feature-rich examination platform. Create, manage, and conduct exams with confidence.</p>
+                <h1>Next-Gen Examination Platform</h1>
+                <p>Experience the future of assessment with our AI-powered, secure, and intuitive examination system designed for modern educational institutions.</p>
                 <div class="hero-buttons">
                     <a href="/forgot_password" class="btn btn-white">
-                        <i class="fas fa-rocket"></i> Get Started Free
+                        <i class="fas fa-rocket"></i> Launch Free Trial
                     </a>
                     <a href="/login" class="btn btn-outline" style="border-color: white; color: white;">
                         <i class="fas fa-sign-in-alt"></i> Sign In
@@ -518,20 +642,20 @@
             </div>
             <div class="hero-visual">
                 <div class="exam-card">
-                    <h3><i class="fas fa-clipboard-check"></i> Live Exam</h3>
+                    <h3><i class="fas fa-brain"></i> AI-Powered Exams</h3>
                     <div class="exam-stats">
-<div class="stat">
-    <div class="stat-number"><i class="fas fa-zap"></i></div>
-    <div class="stat-label">Instant Results</div>
-</div>
-<div class="stat">
-    <div class="stat-number"><i class="fas fa-shield-alt"></i></div>
-    <div class="stat-label">Secure Platform</div>
-</div>
+                        <div class="stat">
+                            <div class="stat-number"><i class="fas fa-zap"></i></div>
+                            <div class="stat-label">Instant Analytics</div>
+                        </div>
+                        <div class="stat">
+                            <div class="stat-number"><i class="fas fa-shield-alt"></i></div>
+                            <div class="stat-label">Military-Grade Security</div>
+                        </div>
                     </div>
-                    <div style="background: rgba(255,255,255,0.2); padding: 1rem; border-radius: 8px;">
-                        <p style="color: white; margin: 0; font-size: 0.9rem;">
-                            <i class="fas fa-lock"></i> Secure & Monitored
+                    <div style="background: rgba(102, 126, 234, 0.2); padding: 1.5rem; border-radius: 12px; border: 1px solid rgba(102, 126, 234, 0.3);">
+                        <p style="color: white; margin: 0; font-size: 1rem; font-weight: 600;">
+                            <i class="fas fa-eye"></i> Advanced Proctoring & Real-time Monitoring
                         </p>
                     </div>
                 </div>
@@ -543,51 +667,51 @@
     <section class="features">
         <div class="container">
             <div class="section-header">
-                <h2>Why Choose ExamPortal?</h2>
-                <p>Discover the features that make ExamPortal the preferred choice for educational institutions and organizations worldwide.</p>
+                <h2>Revolutionary Features</h2>
+                <p>Discover cutting-edge technology that transforms traditional assessment into an engaging, secure, and insightful experience.</p>
             </div>
             <div class="features-grid">
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-shield-alt"></i>
+                        <i class="fas fa-shield-virus"></i>
                     </div>
-                    <h3>Secure & Reliable</h3>
-                    <p>Bank-level security with encrypted data transmission, secure authentication, and comprehensive monitoring to ensure exam integrity.</p>
+                    <h3>Ultra-Secure Infrastructure</h3>
+                    <p>Enterprise-grade security with end-to-end encryption, biometric authentication, and real-time threat detection to ensure absolute exam integrity.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-clock"></i>
+                        <i class="fas fa-brain"></i>
                     </div>
-                    <h3>Real-time Monitoring</h3>
-                    <p>Track exam progress, monitor student activity, and get instant notifications about any suspicious behavior during exams.</p>
+                    <h3>AI-Driven Analytics</h3>
+                    <p>Advanced machine learning algorithms analyze performance patterns, detect anomalies, and provide actionable insights for educational improvement.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-chart-line"></i>
+                        <i class="fas fa-eye"></i>
                     </div>
-                    <h3>Advanced Analytics</h3>
-                    <p>Comprehensive reporting and analytics dashboard to analyze performance, identify trends, and make data-driven decisions.</p>
+                    <h3>Smart Proctoring</h3>
+                    <p>Intelligent monitoring system with facial recognition, behavior analysis, and automated flagging of suspicious activities.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
                         <i class="fas fa-mobile-alt"></i>
                     </div>
-                    <h3>Multi-platform Support</h3>
-                    <p>Access exams from any device - desktop, tablet, or mobile. Responsive design ensures optimal experience across all platforms.</p>
+                    <h3>Universal Compatibility</h3>
+                    <p>Seamlessly works across all devices and platforms with adaptive UI that ensures optimal experience regardless of screen size.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-users-cog"></i>
+                        <i class="fas fa-cogs"></i>
                     </div>
-                    <h3>Easy Management</h3>
-                    <p>Intuitive admin panel for creating exams, managing users, setting time limits, and configuring exam parameters with ease.</p>
+                    <h3>Intelligent Automation</h3>
+                    <p>Automated question generation, smart grading algorithms, and instant report generation that saves hours of manual work.</p>
                 </div>
                 <div class="feature-card">
                     <div class="feature-icon">
-                        <i class="fas fa-file-alt"></i>
+                        <i class="fas fa-chart-network"></i>
                     </div>
-                    <h3>Instant Results</h3>
-                    <p>Automated grading with instant result generation, detailed scorecards, and performance analysis for immediate feedback.</p>
+                    <h3>Real-time Insights</h3>
+                    <p>Live dashboards with comprehensive analytics, performance metrics, and predictive modeling for data-driven decision making.</p>
                 </div>
             </div>
         </div>
@@ -597,18 +721,12 @@
     <section class="cta">
         <div class="container">
             <div class="cta-content">
-                <h2>Ready to Transform Your Examination Process?</h2>
-                <p>Join thousands of educators and organizations who trust ExamPortal for their assessment needs. Start your journey today!</p>
+                <h2>Ready to Revolutionize Your Assessments?</h2>
+                <p>Join the educational revolution with thousands of institutions worldwide who trust ExamPortal for their critical assessments. Start your transformation today!</p>
                 <div class="hero-buttons">
-<button onclick="showComingSoon()" class="btn btn-primary" style="padding: 1.2rem 2.5rem; font-size: 1.1rem;">
-    <i class="fas fa-rocket"></i> Start Free Trial
-</button>
-
-<script>
-function showComingSoon() {
-    alert('🚀 Coming Soon!\n\nFree trial feature is under development.');
-}
-</script>
+                    <button onclick="showComingSoon()" class="btn btn-primary" style="padding: 1.5rem 3rem; font-size: 1.2rem; font-weight: 700;">
+                        <i class="fas fa-rocket"></i> Start Your Journey
+                    </button>
                 </div>
             </div>
         </div>
@@ -645,49 +763,85 @@ function showComingSoon() {
     </footer>
 
     <script>
-        // Smooth scrolling for anchor links
+        function showComingSoon() {
+            alert('🚀 Coming Soon!\n\nFree trial feature is under development.');
+        }
+
+        // Enhanced smooth scrolling
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
-                document.querySelector(this.getAttribute('href')).scrollIntoView({
-                    behavior: 'smooth'
-                });
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
             });
         });
 
-        // Header scroll effect
+        // Enhanced header scroll effect
         window.addEventListener('scroll', function() {
             const header = document.querySelector('.header');
             if (window.scrollY > 100) {
-                header.style.background = 'rgba(255, 255, 255, 0.98)';
-                header.style.boxShadow = '0 2px 20px rgba(0, 0, 0, 0.1)';
+                header.style.background = 'rgba(15, 15, 35, 0.98)';
+                header.style.boxShadow = '0 10px 40px rgba(0, 0, 0, 0.3)';
             } else {
-                header.style.background = 'rgba(255, 255, 255, 0.95)';
+                header.style.background = 'rgba(15, 15, 35, 0.95)';
                 header.style.boxShadow = 'none';
             }
         });
 
-        // Animate cards on scroll
+        // Enhanced intersection observer for animations
         const observerOptions = {
             threshold: 0.1,
-            rootMargin: '0px 0px -50px 0px'
+            rootMargin: '0px 0px -100px 0px'
         };
 
         const observer = new IntersectionObserver(function(entries) {
             entries.forEach(entry => {
                 if (entry.isIntersecting) {
                     entry.target.style.opacity = '1';
-                    entry.target.style.transform = 'translateY(0)';
+                    entry.target.style.transform = 'translateY(0) scale(1)';
                 }
             });
         }, observerOptions);
 
-        document.querySelectorAll('.feature-card').forEach(card => {
+        document.querySelectorAll('.feature-card').forEach((card, index) => {
             card.style.opacity = '0';
-            card.style.transform = 'translateY(30px)';
-            card.style.transition = 'all 0.6s ease';
+            card.style.transform = 'translateY(50px) scale(0.9)';
+            card.style.transition = `all 0.8s ease ${index * 0.1}s`;
             observer.observe(card);
         });
+
+        // Particle animation enhancement
+        document.querySelectorAll('.particle').forEach(particle => {
+            particle.addEventListener('mouseenter', function() {
+                this.style.animation = 'float 2s ease-in-out infinite';
+            });
+        });
+
+        // Add dynamic particle generation
+        function createDynamicParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 6 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 4 + 4 + 's';
+            particle.style.animationDelay = Math.random() * 2 + 's';
+            
+            document.querySelector('.particles').appendChild(particle);
+            
+            setTimeout(() => {
+                particle.remove();
+            }, 10000);
+        }
+
+        // Generate new particles periodically
+        setInterval(createDynamicParticle, 3000);
     </script>
 </body>
 </html>
