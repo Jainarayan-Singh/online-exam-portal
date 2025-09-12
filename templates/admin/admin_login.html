@@ -1,309 +1,795 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.jpg') }}">
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Login - ExamPortal</title>
-
-  <!-- Bootstrap CSS -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Font Awesome -->
-  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-
-  <style>
-    body {
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    }
-    main {
-      flex: 1;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-    }
-    .login-card {
-      box-shadow: 0 15px 35px rgba(0,0,0,0.3);
-      border: 1px solid #334155;
-      background: rgba(30,41,59,0.95);
-      backdrop-filter: blur(10px);
-      border-radius: 1rem;
-      width: 100%;
-      max-width: 400px;
-      color: #fff;
-    }
-    .card-title { font-weight: 600; margin-bottom: .5rem; color: #fff; }
-    .form-control:focus {
-      border-color: #6366f1;
-      box-shadow: 0 0 0 .2rem rgba(99,102,241,.25);
-    }
-    .input-group-text {
-      background: rgba(30,41,59,.8);
-      border-color: #334155;
-      color: #94a3b8;
-    }
-    .btn-outline-secondary { border-color:#334155; color:#94a3b8; }
-    .btn-outline-secondary:hover { background:#334155; border-color:#334155; color:#f1f5f9; }
-    .alert-info {
-      background: rgba(59,130,246,.1);
-      border-left: 4px solid #3b82f6;
-      color: #93c5fd;
-      border: none;
-    }
-    .btn-primary {
-      background: linear-gradient(45deg, #667eea, #764ba2);
-      border: none;
-      border-radius: 25px;
-      transition: all 0.3s ease;
-    }
-    .btn-primary:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
-    }
-    .btn-primary:disabled { opacity:.6; cursor:not-allowed; }
-
-    /* Footer styling (same as base.html) */
-    .professional-footer {
-      background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
-      color: #ecf0f1;
-      padding: 1.5rem 0;
-      position: relative;
-      box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
-      margin-top: auto;
-    }
-    .professional-footer::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 2px;
-      background: linear-gradient(90deg, transparent 0%, #667eea 50%, transparent 100%);
-    }
-    .footer-content {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 1rem;
-    }
-    .footer-brand {
-      display: flex;
-      align-items: center;
-      font-size: 1.3rem;
-      font-weight: bold;
-      color: #667eea;
-    }
-    .footer-brand i { margin-right: 0.5rem; font-size: 1.4rem; }
-    .footer-links { display:flex; gap:2rem; flex-wrap:wrap; }
-    .footer-links a { color:#ecf0f1; text-decoration:none; font-size:0.9rem; transition:.3s; }
-    .footer-links a:hover { color:#667eea; border-bottom:2px solid #667eea; }
-    .footer-social { display:flex; gap:0.8rem; }
-    .footer-social a {
-      width:35px; height:35px; display:inline-flex; align-items:center; justify-content:center;
-      background: rgba(102,126,234,0.2); border-radius:50%; color:#ecf0f1; text-decoration:none;
-      transition:.3s; font-size:0.9rem;
-    }
-    .footer-social a:hover { background:#667eea; transform:translateY(-2px); }
-    @media (max-width:768px){
-      .footer-content { flex-direction:column; text-align:center; }
-      .footer-links { justify-content:center; gap:1rem; }
-      .footer-social { justify-content:center; }
-    }
-  </style>
+    <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.jpg') }}">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login - ExamPortal</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 </head>
 <body>
-  <main>
-<div class="top-navigation-minimal">
-    <a href="{{ url_for('home') }}" class="minimal-btn" title="Home">
-        <i class="fas fa-home"></i>
-        <span class="btn-label">Home</span>
-    </a>
-    <a href="{{ url_for('login') }}" class="minimal-btn" title="Login">
-        <i class="fas fa-sign-in-alt"></i>
-        <span class="btn-label">Login</span>
-    </a>
-</div>
-
-<style>
-.top-navigation-minimal {
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    z-index: 1000;
-    display: flex;
-    gap: 0.5rem;
-}
-
-.minimal-btn {
-    width: 45px;
-    height: 45px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: rgba(255, 255, 255, 0.95);
-    color: #374151;
-    text-decoration: none;
-    border-radius: 50%;
-    backdrop-filter: blur(10px);
-    border: 1px solid rgba(255, 255, 255, 0.3);
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
-    font-size: 1.1rem;
-    position: relative;
-}
-
-.minimal-btn:hover {
-    transform: translateY(-2px) scale(1.05);
-    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
-}
-
-.btn-label {
-    position: absolute;
-    right: 55px;
-    background: rgba(0,0,0,0.8);
-    color: white;
-    padding: 5px 10px;
-    border-radius: 4px;
-    font-size: 12px;
-    opacity: 0;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-    white-space: nowrap;
-}
-
-.minimal-btn:hover .btn-label {
-    opacity: 1;
-}
-</style>
-    <div class="card login-card p-4">
-      <div class="card-body">
-        <div class="text-center mb-4">
-          <i class="fas fa-user-shield fa-3x text-primary mb-3"></i>
-          <h3 class="card-title">Admin Login</h3>
-          <p style="color:#e9ecef;">Sign in to manage exams, questions & uploads</p>
-        </div>
-
-        <!-- Flash messages -->
-        {% with messages = get_flashed_messages(with_categories=true) %}
-          {% if messages %}
-            {% for category, message in messages %}
-              <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show {% if category == 'tip' %}permanent-tip{% endif %}">
-                <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
-                {{ message }}
-                {% if category != 'tip' %}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-                {% endif %}
-              </div>
-            {% endfor %}
-          {% endif %}
-        {% endwith %}
-
-        <form method="POST" id="adminLoginForm">
-          <div class="mb-3">
-            <label for="username" class="form-label"><i class="fas fa-user-shield"></i> Username or Email</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-user text-primary"></i></span>
-              <input type="text" class="form-control" id="username" name="username" placeholder="Enter username or email" required autocomplete="username">
-            </div>
-          </div>
-
-          <div class="mb-3">
-            <label for="password" class="form-label"><i class="fas fa-lock"></i> Password</label>
-            <div class="input-group">
-              <span class="input-group-text"><i class="fas fa-lock text-primary"></i></span>
-              <input type="password" class="form-control" id="password" name="password" placeholder="Enter your password" required autocomplete="current-password">
-              <button class="btn btn-outline-secondary" type="button" id="toggleBtn"><i class="fas fa-eye" id="toggleIcon"></i></button>
-            </div>
-          </div>
-
-          <button type="submit" class="btn btn-primary w-100 mb-3" id="loginBtn">
-            <i class="fas fa-sign-in-alt"></i>
-            <span id="loginText">Login</span>
-            <span id="loginSpinner" class="d-none"><i class="fas fa-spinner fa-spin"></i> Verifying…</span>
-          </button>
-        </form>
-
-        <div class="text-center mt-2">
-          <a href="{{ url_for('login') }}" class="text-decoration-none text-info">
-            <i class="fas fa-arrow-left"></i> Back to Student Login
-          </a>
-        </div>
-
-        <!-- Permanent Tip -->
-        <div class="mt-4">
-          <div class="alert alert-info permanent-tip">
-            <h6 class="mb-1"><i class="fas fa-info-circle"></i> Tip</h6>
-            <small class="mb-0 d-block">
-              Use your admin credentials. For student access, switch to <strong>Student Login</strong>.
-            </small>
-          </div>
-        </div>
-      </div>
+    <!-- Floating Particles Background -->
+    <div class="particles-container">
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
+        <div class="particle"></div>
     </div>
-  </main>
 
-  <!-- Footer (same as user portal) -->
-  <footer class="professional-footer">
-    <div class="container">
-      <div class="footer-content">
-        <div class="footer-brand">
-          <i class="fas fa-graduation-cap"></i> ExamPortal
-        </div>
-        <div class="footer-links">
-          <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
-          <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
-          <a href="{{ url_for('support') }}">Support</a>
-          <a href="{{ url_for('contact') }}">Contact</a>
-        </div>
-        <div class="d-flex align-items-center gap-3">
-          <p class="footer-copyright">
-            © 2025 ExamPortal. All rights reserved.
-          </p>
-          <div class="footer-social">
-            <a href="#"><i class="fab fa-facebook-f"></i></a>
-            <a href="#"><i class="fab fa-twitter"></i></a>
-            <a href="#"><i class="fab fa-linkedin-in"></i></a>
-            <a href="#"><i class="fab fa-instagram"></i></a>
-          </div>
-        </div>
-      </div>
+    <!-- Top Navigation -->
+    <div class="top-navigation-minimal">
+        <a href="{{ url_for('home') }}" class="minimal-btn" title="Home">
+            <i class="fas fa-home"></i>
+            <span class="btn-label">Home</span>
+        </a>
+        <a href="{{ url_for('login') }}" class="minimal-btn" title="Student Login">
+            <i class="fas fa-user-graduate"></i>
+            <span class="btn-label">Student Login</span>
+        </a>
     </div>
-  </footer>
 
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
-  <script>
-  document.addEventListener('DOMContentLoaded', function () {
-    // Toggle password visibility
-    const pwd = document.getElementById('password');
-    const toggleBtn = document.getElementById('toggleBtn');
-    const toggleIcon = document.getElementById('toggleIcon');
-    toggleBtn.addEventListener('click', () => {
-      if (pwd.type === 'password') {
-        pwd.type = 'text';
-        toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
-      } else {
-        pwd.type = 'password';
-        toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
-      }
-    });
+    <!-- Main Content -->
+    <div class="login-wrapper">
+        <div class="container">
+            <div class="row justify-content-center align-items-center min-vh-100">
+                <div class="col-xl-4 col-lg-5 col-md-6 col-sm-8">
+                    <div class="login-container">
+                        <!-- Logo & Header Section -->
+                        <div class="login-header">
+                            <div class="logo-section">
+                                <div class="logo-icon admin">
+                                    <i class="fas fa-user-shield"></i>
+                                </div>
+                                <h1 class="brand-name">ExamPortal</h1>
+                            </div>
+                            <h2 class="welcome-text">Admin Portal</h2>
+                            <p class="welcome-subtitle">Manage exams, questions & student access</p>
+                        </div>
 
-    // Auto-dismiss flash alerts EXCEPT permanent tips
-    const ALERT_CLOSE_DELAY_MS = 1000;
-    const alerts = document.querySelectorAll('.alert:not(.permanent-tip)');
-    alerts.forEach(function (el) {
-      setTimeout(function () {
-        const bsAlert = new bootstrap.Alert(el);
-        bsAlert.close();
-      }, ALERT_CLOSE_DELAY_MS);
-    });
-  });
-  </script>
+                        <!-- Flash Messages (Bootstrap format from old version) -->
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                <div class="flash-messages">
+                                    {% for category, message in messages %}
+                                        <div class="alert alert-{{ 'danger' if category == 'error' else category }} alert-dismissible fade show {% if category == 'tip' %}permanent-tip{% endif %}">
+                                            <i class="fas fa-{{ 'exclamation-triangle' if category == 'error' else 'check-circle' if category == 'success' else 'info-circle' }}"></i>
+                                            {{ message }}
+                                            {% if category != 'tip' %}
+                                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                            {% endif %}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                        {% endwith %}
+
+                        <!-- Login Form (keeping old form structure) -->
+                        <form method="POST" id="adminLoginForm" class="login-form">
+                            <div class="form-group">
+                                <label for="username" class="form-label">
+                                    <i class="fas fa-user-shield"></i> Username or Email
+                                </label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="fas fa-user-shield"></i>
+                                    </div>
+                                    <input type="text"
+                                           class="form-input"
+                                           id="username"
+                                           name="username"
+                                           placeholder="Enter username or email"
+                                           required
+                                           autocomplete="username">
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label for="password" class="form-label">
+                                    <i class="fas fa-lock"></i> Password
+                                </label>
+                                <div class="input-wrapper">
+                                    <div class="input-icon">
+                                        <i class="fas fa-lock"></i>
+                                    </div>
+                                    <input type="password"
+                                           class="form-input"
+                                           id="password"
+                                           name="password"
+                                           placeholder="Enter your password"
+                                           required
+                                           autocomplete="current-password">
+                                    <button class="toggle-password" type="button" id="toggleBtn">
+                                        <i class="fas fa-eye" id="toggleIcon"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="login-button admin-button" id="loginBtn">
+                                <span class="button-content" id="loginText">
+                                    <i class="fas fa-sign-in-alt"></i>
+                                    <span>Login</span>
+                                </span>
+                                <span id="loginSpinner" class="button-loading d-none">
+                                    <i class="fas fa-spinner fa-spin"></i>
+                                    <span>Verifying…</span>
+                                </span>
+                            </button>
+                        </form>
+
+                        <!-- Action Links -->
+                        <div class="action-links">
+                            <a href="{{ url_for('login') }}" class="action-link secondary">
+                                <i class="fas fa-arrow-left"></i>
+                                <span>Back to Student Login</span>
+                            </a>
+                        </div>
+
+                        <!-- Permanent Tip Section (same as old version) -->
+                        <div class="help-section">
+                            <div class="alert alert-info permanent-tip">
+                                <h6 class="mb-1"><i class="fas fa-info-circle"></i> Tip</h6>
+                                <small class="mb-0 d-block">
+                                    Use your admin credentials. For student access, switch to <strong>Student Login</strong>.
+                                </small>
+                            </div>
+                        </div>
+
+                        <!-- Security Footer -->
+                        <div class="security-footer admin-security">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Protected Admin Area</span>
+                            <div class="security-indicators">
+                                <div class="security-dot admin-dot"></div>
+                                <div class="security-dot admin-dot"></div>
+                                <div class="security-dot admin-dot"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer (same as old version) -->
+    <footer class="professional-footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-brand">
+                    <i class="fas fa-graduation-cap"></i> ExamPortal
+                </div>
+                <div class="footer-links">
+                    <a href="{{ url_for('privacy_policy') }}">Privacy Policy</a>
+                    <a href="{{ url_for('terms_of_service') }}">Terms of Service</a>
+                    <a href="{{ url_for('support') }}">Support</a>
+                    <a href="{{ url_for('contact') }}">Contact</a>
+                </div>
+                <div class="d-flex align-items-center gap-3">
+                    <p class="footer-copyright">
+                        © 2025 ExamPortal. All rights reserved.
+                    </p>
+                    <div class="footer-social">
+                        <a href="#"><i class="fab fa-facebook-f"></i></a>
+                        <a href="#"><i class="fab fa-twitter"></i></a>
+                        <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                        <a href="#"><i class="fab fa-instagram"></i></a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <style>
+        /* Global Styles */
+        body {
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d2d5f 100%);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            overflow-x: hidden;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Particles Background */
+        .particles-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        .particle {
+            position: absolute;
+            background: linear-gradient(45deg, #f59e0b, #d97706);
+            border-radius: 50%;
+            animation: float 8s ease-in-out infinite;
+        }
+
+        .particle:nth-child(1) { width: 6px; height: 6px; top: 10%; left: 15%; animation-delay: 0s; }
+        .particle:nth-child(2) { width: 4px; height: 4px; top: 70%; left: 85%; animation-delay: 1s; }
+        .particle:nth-child(3) { width: 8px; height: 8px; top: 30%; left: 5%; animation-delay: 2s; }
+        .particle:nth-child(4) { width: 5px; height: 5px; top: 80%; left: 20%; animation-delay: 3s; }
+        .particle:nth-child(5) { width: 7px; height: 7px; top: 20%; left: 90%; animation-delay: 4s; }
+        .particle:nth-child(6) { width: 4px; height: 4px; top: 60%; left: 70%; animation-delay: 5s; }
+        .particle:nth-child(7) { width: 6px; height: 6px; top: 45%; left: 25%; animation-delay: 6s; }
+        .particle:nth-child(8) { width: 5px; height: 5px; top: 85%; left: 60%; animation-delay: 7s; }
+
+        /* Top Navigation */
+        .top-navigation-minimal {
+            position: fixed;
+            top: 30px;
+            right: 30px;
+            z-index: 1000;
+            display: flex;
+            gap: 12px;
+        }
+
+        .minimal-btn {
+            width: 55px;
+            height: 55px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            color: rgba(255, 255, 255, 0.8);
+            text-decoration: none;
+            border-radius: 50%;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s ease;
+            font-size: 1.2rem;
+            position: relative;
+        }
+
+        .minimal-btn:hover {
+            transform: translateY(-3px) scale(1.1);
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            color: white;
+            box-shadow: 0 15px 40px rgba(245, 158, 11, 0.4);
+        }
+
+        .btn-label {
+            position: absolute;
+            right: 65px;
+            background: rgba(0, 0, 0, 0.9);
+            color: white;
+            padding: 8px 12px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 500;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+            white-space: nowrap;
+        }
+
+        .minimal-btn:hover .btn-label {
+            opacity: 1;
+        }
+
+        /* Login Wrapper */
+        .login-wrapper {
+            position: relative;
+            z-index: 2;
+            flex: 1;
+            display: flex;
+            align-items: center;
+            padding: 20px 0;
+        }
+
+        /* Login Container */
+        .login-container {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 24px;
+            padding: 40px;
+            box-shadow: 0 25px 50px rgba(0, 0, 0, 0.4);
+            position: relative;
+            overflow: hidden;
+            max-width: 450px;
+            width: 100%;
+            margin: 0 auto;
+        }
+
+        .login-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(217, 119, 6, 0.1) 100%);
+            border-radius: 24px;
+            z-index: -1;
+        }
+
+        /* Header Section */
+        .login-header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+
+        .logo-section {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8rem;
+            color: white;
+        }
+
+        .logo-icon.admin {
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            box-shadow: 0 10px 30px rgba(245, 158, 11, 0.4);
+        }
+
+        .brand-name {
+            font-size: 1.8rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #ffffff 0%, #f59e0b 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0;
+        }
+
+        .welcome-text {
+            font-size: 2rem;
+            font-weight: 700;
+            color: white;
+            margin: 0 0 8px 0;
+        }
+
+        .welcome-subtitle {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 1rem;
+            margin: 0;
+        }
+
+        /* Flash Messages - Bootstrap style from old version */
+        .flash-messages {
+            margin-bottom: 24px;
+        }
+
+        .alert {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .alert-info {
+            background: rgba(59, 130, 246, 0.1);
+            border-left: 4px solid #3b82f6;
+            color: #93c5fd;
+            border: none;
+        }
+
+        .alert-danger {
+            background: rgba(239, 68, 68, 0.15);
+            border-color: rgba(239, 68, 68, 0.3);
+            color: #fca5a5;
+        }
+
+        .alert-success {
+            background: rgba(34, 197, 94, 0.15);
+            border-color: rgba(34, 197, 94, 0.3);
+            color: #86efac;
+        }
+
+        .permanent-tip {
+            margin-top: 20px !important;
+        }
+
+        /* Form Styles */
+        .login-form {
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            margin-bottom: 24px;
+        }
+
+        .form-label {
+            display: block;
+            color: white;
+            font-weight: 600;
+            margin-bottom: 8px;
+            font-size: 0.95rem;
+        }
+
+        .form-label i {
+            margin-right: 8px;
+            color: #f59e0b;
+        }
+
+        .input-wrapper {
+            position: relative;
+        }
+
+        .input-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #f59e0b;
+            z-index: 2;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 16px 16px 16px 48px;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 12px;
+            color: white;
+            font-size: 1rem;
+            transition: all 0.3s ease;
+            outline: none;
+        }
+
+        .form-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .form-input:focus {
+            border-color: #f59e0b;
+            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.2);
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .toggle-password:hover {
+            color: #f59e0b;
+            background: rgba(245, 158, 11, 0.1);
+        }
+
+        /* Admin Button */
+        .admin-button {
+            width: 100%;
+            padding: 18px;
+            background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+            border: none;
+            border-radius: 12px;
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 8px 25px rgba(245, 158, 11, 0.4);
+        }
+
+        .admin-button::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: left 0.5s;
+        }
+
+        .admin-button:hover::before {
+            left: 100%;
+        }
+
+        .admin-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(245, 158, 11, 0.5);
+        }
+
+        .admin-button:disabled {
+            opacity: 0.7;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .button-content,
+        .button-loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .button-loading {
+            display: none;
+        }
+
+        .admin-button.loading .button-content {
+            display: none;
+        }
+
+        .admin-button.loading .button-loading {
+            display: flex;
+        }
+
+        /* Action Links */
+        .action-links {
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .action-link {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            border-radius: 10px;
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            border: 1px solid transparent;
+        }
+
+        .action-link.secondary {
+            background: rgba(75, 85, 99, 0.2);
+            border-color: rgba(75, 85, 99, 0.4);
+            color: #d1d5db;
+        }
+
+        .action-link.secondary:hover {
+            background: rgba(75, 85, 99, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(75, 85, 99, 0.3);
+            text-decoration: none;
+            color: #f3f4f6;
+        }
+
+        /* Help Section */
+        .help-section {
+            margin-bottom: 32px;
+        }
+
+        /* Admin Security Footer */
+        .security-footer.admin-security {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .security-indicators {
+            display: flex;
+            gap: 4px;
+            margin-left: 8px;
+        }
+
+        .security-dot.admin-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #f59e0b;
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        .security-dot.admin-dot:nth-child(2) {
+            animation-delay: 0.3s;
+        }
+
+        .security-dot.admin-dot:nth-child(3) {
+            animation-delay: 0.6s;
+        }
+
+        /* Footer styling */
+        .professional-footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: #ecf0f1;
+            padding: 1.5rem 0;
+            position: relative;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            margin-top: auto;
+        }
+
+        .professional-footer::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, transparent 0%, #f59e0b 50%, transparent 100%);
+        }
+
+        .footer-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 1rem;
+        }
+
+        .footer-brand {
+            display: flex;
+            align-items: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            color: #f59e0b;
+        }
+
+        .footer-brand i { margin-right: 0.5rem; font-size: 1.4rem; }
+        .footer-links { display:flex; gap:2rem; flex-wrap:wrap; }
+        .footer-links a { color:#ecf0f1; text-decoration:none; font-size:0.9rem; transition:.3s; }
+        .footer-links a:hover { color:#f59e0b; border-bottom:2px solid #f59e0b; }
+        .footer-social { display:flex; gap:0.8rem; }
+        .footer-social a {
+            width:35px; height:35px; display:inline-flex; align-items:center; justify-content:center;
+            background: rgba(245,158,11,0.2); border-radius:50%; color:#ecf0f1; text-decoration:none;
+            transition:.3s; font-size:0.9rem;
+        }
+        .footer-social a:hover { background:#f59e0b; transform:translateY(-2px); }
+
+        .footer-copyright {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 0.9rem;
+        }
+
+        /* Animations */
+        @keyframes float {
+            0%, 100% { transform: translateY(0px) translateX(0px); }
+            25% { transform: translateY(-20px) translateX(10px); }
+            50% { transform: translateY(0px) translateX(20px); }
+            75% { transform: translateY(-10px) translateX(10px); }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .top-navigation-minimal {
+                top: 20px;
+                right: 20px;
+                gap: 8px;
+            }
+            
+            .minimal-btn {
+                width: 45px;
+                height: 45px;
+                font-size: 1rem;
+            }
+            
+            .login-container {
+                padding: 30px 20px;
+                margin: 10px;
+                border-radius: 20px;
+            }
+            
+            .logo-icon {
+                width: 50px;
+                height: 50px;
+                font-size: 1.5rem;
+            }
+            
+            .brand-name {
+                font-size: 1.5rem;
+            }
+            
+            .welcome-text {
+                font-size: 1.8rem;
+            }
+            
+            .form-input {
+                padding: 14px 14px 14px 44px;
+            }
+            
+            .admin-button {
+                padding: 16px;
+            }
+
+            .footer-content { flex-direction:column; text-align:center; }
+            .footer-links { justify-content:center; gap:1rem; }
+            .footer-social { justify-content:center; }
+        }
+
+        @media (max-width: 480px) {
+            .login-container {
+                padding: 25px 15px;
+            }
+            
+            .logo-section {
+                flex-direction: column;
+                gap: 8px;
+            }
+            
+            .welcome-text {
+                font-size: 1.6rem;
+            }
+        }
+    </style>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            // Toggle password visibility (same as old version)
+            const pwd = document.getElementById('password');
+            const toggleBtn = document.getElementById('toggleBtn');
+            const toggleIcon = document.getElementById('toggleIcon');
+            
+            toggleBtn.addEventListener('click', () => {
+                if (pwd.type === 'password') {
+                    pwd.type = 'text';
+                    toggleIcon.classList.replace('fa-eye', 'fa-eye-slash');
+                } else {
+                    pwd.type = 'password';
+                    toggleIcon.classList.replace('fa-eye-slash', 'fa-eye');
+                }
+            });
+
+            // Auto-dismiss flash alerts EXCEPT permanent tips (same as old version)
+            const ALERT_CLOSE_DELAY_MS = 1000;
+            const alerts = document.querySelectorAll('.alert:not(.permanent-tip)');
+            alerts.forEach(function (el) {
+                setTimeout(function () {
+                    const bsAlert = new bootstrap.Alert(el);
+                    bsAlert.close();
+                }, ALERT_CLOSE_DELAY_MS);
+            });
+
+            // Form submission handling (same pattern as old version)
+            const form = document.getElementById('adminLoginForm');
+            const loginBtn = document.getElementById('loginBtn');
+            const loginText = document.getElementById('loginText');
+            const loginSpinner = document.getElementById('loginSpinner');
+
+            form.addEventListener('submit', function() {
+                loginBtn.disabled = true;
+                loginText.classList.add('d-none');
+                loginSpinner.classList.remove('d-none');
+                loginBtn.classList.add('loading');
+            });
+        });
+    </script>
 </body>
 </html>

@@ -216,6 +216,180 @@
     box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
     color: white;
   }
+
+  /* Pagination Styles */
+  .pagination-container {
+    background: linear-gradient(135deg, #f8faff 0%, #ffffff 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    margin-top: 20px;
+  }
+
+  .pagination-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+
+  .pagination-info {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .entries-selector {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .entries-selector select {
+    padding: 8px 12px;
+    border: 2px solid #e2e8f0;
+    border-radius: 8px;
+    background: white;
+    font-weight: 600;
+    color: #4a5568;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .entries-selector select:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .pagination-stats {
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 14px;
+  }
+
+  .pagination-nav {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pagination-btn {
+    padding: 10px 15px;
+    border: 2px solid #e2e8f0;
+    background: white;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    color: #4a5568;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .pagination-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.2);
+    text-decoration: none;
+  }
+
+  .pagination-btn:disabled,
+  .pagination-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .pagination-btn:disabled:hover,
+  .pagination-btn.disabled:hover {
+    border-color: #e2e8f0;
+    color: #4a5568;
+    transform: none;
+    box-shadow: none;
+  }
+
+  .pagination-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: #667eea;
+  }
+
+  .pagination-btn.active:hover {
+    color: white;
+  }
+
+  .page-numbers {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .search-controls {
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+  }
+
+  .search-input {
+    padding: 12px 16px;
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    width: 100%;
+    max-width: 300px;
+  }
+
+  .search-input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+  }
+
+  .no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #64748b;
+  }
+
+  .no-results i {
+    font-size: 3rem;
+    margin-bottom: 15px;
+    opacity: 0.5;
+  }
+
+  @media (max-width: 768px) {
+    .pagination-controls {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 15px;
+    }
+
+    .pagination-info {
+      justify-content: center;
+      text-align: center;
+    }
+
+    .pagination-nav {
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+
+    .page-numbers {
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+  }
 </style>
 
 <div class="page-header">
@@ -253,13 +427,47 @@
   </form>
 </div>
 
+<!-- Search Controls -->
+<div class="search-controls">
+  <div class="row g-3 align-items-center">
+    <div class="col-md-4">
+      <label class="form-label fw-bold" style="color: #2d3748;">
+        <i class="fas fa-search me-2"></i>Search Questions
+      </label>
+      <input type="text" id="search-input" class="search-input" placeholder="Search by question text, ID, or type...">
+    </div>
+    <div class="col-md-3">
+      <label class="form-label fw-bold" style="color: #2d3748;">Filter by Type</label>
+      <select id="type-filter" class="form-select">
+        <option value="">All Types</option>
+        <option value="MCQ">MCQ</option>
+        <option value="MSQ">MSQ</option>
+        <option value="NUMERIC">NUMERIC</option>
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="form-label fw-bold" style="color: #2d3748;">Show Images</label>
+      <select id="image-filter" class="form-select">
+        <option value="">All</option>
+        <option value="with">With Images</option>
+        <option value="without">Without Images</option>
+      </select>
+    </div>
+    <div class="col-md-3 d-flex align-items-end gap-2">
+      <button id="clear-filters" class="btn btn-outline-secondary">
+        <i class="fas fa-times me-1"></i>Clear
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Enhanced Questions listing + controls -->
 <div class="card border-0 shadow-lg mb-4">
   <div class="card-header" style="background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%); border: none;">
     <div class="d-flex justify-content-between align-items-center">
       <h4 class="mb-0" style="color: #2d3748; font-weight: 700;">
         <i class="fas fa-list-alt me-2" style="color: #667eea;"></i>
-        Questions List ({{ questions|length }})
+        Questions List (<span id="total-count">{{ questions|length }}</span>)
       </h4>
       <div class="d-flex gap-2">
         <button id="delete-selected" class="btn btn-danger">
@@ -307,70 +515,120 @@
       </div>
     </div>
 
-    {% if questions %}
-      <table class="table enhanced-table mb-0">
-        <thead>
-          <tr>
-            <th style="width:50px">
-              <input id="select-all" type="checkbox" class="enhanced-checkbox" title="Select all">
-            </th>
-            <th>ID</th>
-            <th>Question</th>
-            <th>Type</th>
-            <th>Image</th>
-            <th>Marks</th>
-            <th style="width:120px">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for q in questions %}
+    <div id="questions-container">
+      {% if questions %}
+        <table class="table enhanced-table mb-0" id="questions-table">
+          <thead>
             <tr>
-              <td>
-                <input class="row-checkbox enhanced-checkbox" data-id="{{ q.id }}" type="checkbox">
-              </td>
-              <td>
-                <span class="question-id">{{ q.id }}</span>
-              </td>
-              <td>
-                <div class="question-text">{{ q.question_text }}</div>
-              </td>
-              <td>
-                <span class="question-type">{{ q.question_type }}</span>
-              </td>
-              <td>
-                {% if q.image_path %}
-                  <span class="image-path">{{ q.image_path }}</span>
-                {% else %}
-                  <span class="text-muted">-</span>
-                {% endif %}
-              </td>
-              <td>
-                <span class="marks-info">+{{ q.positive_marks }}/-{{ q.negative_marks }}</span>
-                {% if q.tolerance %}
-                  <br><small class="text-info fw-bold">(tol: {{ q.tolerance }})</small>
-                {% endif %}
-              </td>
-              <td class="action-buttons">
-                <a class="btn btn-warning btn-sm" href="{{ url_for('admin.edit_question', question_id=q.id) }}" title="Edit">
-                  <i class="fas fa-edit"></i>
-                </a>
-                <form method="post" action="{{ url_for('admin.delete_question', question_id=q.id) }}" style="display:inline" onsubmit="return confirm('Delete question #{{ q.id }}?');">
-                  <button class="btn btn-danger btn-sm" type="submit" title="Delete">
-                    <i class="fas fa-trash"></i>
-                  </button>
-                </form>
-              </td>
+              <th style="width:50px">
+                <input id="select-all" type="checkbox" class="enhanced-checkbox" title="Select all">
+              </th>
+              <th>ID</th>
+              <th>Question</th>
+              <th>Type</th>
+              <th>Image</th>
+              <th>Marks</th>
+              <th style="width:120px">Actions</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    {% else %}
-      <div class="p-5 text-center">
-        <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
-        <h5 class="text-muted">No questions found for this exam</h5>
-        <p class="text-muted">Start by adding some questions using the "Add Question" button above.</p>
-      </div>
-    {% endif %}
+          </thead>
+          <tbody id="questions-tbody">
+            {% for q in questions %}
+              <tr class="question-row" 
+                  data-question-text="{{ q.question_text|lower }}"
+                  data-question-type="{{ q.question_type }}"
+                  data-has-image="{{ 'true' if q.image_path else 'false' }}"
+                  data-question-id="{{ q.id }}">
+                <td>
+                  <input class="row-checkbox enhanced-checkbox" data-id="{{ q.id }}" type="checkbox">
+                </td>
+                <td>
+                  <span class="question-id">{{ q.id }}</span>
+                </td>
+                <td>
+                  <div class="question-text">{{ q.question_text }}</div>
+                </td>
+                <td>
+                  <span class="question-type">{{ q.question_type }}</span>
+                </td>
+                <td>
+                  {% if q.image_path %}
+                    <span class="image-path">{{ q.image_path }}</span>
+                  {% else %}
+                    <span class="text-muted">-</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <span class="marks-info">+{{ q.positive_marks }}/-{{ q.negative_marks }}</span>
+                  {% if q.tolerance %}
+                    <br><small class="text-info fw-bold">(tol: {{ q.tolerance }})</small>
+                  {% endif %}
+                </td>
+                <td class="action-buttons">
+                  <a class="btn btn-warning btn-sm" href="{{ url_for('admin.edit_question', question_id=q.id) }}" title="Edit">
+                    <i class="fas fa-edit"></i>
+                  </a>
+                  <form method="post" action="{{ url_for('admin.delete_question', question_id=q.id) }}" style="display:inline" onsubmit="return confirm('Delete question #{{ q.id }}?');">
+                    <button class="btn btn-danger btn-sm" type="submit" title="Delete">
+                      <i class="fas fa-trash"></i>
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <!-- Pagination Controls -->
+        <div class="pagination-container">
+          <div class="pagination-controls">
+            <div class="pagination-info">
+              <div class="entries-selector">
+                <label for="entries-per-page" class="fw-bold" style="color: #2d3748;">Show:</label>
+                <select id="entries-per-page">
+                  <option value="5">5</option>
+                  <option value="10" selected>10</option>
+                  <option value="25">25</option>
+                  <option value="50">50</option>
+                  <option value="100">100</option>
+                  <option value="all">All</option>
+                </select>
+                <span class="fw-bold" style="color: #2d3748;">entries</span>
+              </div>
+              <div class="pagination-stats">
+                Showing <span id="start-entry">1</span> to <span id="end-entry">10</span> of <span id="filtered-count">{{ questions|length }}</span> entries
+                <span id="filter-info"></span>
+              </div>
+            </div>
+            
+            <div class="pagination-nav">
+              <button id="first-page" class="pagination-btn">
+                <i class="fas fa-angle-double-left"></i> First
+              </button>
+              <button id="prev-page" class="pagination-btn">
+                <i class="fas fa-angle-left"></i> Previous
+              </button>
+              
+              <div class="page-numbers" id="page-numbers">
+                <!-- Page numbers will be generated by JavaScript -->
+              </div>
+              
+              <button id="next-page" class="pagination-btn">
+                Next <i class="fas fa-angle-right"></i>
+              </button>
+              <button id="last-page" class="pagination-btn">
+                Last <i class="fas fa-angle-double-right"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      {% else %}
+        <div class="p-5 text-center">
+          <i class="fas fa-inbox fa-3x text-muted mb-3"></i>
+          <h5 class="text-muted">No questions found for this exam</h5>
+          <p class="text-muted">Start by adding some questions using the "Add Question" button above.</p>
+        </div>
+      {% endif %}
+    </div>
   </div>
 </div>
 
@@ -435,6 +693,233 @@
 
 <script>
 (function(){
+  // Pagination variables
+  let currentPage = 1;
+  let itemsPerPage = 10;
+  let filteredRows = [];
+  let allRows = [];
+  
+  // Initialize pagination
+  function initializePagination() {
+    allRows = Array.from(document.querySelectorAll('.question-row'));
+    filteredRows = [...allRows];
+    updatePagination();
+  }
+
+  // Search and filter functionality
+  function applyFilters() {
+    const searchTerm = document.getElementById('search-input').value.toLowerCase();
+    const typeFilter = document.getElementById('type-filter').value;
+    const imageFilter = document.getElementById('image-filter').value;
+    
+    filteredRows = allRows.filter(row => {
+      const questionText = row.dataset.questionText;
+      const questionId = row.dataset.questionId;
+      const questionType = row.dataset.questionType;
+      const hasImage = row.dataset.hasImage === 'true';
+      
+      // Search filter
+      const matchesSearch = !searchTerm || 
+        questionText.includes(searchTerm) || 
+        questionId.includes(searchTerm) ||
+        questionType.toLowerCase().includes(searchTerm);
+      
+      // Type filter
+      const matchesType = !typeFilter || questionType === typeFilter;
+      
+      // Image filter
+      let matchesImage = true;
+      if (imageFilter === 'with') matchesImage = hasImage;
+      else if (imageFilter === 'without') matchesImage = !hasImage;
+      
+      return matchesSearch && matchesType && matchesImage;
+    });
+    
+    currentPage = 1;
+    updatePagination();
+    updateFilterInfo();
+  }
+
+  function updateFilterInfo() {
+    const filterInfo = document.getElementById('filter-info');
+    const totalCount = document.getElementById('total-count');
+    const filteredCount = document.getElementById('filtered-count');
+    
+    totalCount.textContent = allRows.length;
+    filteredCount.textContent = filteredRows.length;
+    
+    if (filteredRows.length < allRows.length) {
+      filterInfo.textContent = ` (filtered from ${allRows.length} total)`;
+    } else {
+      filterInfo.textContent = '';
+    }
+  }
+
+  function updatePagination() {
+    const totalItems = filteredRows.length;
+    const totalPages = itemsPerPage === 'all' ? 1 : Math.ceil(totalItems / itemsPerPage);
+    
+    // Update pagination stats
+    let startEntry, endEntry;
+    if (itemsPerPage === 'all') {
+      startEntry = totalItems > 0 ? 1 : 0;
+      endEntry = totalItems;
+    } else {
+      startEntry = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+      endEntry = Math.min(currentPage * itemsPerPage, totalItems);
+    }
+    
+    document.getElementById('start-entry').textContent = startEntry;
+    document.getElementById('end-entry').textContent = endEntry;
+    
+    // Show/hide rows
+    allRows.forEach(row => row.style.display = 'none');
+    
+    if (itemsPerPage === 'all') {
+      filteredRows.forEach(row => row.style.display = '');
+    } else {
+      const startIndex = (currentPage - 1) * itemsPerPage;
+      const endIndex = startIndex + itemsPerPage;
+      filteredRows.slice(startIndex, endIndex).forEach(row => row.style.display = '');
+    }
+    
+    // Update navigation buttons
+    const firstBtn = document.getElementById('first-page');
+    const prevBtn = document.getElementById('prev-page');
+    const nextBtn = document.getElementById('next-page');
+    const lastBtn = document.getElementById('last-page');
+    
+    firstBtn.disabled = currentPage === 1 || itemsPerPage === 'all';
+    prevBtn.disabled = currentPage === 1 || itemsPerPage === 'all';
+    nextBtn.disabled = currentPage === totalPages || itemsPerPage === 'all';
+    lastBtn.disabled = currentPage === totalPages || itemsPerPage === 'all';
+    
+    firstBtn.classList.toggle('disabled', firstBtn.disabled);
+    prevBtn.classList.toggle('disabled', prevBtn.disabled);
+    nextBtn.classList.toggle('disabled', nextBtn.disabled);
+    lastBtn.classList.toggle('disabled', lastBtn.disabled);
+    
+    // Generate page numbers
+    generatePageNumbers(totalPages);
+  }
+
+  function generatePageNumbers(totalPages) {
+    const pageNumbersContainer = document.getElementById('page-numbers');
+    pageNumbersContainer.innerHTML = '';
+    
+    if (itemsPerPage === 'all' || totalPages <= 1) {
+      return;
+    }
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Adjust startPage if we're near the end
+    if (endPage - startPage < maxVisiblePages - 1) {
+      startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Add ellipsis and first page if needed
+    if (startPage > 1) {
+      addPageButton(1);
+      if (startPage > 2) {
+        const ellipsis = document.createElement('span');
+        ellipsis.textContent = '...';
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.style.padding = '10px 8px';
+        ellipsis.style.color = '#64748b';
+        pageNumbersContainer.appendChild(ellipsis);
+      }
+    }
+    
+    // Add visible page numbers
+    for (let i = startPage; i <= endPage; i++) {
+      addPageButton(i);
+    }
+    
+    // Add ellipsis and last page if needed
+    if (endPage < totalPages) {
+      if (endPage < totalPages - 1) {
+        const ellipsis = document.createElement('span');
+        ellipsis.textContent = '...';
+        ellipsis.className = 'pagination-ellipsis';
+        ellipsis.style.padding = '10px 8px';
+        ellipsis.style.color = '#64748b';
+        pageNumbersContainer.appendChild(ellipsis);
+      }
+      addPageButton(totalPages);
+    }
+  }
+
+  function addPageButton(pageNum) {
+    const pageBtn = document.createElement('button');
+    pageBtn.textContent = pageNum;
+    pageBtn.className = 'pagination-btn';
+    pageBtn.style.minWidth = '40px';
+    
+    if (pageNum === currentPage) {
+      pageBtn.classList.add('active');
+    }
+    
+    pageBtn.addEventListener('click', () => {
+      currentPage = pageNum;
+      updatePagination();
+    });
+    
+    document.getElementById('page-numbers').appendChild(pageBtn);
+  }
+
+  // Event listeners
+  document.getElementById('search-input').addEventListener('input', applyFilters);
+  document.getElementById('type-filter').addEventListener('change', applyFilters);
+  document.getElementById('image-filter').addEventListener('change', applyFilters);
+  
+  document.getElementById('clear-filters').addEventListener('click', () => {
+    document.getElementById('search-input').value = '';
+    document.getElementById('type-filter').value = '';
+    document.getElementById('image-filter').value = '';
+    applyFilters();
+  });
+
+  document.getElementById('entries-per-page').addEventListener('change', (e) => {
+    itemsPerPage = e.target.value === 'all' ? 'all' : parseInt(e.target.value);
+    currentPage = 1;
+    updatePagination();
+  });
+
+  // Navigation button event listeners
+  document.getElementById('first-page').addEventListener('click', () => {
+    currentPage = 1;
+    updatePagination();
+  });
+
+  document.getElementById('prev-page').addEventListener('click', () => {
+    if (currentPage > 1) {
+      currentPage--;
+      updatePagination();
+    }
+  });
+
+  document.getElementById('next-page').addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    if (currentPage < totalPages) {
+      currentPage++;
+      updatePagination();
+    }
+  });
+
+  document.getElementById('last-page').addEventListener('click', () => {
+    const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+    currentPage = totalPages;
+    updatePagination();
+  });
+
+  // Initialize pagination on page load
+  if (document.querySelectorAll('.question-row').length > 0) {
+    initializePagination();
+  }
+
   // Exam select + reload
   const examSelect = document.getElementById('exam-select');
   const reloadBtn = document.getElementById('reload-btn');
@@ -624,7 +1109,11 @@
 
   selectAll.addEventListener('change', (e) => {
     const checked = selectAll.checked;
-    document.querySelectorAll('.row-checkbox').forEach(cb => cb.checked = checked);
+    // Only check visible checkboxes
+    const visibleCheckboxes = Array.from(document.querySelectorAll('.row-checkbox')).filter(cb => {
+      return cb.closest('tr').style.display !== 'none';
+    });
+    visibleCheckboxes.forEach(cb => cb.checked = checked);
   });
 
   clearSelectionBtn.addEventListener('click', (e) => {
