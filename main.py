@@ -23,6 +23,11 @@ from reportlab.pdfgen import canvas
 from reportlab.lib.utils import ImageReader
 from dotenv import load_dotenv
 from admin import admin_bp
+import threading
+import uuid
+from flask_session import Session
+import tempfile
+
 
 # CRITICAL: Load environment variables FIRST
 load_dotenv()
@@ -47,11 +52,7 @@ app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 7200  # 2 hours
 
 
-# --- SERVER-SIDE SESSION (Flask-Session) - to avoid large cookie sizes ---
-from flask_session import Session
-import tempfile
 
-# Configure server-side sessions
 # Use filesystem for Render single-instance free tier. For multi-instance use Redis.
 SESSION_TYPE = os.environ.get("SESSION_TYPE", "filesystem")  # default to filesystem
 # session files dir
@@ -172,7 +173,160 @@ def clear_user_cache():
     print(f"🗑️ Cleared {len(keys_to_clear)} cached session keys")
 
 
+# =============================================
+# CONCURRENT SAFETY SYSTEM
+# =============================================
 
+# Global file locks
+file_locks = {}
+lock_registry = threading.RLock()
+
+def get_file_lock(file_key):
+    """Get or create a lock for a specific file"""
+    with lock_registry:
+        if file_key not in file_locks:
+            file_locks[file_key] = threading.RLock()
+        return file_locks[file_key]
+
+def generate_operation_id():
+    """Generate unique operation ID"""
+    return f"op_{int(time.time())}_{uuid.uuid4().hex[:8]}"
+
+def safe_csv_save_with_retry(df, csv_type, operation_id=None, max_retries=5):
+    """Save CSV with retry mechanism - never gives up"""
+    if not operation_id:
+        operation_id = generate_operation_id()
+    
+    global drive_service
+    file_id = DRIVE_FILE_IDS.get(csv_type)
+    
+    if not file_id or not drive_service:
+        print(f"[{operation_id}] No file ID or drive service for {csv_type}")
+        return False
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"[{operation_id}] Attempt {attempt + 1} saving {csv_type}")
+            success = save_csv_to_drive(drive_service, df, file_id)
+            
+            if success:
+                # Clear cache
+                cache_key = f'csv_{csv_type}.csv'
+                app_cache['data'].pop(cache_key, None)
+                app_cache['timestamps'].pop(cache_key, None)
+                print(f"[{operation_id}] Successfully saved {csv_type} on attempt {attempt + 1}")
+                return True
+            else:
+                print(f"[{operation_id}] Save failed for {csv_type} on attempt {attempt + 1}")
+                
+        except Exception as e:
+            print(f"[{operation_id}] Exception on attempt {attempt + 1} for {csv_type}: {e}")
+        
+        # Wait before retry (exponential backoff)
+        if attempt < max_retries - 1:
+            wait_time = (2 ** attempt) * 0.5  # 0.5, 1, 2, 4, 8 seconds
+            print(f"[{operation_id}] Waiting {wait_time}s before retry...")
+            time.sleep(wait_time)
+    
+    print(f"[{operation_id}] FAILED to save {csv_type} after {max_retries} attempts")
+    return False
+
+def safe_csv_load(filename, operation_id=None):
+    """Safe CSV loading with file locking"""
+    if not operation_id:
+        operation_id = generate_operation_id()
+    
+    file_lock = get_file_lock(filename.replace('.csv', ''))
+    
+    with file_lock:
+        print(f"[{operation_id}] Loading {filename} safely")
+        return load_csv_from_drive_direct(filename)
+
+def safe_dual_file_save(results_df, responses_df, new_result, response_records):
+    """Atomically save both results and responses with retry"""
+    operation_id = generate_operation_id()
+    
+    # Lock both files together
+    with get_file_lock('results'):
+        with get_file_lock('responses'):
+            print(f"[{operation_id}] Starting dual file save with retry mechanism")
+            
+            # Prepare dataframes
+            new_results_df = pd.concat([results_df, pd.DataFrame([new_result])], ignore_index=True)
+            new_responses_df = pd.concat([responses_df, pd.DataFrame(response_records)], ignore_index=True)
+            
+            # Save results with retry
+            print(f"[{operation_id}] Saving results...")
+            results_success = safe_csv_save_with_retry(new_results_df, 'results', f"{operation_id}_results")
+            
+            if results_success:
+                print(f"[{operation_id}] Results saved! Now saving responses...")
+                # Save responses with retry
+                responses_success = safe_csv_save_with_retry(new_responses_df, 'responses', f"{operation_id}_responses")
+                
+                if responses_success:
+                    print(f"[{operation_id}] Both files saved successfully!")
+                    return True, "Both results and responses saved successfully"
+                else:
+                    print(f"[{operation_id}] Responses failed even after retries!")
+                    return False, "Failed to save responses after multiple attempts"
+            else:
+                print(f"[{operation_id}] Results failed even after retries!")
+                return False, "Failed to save results after multiple attempts"
+
+def safe_user_register(email, full_name):
+    """Safe user registration with retry mechanism"""
+    operation_id = generate_operation_id()
+    
+    with get_file_lock('users'):
+        print(f"[{operation_id}] Registering user safely: {email}")
+        
+        # Load current users
+        users_df = safe_csv_load('users.csv', operation_id)
+        
+        # Check if email exists
+        if not users_df.empty and email.lower() in users_df['email'].str.lower().values:
+            existing_user = users_df[users_df['email'].str.lower() == email.lower()].iloc[0]
+            return False, "exists", {
+                'username': existing_user['username'],
+                'password': existing_user['password'],
+                'full_name': existing_user['full_name']
+            }
+        
+        # Create new user
+        existing_usernames = users_df['username'].tolist() if not users_df.empty else []
+        username = generate_username(full_name, existing_usernames)
+        password = generate_password()
+        
+        next_id = 1
+        if not users_df.empty and 'id' in users_df.columns:
+            next_id = int(users_df['id'].fillna(0).astype(int).max()) + 1
+        
+        new_user = {
+            'id': next_id,
+            'full_name': full_name,
+            'username': username,
+            'email': email.lower(),
+            'password': password,
+            'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            'role': 'user'
+        }
+        
+        # Prepare new dataframe
+        if users_df.empty:
+            new_df = pd.DataFrame([new_user])
+        else:
+            new_df = pd.concat([users_df, pd.DataFrame([new_user])], ignore_index=True)
+        
+        # Save with retry mechanism
+        if safe_csv_save_with_retry(new_df, 'users', operation_id):
+            return True, "success", {
+                'username': username,
+                'password': password,
+                'full_name': full_name
+            }
+        else:
+            return False, "save_failed", None
 
 
 def ensure_required_files():
@@ -1067,13 +1221,12 @@ def verify_email_exists(email):
 
 @app.route('/forgot_password', methods=['GET', 'POST'])
 def forgot_password():
-    """Register new user with email verification"""
+    """Enhanced user registration with concurrent safety and retry"""
     if request.method == 'POST':
         try:
             email = request.form['email'].strip().lower()
             full_name = request.form.get('full_name', '').strip()
 
-            # Validate inputs
             if not email:
                 flash('Please enter your email address.', 'error')
                 return render_template('forgot_password.html')
@@ -1082,89 +1235,30 @@ def forgot_password():
                 flash('Please enter your full name.', 'error')
                 return render_template('forgot_password.html', email=email)
 
-            # Verify email format and domain
             is_valid, error_message = verify_email_exists(email)
             if not is_valid:
                 flash(f'Invalid email: {error_message}', 'error')
                 return render_template('forgot_password.html', email=email, full_name=full_name)
 
-            # Load existing users
-            users_df = load_csv_with_cache('users.csv')
-
-            # Check if email already exists
-            if not users_df.empty and email in users_df['email'].str.lower().values:
-                # Email already exists - send existing credentials
-                existing_user = users_df[users_df['email'].str.lower() == email].iloc[0]
-                username = existing_user['username']
-                password = existing_user['password']
-                existing_full_name = existing_user['full_name']
-
+            # Use safe registration with retry
+            success, status, credentials = safe_user_register(email, full_name)
+            
+            if success or status == "exists":
                 # Send credentials email
-                email_sent, email_message = send_credentials_email(email, existing_full_name, username, password)
+                email_sent, email_message = send_credentials_email(
+                    email, credentials['full_name'], credentials['username'], credentials['password']
+                )
 
                 if email_sent:
-                    flash(f'Account already exists! Your login credentials have been sent to {email}', 'success')
-                    return render_template('forgot_password.html', success=True, email=email)
+                    msg = 'Account created successfully!' if success else 'Account already exists!'
+                    flash(f'{msg} Your credentials have been sent to {email}', 'success')
                 else:
-                    flash('Account exists. Here are your credentials:', 'warning')
-                    return render_template('forgot_password.html', success=True, email=email, credentials={
-                        'username': username,
-                        'password': password
-                    })
-
-            # Create new user account
-            # Generate unique username and password
-            existing_usernames = users_df['username'].tolist() if not users_df.empty else []
-            username = generate_username(full_name, existing_usernames)
-            password = generate_password()
-
-            # Generate new user ID
-            next_user_id = 1
-            if not users_df.empty and 'id' in users_df.columns:
-                try:
-                    next_user_id = int(users_df['id'].fillna(0).astype(int).max()) + 1
-                except:
-                    next_user_id = len(users_df) + 1
-
-            # Create new user record
-            new_user = {
-                'id': int(next_user_id),
-                'full_name': full_name,
-                'username': username,
-                'email': email,
-                'password': password,
-                'created_at': datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-                'role': 'user'
-            }
-
-            # Add to users DataFrame
-            if users_df.empty:
-                new_users_df = pd.DataFrame([new_user])
+                    msg = 'Account created!' if success else 'Account exists!'
+                    flash(f'{msg} Here are your credentials:', 'success')
+                    
+                return render_template('forgot_password.html', success=True, email=email, credentials=credentials)
             else:
-                new_users_df = pd.concat([users_df, pd.DataFrame([new_user])], ignore_index=True)
-
-            # Save to Google Drive
-            if save_csv_to_drive_batch(new_users_df, 'users'):
-                # Clear cache
-                cache_key = f'csv_users.csv'
-                app_cache['data'].pop(cache_key, None)
-                app_cache['timestamps'].pop(cache_key, None)
-
-                # Send credentials email
-                email_sent, email_message = send_credentials_email(email, full_name, username, password)
-
-                if email_sent:
-                    flash(f'Account created successfully! Your credentials have been sent to {email}', 'success')
-                    return render_template('forgot_password.html', success=True, email=email)
-                else:
-                    # User created but email failed - show credentials on screen
-                    flash('Account created! Here are your credentials:', 'success')
-                    return render_template('forgot_password.html', success=True, email=email, credentials={
-                        'username': username,
-                        'password': password
-                    })
-            else:
-                flash('Failed to create account. Please try again.', 'error')
+                flash(f'Registration failed: {status}. Please try again.', 'error')
 
         except Exception as e:
             print(f"Registration error: {e}")
@@ -1618,7 +1712,7 @@ def clear_answer(exam_id):
 @app.route('/submit-exam/<int:exam_id>', methods=['GET', 'POST'])
 @login_required
 def submit_exam(exam_id):
-    """COMPLETELY FIXED exam submission with comprehensive error handling"""
+    """Enhanced exam submission with concurrent safety and retry mechanism"""
     if request.method == 'GET':
         return render_template('submit_confirm.html', exam_id=exam_id)
 
@@ -1646,9 +1740,9 @@ def submit_exam(exam_id):
         incorrect_answers = 0
         unanswered_questions = 0
 
-        # Load current data for ID generation
-        results_df = load_csv_with_cache('results.csv')
-        responses_df = load_csv_with_cache('responses.csv')
+        # Load current data using safe functions
+        results_df = safe_csv_load('results.csv')
+        responses_df = safe_csv_load('responses.csv')
 
         # Generate next result ID
         next_result_id = 1
@@ -1704,8 +1798,7 @@ def submit_exam(exam_id):
                 if is_attempted:
                     tolerance = question.get('tolerance', 0.1) if question_type == 'NUMERIC' else None
                     is_correct = check_answer(given_answer, correct_answer, question_type, tolerance or 0.1)
-                    question_score = calculate_question_score(is_correct, question_type, q_positive_marks,
-                                                              q_negative_marks)
+                    question_score = calculate_question_score(is_correct, question_type, q_positive_marks, q_negative_marks)
 
                     if is_correct:
                         correct_answers += 1
@@ -1794,40 +1887,27 @@ def submit_exam(exam_id):
 
         print(f"Attempting to save results: Score {total_score}/{max_possible_score} ({percentage:.1f}%)")
 
-        # Batch save results and responses
-        try:
-            # Save result
-            new_results_df = pd.concat([results_df, pd.DataFrame([new_result])], ignore_index=True)
-            results_saved = save_csv_to_drive_batch(new_results_df, 'results')
+        # Use atomic dual file save with retry mechanism
+        save_success, save_message = safe_dual_file_save(results_df, responses_df, new_result, response_records)
 
-            # Batch save responses
-            responses_saved = batch_save_responses(response_records) if response_records else True
+        if save_success:
+            session['latest_attempt_id'] = next_result_id
+            print(f"Successfully saved exam results and {len(response_records)} responses")
 
-            if results_saved and responses_saved:
-                session['latest_attempt_id'] = next_result_id
-                print(f"Successfully saved exam results and {len(response_records)} responses")
+            # Clear exam session data
+            session.pop('exam_answers', None)
+            session.pop('marked_for_review', None)
+            session.pop('exam_start_time', None)
 
-                # Clear exam session data
-                session.pop('exam_answers', None)
-                session.pop('marked_for_review', None)
-                session.pop('exam_start_time', None)
+            # Clear exam cache
+            cache_key = f'exam_data_{exam_id}'
+            session.pop(cache_key, None)
 
-                # Clear exam cache
-                cache_key = f'exam_data_{exam_id}'
-                session.pop(cache_key, None)
-
-                flash('Exam submitted successfully!', 'success')
-                return redirect(url_for('result', exam_id=exam_id))
-            else:
-                print("Failed to save results or responses")
-                flash('Error saving exam results. Please try again.', 'error')
-                return redirect(url_for('exam_page', exam_id=exam_id))
-
-        except Exception as e:
-            print(f"Critical error during save: {e}")
-            import traceback
-            traceback.print_exc()
-            flash(f'Critical error saving exam results: {str(e)}', 'error')
+            flash('Exam submitted successfully!', 'success')
+            return redirect(url_for('result', exam_id=exam_id))
+        else:
+            print(f"Failed to save exam submission: {save_message}")
+            flash(f'Error saving exam results: {save_message}. Please try again.', 'error')
             return redirect(url_for('exam_page', exam_id=exam_id))
 
     except Exception as e:
