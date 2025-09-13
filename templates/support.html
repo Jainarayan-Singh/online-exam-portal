@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support - ExamPortal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .support-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+        .support-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-back {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .faq-item {
+            border-bottom: 1px solid #e9ecef;
+            padding: 1rem 0;
+        }
+        .faq-item:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="content-card p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary"><i class="fas fa-life-ring"></i> Support Center</h1>
+                <a href="javascript:history.back()" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="support-card">
+                        <h4 class="text-primary"><i class="fas fa-headset"></i> Contact Support</h4>
+                        <p class="text-muted">Get help from our support team</p>
+                        <div class="row">
+                            <div class="col-6">
+                                <strong><i class="fas fa-envelope text-primary"></i> Email</strong><br>
+                                <small>examportaldesk@gmail.com</small>
+                            </div>
+                            <div class="col-6">
+                                <strong><i class="fas fa-phone text-success"></i> Phone</strong><br>
+                                <small>+91-755-123-4567</small>
+                            </div>
+                        </div>
+                        <div class="mt-3">
+                            <strong><i class="fas fa-clock text-warning"></i> Support Hours</strong><br>
+                            <small>Monday - Friday: 9:00 AM - 6:00 PM IST<br>Saturday, Sunday: Unavailable</small>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-6">
+                    <div class="support-card">
+                        <h4 class="text-success"><i class="fas fa-bolt"></i> Quick Help</h4>
+                        <p class="text-muted">Common solutions for immediate assistance</p>
+                        <div class="d-grid gap-2">
+                            <button class="btn btn-outline-primary" type="button" data-bs-toggle="collapse" data-bs-target="#faqCollapse">
+                                <i class="fas fa-question-circle"></i> View FAQ
+                            </button>
+                            <a href="#troubleshoot" class="btn btn-outline-success">
+                                <i class="fas fa-tools"></i> Troubleshooting Guide
+                            </a>
+                            <a href="#technical" class="btn btn-outline-warning">
+                                <i class="fas fa-cog"></i> Technical Requirements
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="collapse mt-4" id="faqCollapse">
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h5><i class="fas fa-question-circle"></i> Frequently Asked Questions</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="faq-item">
+                            <h6><strong>Q: I forgot my password. How can I reset it?</strong></h6>
+                            <p>A: Click on "Forgot Password" on the login page and follow the instructions sent to your registered email.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h6><strong>Q: My exam is not loading. What should I do?</strong></h6>
+                            <p>A: Check your internet connection, clear browser cache, and ensure JavaScript is enabled. If the problem persists, contact support immediately.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h6><strong>Q: Can I pause an exam once started?</strong></h6>
+                            <p>A: No, exams cannot be paused once started. Ensure you have sufficient time before beginning.</p>
+                        </div>
+                        <div class="faq-item">
+                            <h6><strong>Q: How do I view my exam results?</strong></h6>
+                            <p>A: Results are available in your dashboard after the exam is submitted and processed by your institution.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="troubleshoot" class="mt-5">
+                <h3 class="text-primary border-bottom pb-2"><i class="fas fa-tools"></i> Troubleshooting Guide</h3>
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-wifi text-primary"></i> Connection Issues</h5>
+                        <ul>
+                            <li>Check your internet connection</li>
+                            <li>Try refreshing the page</li>
+                            <li>Switch to a different browser</li>
+                            <li>Disable browser extensions temporarily</li>
+                        </ul>
+                    </div>
+                    <div class="col-md-6">
+                        <h5><i class="fas fa-browser text-success"></i> Browser Issues</h5>
+                        <ul>
+                            <li>Clear browser cache and cookies</li>
+                            <li>Enable JavaScript and cookies</li>
+                            <li>Update your browser to latest version</li>
+                            <li>Try incognito/private browsing mode</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <div id="technical" class="mt-5">
+                <h3 class="text-primary border-bottom pb-2"><i class="fas fa-cog"></i> Technical Requirements</h3>
+                <div class="row mt-4">
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-desktop fa-3x text-primary mb-3"></i>
+                            <h5>Supported Browsers</h5>
+                            <ul class="list-unstyled">
+                                <li>Chrome 90+</li>
+                                <li>Firefox 88+</li>
+                                <li>Safari 14+</li>
+                                <li>Edge 90+</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-wifi fa-3x text-success mb-3"></i>
+                            <h5>Internet Speed</h5>
+                            <ul class="list-unstyled">
+                                <li>Minimum: 1 Mbps</li>
+                                <li>Recommended: 5+ Mbps</li>
+                                <li>Stable connection required</li>
+                                <li>Avoid shared networks</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="text-center">
+                            <i class="fas fa-laptop fa-3x text-warning mb-3"></i>
+                            <h5>Device Requirements</h5>
+                            <ul class="list-unstyled">
+                                <li>Desktop/Laptop preferred</li>
+                                <li>4GB+ RAM recommended</li>
+                                <li>Updated OS</li>
+                                <li>Webcam (if required)</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-info mt-5">
+                <h5><i class="fas fa-info-circle"></i> Still Need Help?</h5>
+                <p class="mb-0">If you can't find the answer you're looking for, don't hesitate to contact our support team. We're here to help you succeed!</p>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,210 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Us - ExamPortal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .contact-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            text-center;
+        }
+        .contact-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-back {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .btn-contact {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            transition: all 0.3s ease;
+            width: 100%;
+            padding: 0.75rem;
+        }
+        .btn-contact:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .contact-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        .map-container {
+            height: 300px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px dashed #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="content-card p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary"><i class="fas fa-envelope"></i> Contact Us</h1>
+                <a href="javascript:history.back()" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-8">
+                    <h3 class="text-primary mb-4">Get in Touch</h3>
+                    <p class="lead">We're here to help! Choose the best way to reach us based on your needs.</p>
+                    
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="contact-card">
+                                <i class="fas fa-envelope contact-icon text-primary"></i>
+                                <h5>Email Support</h5>
+                                <p class="text-muted">For general inquiries and non-urgent matters</p>
+                                <p><strong>examportaldesk@gmail.com</strong></p>
+                                <small class="text-muted">Response within 24 hours</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="contact-card">
+                                <i class="fas fa-phone contact-icon text-success"></i>
+                                <h5>Phone Support</h5>
+                                <p class="text-muted">For urgent technical issues during exams</p>
+                                <p><strong>+91-755-123-4567</strong></p>
+                                <small class="text-muted">Mon-Fri: 9AM-6PM IST</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="contact-card">
+                                <i class="fas fa-comment-dots contact-icon text-info"></i>
+                                <h5>Live Chat</h5>
+                                <p class="text-muted">Real-time assistance for quick questions</p>
+                                <button class="btn btn-contact" onclick="alert('Live chat will be available soon!')">
+                                    <i class="fas fa-comments"></i> Start Chat
+                                </button>
+                                <small class="text-muted d-block mt-2">Available during business hours</small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <div class="contact-card">
+                                <i class="fas fa-bug contact-icon text-danger"></i>
+                                <h5>Report Issues</h5>
+                                <p class="text-muted">Technical bugs and platform issues</p>
+                                <button class="btn btn-contact" onclick="alert('Bug report form will open soon!')">
+                                    <i class="fas fa-exclamation-triangle"></i> Report Bug
+                                </button>
+                                <small class="text-muted d-block mt-2">Include screenshots if possible</small>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-5">
+                        <h4 class="text-primary mb-3"><i class="fas fa-map-marker-alt"></i> Our Location</h4>
+                        <div class="map-container">
+                            <div class="text-center">
+                                <i class="fas fa-map-marked-alt fa-3x text-muted mb-3"></i>
+                                <h5 class="text-muted">ExamPortal Headquarters</h5>
+                                <p class="text-muted">
+                                    Tech Park, Noida<br>
+                                    Uttar Pradesh<br>
+                                    India
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="card border-0 bg-light">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-clock"></i> Response Times</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <strong class="text-success">Emergency (Exam Issues)</strong><br>
+                                <small>Immediate - Call directly</small>
+                            </div>
+                            <div class="mb-3">
+                                <strong class="text-warning">Urgent Queries</strong><br>
+                                <small>Within 2-4 hours</small>
+                            </div>
+                            <div class="mb-3">
+                                <strong class="text-info">General Support</strong><br>
+                                <small>Within 24 hours</small>
+                            </div>
+                            <div>
+                                <strong class="text-muted">Feature Requests</strong><br>
+                                <small>Within 48-72 hours</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0 bg-light mt-4">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="fas fa-graduation-cap"></i> For Institutions</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Educational institutions interested in our platform:</p>
+                            <p><strong>Business Email:</strong><br>
+                            <small>examportaldesk@gmail.com</small></p>
+                            <p><strong>Sales Team:</strong><br>
+                            <small>+91-755-987-6543</small></p>
+                            <button class="btn btn-success btn-sm w-100" onclick="alert('Demo request form will open soon!')">
+                                <i class="fas fa-calendar"></i> Schedule Demo
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="alert alert-primary mt-5">
+                <div class="row align-items-center">
+                    <div class="col-md-8">
+                        <h5><i class="fas fa-lightbulb"></i> Before Contacting Support</h5>
+                        <p class="mb-0">Please check our FAQ section and troubleshooting guide first. This helps us provide faster assistance for your specific needs.</p>
+                    </div>
+                    <div class="col-md-4 text-end">
+                        <i class="fas fa-headset fa-3x text-primary"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

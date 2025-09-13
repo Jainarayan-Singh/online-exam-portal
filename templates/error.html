@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+
+{% block title %}Error {{ error_code }} - ExamPortal{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card text-center">
+                <div class="card-body p-5">
+                    <div class="mb-4">
+                        <i class="fas fa-exclamation-triangle fa-4x text-warning"></i>
+                    </div>
+
+                    <h1 class="display-4 text-primary mb-3">{{ error_code }}</h1>
+                    <h4 class="mb-4">{{ error_message }}</h4>
+
+                    {% if error_code == 404 %}
+                    <p class="text-muted mb-4">
+                        The page you're looking for doesn't exist or may have been moved.
+                    </p>
+                    {% elif error_code == 500 %}
+                    <p class="text-muted mb-4">
+                        We're experiencing technical difficulties. Please try again later or contact support.
+                    </p>
+                    {% else %}
+                    <p class="text-muted mb-4">
+                        An unexpected error occurred. Please try again or contact support if the problem persists.
+                    </p>
+                    {% endif %}
+
+                    <div class="mt-4">
+                        <a href="{{ url_for('dashboard') if session.user_id else url_for('login') }}" class="btn btn-primary btn-lg me-3">
+                            <i class="fas fa-home"></i> Go to {{ 'Dashboard' if session.user_id else 'Login' }}
+                        </a>
+                        <button onclick="history.back()" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-arrow-left"></i> Go Back
+                        </button>
+                    </div>
+
+                    {% if error_code == 500 %}
+                    <div class="mt-4">
+                        <small class="text-muted">
+                            Error ID: {{ moment().format('YYYY-MM-DD-HH-mm-ss') if moment else 'N/A' }} |
+                            If this error persists, please contact technical support.
+                        </small>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

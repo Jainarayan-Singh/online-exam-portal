@@ -1,0 +1,216 @@
+{% extends "admin_base.html" %}
+{% block title %}Manage Questions{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <h2><i class="fas fa-question-circle"></i> Questions</h2>
+  <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addQuestionModal">
+    <i class="fas fa-plus"></i> Add Question
+  </button>
+</div>
+
+<!-- Questions Table -->
+<div class="card shadow">
+  <div class="card-body">
+    <table class="table table-striped align-middle">
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Exam</th>
+          <th>Question</th>
+          <th>Type</th>
+          <th>Correct Answer</th>
+          <th>Marks</th>
+          <th>Image</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for q in questions %}
+        <tr>
+          <td>{{ q.id }}</td>
+          <td>{{ q.exam_name }}</td>
+          <td>{{ q.question_text|truncate(40) }}</td>
+          <td>{{ q.question_type }}</td>
+          <td>{{ q.correct_answer }}</td>
+          <td>+{{ q.positive_marks }}/-{{ q.negative_marks }}</td>
+          <td>
+            {% if q.image_path %}
+              <a href="{{ q.image_path }}" target="_blank"><i class="fas fa-image"></i></a>
+            {% else %}
+              -
+            {% endif %}
+          </td>
+          <td>
+            <button class="btn btn-sm btn-warning"
+                    data-bs-toggle="modal"
+                    data-bs-target="#editQuestionModal{{ q.id }}">
+              <i class="fas fa-edit"></i>
+            </button>
+            <a href="{{ url_for('admin.delete_question', question_id=q.id) }}"
+               class="btn btn-sm btn-danger"
+               onclick="return confirm('Delete this question?');">
+              <i class="fas fa-trash"></i>
+            </a>
+          </td>
+        </tr>
+
+        <!-- Edit Question Modal -->
+        <div class="modal fade" id="editQuestionModal{{ q.id }}" tabindex="-1">
+          <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+              <form method="POST" action="{{ url_for('admin.edit_question', question_id=q.id) }}">
+                <div class="modal-header">
+                  <h5 class="modal-title">Edit Question</h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                  <div class="mb-3">
+                    <label class="form-label">Exam</label>
+                    <select class="form-control" name="exam_id" required>
+                      {% for exam in exams %}
+                      <option value="{{ exam.id }}" {% if exam.id == q.exam_id %}selected{% endif %}>
+                        {{ exam.name }}
+                      </option>
+                      {% endfor %}
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Question Text</label>
+                    <textarea class="form-control" name="question_text" rows="3" required>{{ q.question_text }}</textarea>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="form-label">Option A</label>
+                      <input type="text" class="form-control" name="option_a" value="{{ q.option_a }}">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Option B</label>
+                      <input type="text" class="form-control" name="option_b" value="{{ q.option_b }}">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Option C</label>
+                      <input type="text" class="form-control" name="option_c" value="{{ q.option_c }}">
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Option D</label>
+                      <input type="text" class="form-control" name="option_d" value="{{ q.option_d }}">
+                    </div>
+                  </div>
+                  <div class="mb-3 mt-2">
+                    <label class="form-label">Correct Answer</label>
+                    <input type="text" class="form-control" name="correct_answer" value="{{ q.correct_answer }}" required>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Question Type</label>
+                    <select class="form-control" name="question_type" required>
+                      <option value="MCQ" {% if q.question_type == "MCQ" %}selected{% endif %}>MCQ</option>
+                      <option value="MSQ" {% if q.question_type == "MSQ" %}selected{% endif %}>MSQ</option>
+                      <option value="NUMERIC" {% if q.question_type == "NUMERIC" %}selected{% endif %}>NUMERIC</option>
+                    </select>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Image Path (optional)</label>
+                    <input type="text" class="form-control" name="image_path" value="{{ q.image_path }}">
+                  </div>
+                  <div class="row">
+                    <div class="col-md-6">
+                      <label class="form-label">Positive Marks</label>
+                      <input type="number" class="form-control" name="positive_marks" value="{{ q.positive_marks }}" required>
+                    </div>
+                    <div class="col-md-6">
+                      <label class="form-label">Negative Marks</label>
+                      <input type="number" class="form-control" name="negative_marks" value="{{ q.negative_marks }}" required>
+                    </div>
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                  <button type="submit" class="btn btn-success">Save Changes</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- Add Question Modal -->
+<div class="modal fade" id="addQuestionModal" tabindex="-1">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <form method="POST" action="{{ url_for('admin.add_question') }}">
+        <div class="modal-header">
+          <h5 class="modal-title">Add Question</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Exam</label>
+            <select class="form-control" name="exam_id" required>
+              {% for exam in exams %}
+              <option value="{{ exam.id }}">{{ exam.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Question Text</label>
+            <textarea class="form-control" name="question_text" rows="3" required></textarea>
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Option A</label>
+              <input type="text" class="form-control" name="option_a">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Option B</label>
+              <input type="text" class="form-control" name="option_b">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Option C</label>
+              <input type="text" class="form-control" name="option_c">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Option D</label>
+              <input type="text" class="form-control" name="option_d">
+            </div>
+          </div>
+          <div class="mb-3 mt-2">
+            <label class="form-label">Correct Answer</label>
+            <input type="text" class="form-control" name="correct_answer" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Question Type</label>
+            <select class="form-control" name="question_type" required>
+              <option value="MCQ">MCQ</option>
+              <option value="MSQ">MSQ</option>
+              <option value="NUMERIC">NUMERIC</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Image Path (optional)</label>
+            <input type="text" class="form-control" name="image_path">
+          </div>
+          <div class="row">
+            <div class="col-md-6">
+              <label class="form-label">Positive Marks</label>
+              <input type="number" class="form-control" name="positive_marks" required>
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Negative Marks</label>
+              <input type="number" class="form-control" name="negative_marks" required>
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Add Question</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

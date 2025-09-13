@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About Us - ExamPortal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .content-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        .feature-card {
+            background: white;
+            border-radius: 15px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+            text-center;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+        }
+        .btn-back {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            border: none;
+            border-radius: 25px;
+            color: white;
+            transition: all 0.3s ease;
+        }
+        .btn-back:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            color: white;
+        }
+        .hero-section {
+            background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            border-radius: 15px;
+            padding: 3rem;
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        .stats-card {
+            background: linear-gradient(45deg, #667eea, #764ba2);
+            color: white;
+            border-radius: 15px;
+            padding: 2rem;
+            text-align: center;
+        }
+        .feature-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container my-5">
+        <div class="content-card p-5">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1 class="text-primary"><i class="fas fa-info-circle"></i> About ExamPortal</h1>
+                <a href="javascript:history.back()" class="btn btn-back">
+                    <i class="fas fa-arrow-left"></i> Back
+                </a>
+            </div>
+            
+            <div class="hero-section">
+                <h2 class="text-primary mb-4">Revolutionizing Online Examinations</h2>
+                <p class="lead">ExamPortal is a cutting-edge online examination platform designed to provide secure, efficient, and user-friendly testing solutions for educational institutions and organizations.</p>
+                <div class="mt-4">
+                    <span class="badge bg-primary fs-6 me-2">Secure</span>
+                    <span class="badge bg-success fs-6 me-2">Reliable</span>
+                    <span class="badge bg-info fs-6 me-2">User-Friendly</span>
+                    <span class="badge bg-warning fs-6">Professional</span>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-md-8">
+                    <h3 class="text-primary mb-4">Our Mission</h3>
+                    <p>To democratize access to quality education assessment tools by providing institutions with a robust, secure, and intuitive online examination platform that ensures academic integrity while delivering exceptional user experience.</p>
+
+                    <h3 class="text-primary mb-4 mt-5">Key Features</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <i class="fas fa-shield-alt feature-icon text-primary"></i>
+                                <h5>Secure Testing</h5>
+                                <p class="text-muted">Advanced security measures to prevent cheating and ensure exam integrity</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <i class="fas fa-clock feature-icon text-success"></i>
+                                <h5>Real-time Monitoring</h5>
+                                <p class="text-muted">Live exam tracking with timer and progress monitoring</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <i class="fas fa-chart-bar feature-icon text-info"></i>
+                                <h5>Instant Results</h5>
+                                <p class="text-muted">Automated grading with detailed performance analytics</p>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="feature-card">
+                                <i class="fas fa-mobile-alt feature-icon text-warning"></i>
+                                <h5>Multi-device Support</h5>
+                                <p class="text-muted">Responsive design works on desktop, tablet, and mobile</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <h3 class="text-primary mb-4 mt-5">Why Choose ExamPortal?</h3>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Easy to use interface</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Bank-level security</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> 24/7 technical support</li>
+                            </ul>
+                        </div>
+                        <div class="col-md-6">
+                            <ul class="list-unstyled">
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Automated grading system</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Detailed analytics</li>
+                                <li class="mb-3"><i class="fas fa-check-circle text-success me-2"></i> Scalable infrastructure</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-md-4">
+                    <div class="stats-card mb-4">
+                        <h4><i class="fas fa-users"></i> Our Impact</h4>
+                        <div class="mt-4">
+                            <div class="mb-3">
+                                <h2 class="mb-0">50,000+</h2>
+                                <small>Students Served</small>
+                            </div>
+                            <div class="mb-3">
+                                <h2 class="mb-0">200+</h2>
+                                <small>Institutions</small>
+                            </div>
+                            <div class="mb-3">
+                                <h2 class="mb-0">1M+</h2>
+                                <small>Exams Conducted</small>
+                            </div>
+                            <div>
+                                <h2 class="mb-0">99.9%</h2>
+                                <small>Uptime</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="card border-0">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="fas fa-award"></i> Our Values</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <h6 class="text-primary">Integrity</h6>
+                                <small class="text-muted">Maintaining highest standards of academic honesty</small>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-success">Innovation</h6>
+                                <small class="text-muted">Continuously improving our technology and features</small>
+                            </div>
+                            <div class="mb-3">
+                                <h6 class="text-info">Accessibility</h6>
+                                <small class="text-muted">Making quality education assessment available to all</small>
+                            </div>
+                            <div>
+                                <h6 class="text-warning">Excellence</h6>
+                                <small class="text-muted">Delivering superior service and support</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-5">
+                <div class="col-12">
+                    <div class="card border-0 bg-gradient" style="background: linear-gradient(45deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));">
+                        <div class="card-body text-center py-4">
+                            <h4 class="text-primary mb-3">Ready to Get Started?</h4>
+                            <p class="text-muted mb-4">Join thousands of institutions and students who trust ExamPortal for their examination needs.</p>
+                            <div class="d-flex gap-3 justify-content-center flex-wrap">
+                                <button class="btn btn-primary btn-lg" onclick="alert('Contact sales team!')">
+                                    <i class="fas fa-handshake"></i> Contact Sales
+                                </button>
+                                <button class="btn btn-outline-primary btn-lg" onclick="alert('Demo request form!')">
+                                    <i class="fas fa-play"></i> Request Demo
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>
