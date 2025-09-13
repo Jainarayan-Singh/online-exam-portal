@@ -28,7 +28,7 @@
   }
   
   .batch-card {
-    background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+    background: linear-gradient(135deg, #545da8 0%, #8993ac 100%);
     border: 2px solid #e2e8f0;
     border-radius: 20px;
     padding: 24px;
@@ -60,7 +60,7 @@
   }
   
   .batch-row {
-    background: white;
+    background: rgb(255, 255, 255);
     border: 2px solid #e2e8f0;
     border-radius: 12px;
     padding: 16px;
@@ -390,6 +390,23 @@
       justify-content: center;
     }
   }
+  #clear-rows {
+  background: linear-gradient(135deg, rgba(255, 99, 132, 0.2), rgba(255, 0, 72, 0.15));
+  border: 1px solid rgba(255, 99, 132, 0.6);
+  color: #ffffff; /* text light red */
+  box-shadow: 0 0 12px rgba(255, 77, 109, 0.6),
+              0 0 25px rgba(255, 77, 109, 0.4);
+  transition: all 0.3s ease-in-out;
+}
+
+#clear-rows:hover {
+  background: linear-gradient(135deg, rgba(255, 77, 109, 0.3), rgba(255, 0, 72, 0.25));
+  color: #fff; /* text white on hover */
+  box-shadow: 0 0 18px rgba(255, 77, 109, 0.8),
+              0 0 35px rgba(255, 77, 109, 0.6);
+  transform: translateY(-2px) scale(1.02);
+}
+
 </style>
 
 <div class="page-header">
@@ -646,9 +663,9 @@
     <button id="add-row" class="btn btn-success batch-btn">
       <i class="fas fa-plus me-1"></i>Add Row
     </button>
-    <button id="clear-rows" class="btn btn-outline-secondary batch-btn">
-      <i class="fas fa-broom me-1"></i>Clear All
-    </button>
+<button id="clear-rows" class="btn btn-outline-secondary batch-btn">
+  <i class="fas fa-broom me-1"></i>Clear All
+</button>
     <button id="batch-submit" class="btn btn-primary batch-btn">
       <i class="fas fa-upload me-1"></i>Add All Questions
     </button>
