@@ -730,11 +730,20 @@ def check_answer(given_answer, correct_answer, question_type, tolerance=0.1):
 
 
 def calculate_question_score(is_correct, question_type, positive_marks, negative_marks):
-    """Calculate score for a question"""
+    def safe_float(val, default=0.0):
+        try:
+            return float(val)
+        except:
+            return default
+
+    pos = safe_float(positive_marks, 1.0)
+    neg = safe_float(negative_marks, 0.0)
+
     if is_correct:
-        return float(positive_marks)
+        return pos
     else:
-        return -float(negative_marks) if negative_marks else 0.0
+        return -neg if neg else 0.0
+
 
 
 def save_csv_to_drive_batch(df, csv_type):
@@ -1313,7 +1322,8 @@ def dashboard():
 
 from datetime import datetime
 
-@app.route("/results_history", endpoint="results_history")
+@app.route("/results_history")
+@login_required
 def results_history():
     if "user_id" not in session:
         flash("Please login to view your results history.", "danger")
