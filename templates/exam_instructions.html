@@ -3,456 +3,702 @@
 {% block title %}Exam Instructions - ExamPortal{% endblock %}
 
 {% block content %}
-<div class="container mt-4">
-    <div class="row justify-content-center">
-        <div class="col-md-10">
-            <div class="card shadow">
-                <div class="card-header bg-primary text-white">
-                    <h3 class="mb-0">
-                        <i class="fas fa-info-circle"></i> Exam Instructions
-                    </h3>
-                </div>
-                <div class="card-body p-4">
-                    <!-- Exam Details -->
-                    <div class="row mb-4">
-                        <div class="col-md-6">
-                            <h5><i class="fas fa-file-alt text-primary"></i> Exam Details</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Exam Name:</strong> {{ exam.name }}</li>
-                                <li><strong>Date:</strong> {{ exam.date }}</li>
-                                <li><strong>Start Time:</strong> {{ exam.start_time }}</li>
-                                <li><strong>Duration:</strong> {{ exam.duration }} minutes</li>
-                                <li><strong>Total Questions:</strong> {{ exam.total_questions }}</li>
-                            </ul>
-                        </div>
-                        <div class="col-md-6">
-                            <h5><i class="fas fa-chart-line text-success"></i> Marking Scheme</h5>
-                            <ul class="list-unstyled">
-                                <li><strong>Correct Answer:</strong> <span class="text-success">{{ exam.positive_marks }} Mark(s)</span></li>
-                                <li><strong>Wrong Answer:</strong> <span class="text-danger">{{ exam.negative_marks }} Mark(s)</span></li>
-                                <li><strong>Unanswered:</strong> <span class="text-muted">0 Marks</span></li>
-                            </ul>
-                        </div>
-                    </div>
+<style>
+    :root{ --bg-1:#0f0f23; --bg-2:#1a1a3e; --accent-a:#667eea; --accent-b:#764ba2; --success:#10b981; }
+    .dashboard-body{ background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, #2d2d5f 100%); min-height:100vh; position:relative; overflow-x:hidden; padding-top:2rem; color:#eaf0ff; }
+    .particles{ position:fixed; top:0; left:0; width:100%; height:100%; overflow:hidden; z-index:1; pointer-events:none; }
+    .particle{ position:absolute; background:linear-gradient(45deg, var(--accent-a), var(--accent-b)); border-radius:50%; animation:float 6s ease-in-out infinite; }
+    .particle:nth-child(1){ width:4px;height:4px; top:20%; left:10%; animation-delay:0s; }
+    .particle:nth-child(2){ width:6px;height:6px; top:60%; left:80%; animation-delay:1s; }
+    .particle:nth-child(3){ width:3px;height:3px; top:80%; left:20%; animation-delay:2s; }
+    .particle:nth-child(4){ width:5px;height:5px; top:40%; left:60%; animation-delay:3s; }
+    .particle:nth-child(5){ width:4px;height:4px; top:30%; left:90%; animation-delay:4s; }
+    @keyframes float{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-30px)} }
 
-                    <hr>
+    .container-wrap{ position:relative; z-index:2; max-width:1400px; margin:0 auto; padding:0 2rem; }
+    .welcome-section{ background:rgba(255,255,255,0.06); backdrop-filter:blur(20px); border-radius:24px; padding:2.4rem; margin-bottom:2rem; border:1px solid rgba(255,255,255,0.12); box-shadow:0 30px 60px rgba(0,0,0,0.3); }
+    .welcome-section h2{ font-size:2.4rem; font-weight:900; background:linear-gradient(135deg, #fff 0%, var(--accent-a) 50%, var(--accent-b) 100%); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:0.5rem; }
+    .welcome-section p{ color:rgba(255,255,255,0.85); font-size:1.05rem; margin:0; }
 
-                    <!-- Question Types Information -->
-                    <div class="row mb-4">
-                        <div class="col-md-12">
-                            <h5><i class="fas fa-question-circle text-info"></i> Question Types</h5>
-                            <div class="row">
-                                <div class="col-md-4">
-                                    <div class="card border-success mb-3">
-                                        <div class="card-header bg-success text-white text-center">
-                                            <i class="fas fa-dot-circle"></i> MCQ
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title">Single Correct Choice</h6>
-                                            <p class="card-text small">Select one correct option from the given choices.</p>
-                                            <div class="text-center">
-                                                <span class="badge bg-success">● Single Select</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card border-warning mb-3">
-                                        <div class="card-header bg-warning text-dark text-center">
-                                            <i class="fas fa-check-square"></i> MSQ
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title">Multiple Correct Choice</h6>
-                                            <p class="card-text small">Select ALL correct options. Partial marking not apply.</p>
-                                            <div class="text-center">
-                                                <span class="badge bg-warning text-dark">■ Multi Select</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                                <div class="col-md-4">
-                                    <div class="card border-info mb-3">
-                                        <div class="card-header bg-info text-white text-center">
-                                            <i class="fas fa-calculator"></i> NUMERIC
-                                        </div>
-                                        <div class="card-body">
-                                            <h6 class="card-title">Numerical Answer</h6>
-                                            <p class="card-text small">Enter a numerical value as your answer.</p>
-                                            <div class="text-center">
-                                                <span class="badge bg-info">▲ Number Input</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    .modern-card{ background:rgba(255,255,255,0.06); backdrop-filter:blur(16px); border-radius:20px; border:1px solid rgba(255,255,255,0.12); box-shadow:0 20px 40px rgba(0,0,0,0.3); overflow:hidden; }
+    .card-header{ padding:1.6rem 1.6rem; display:flex; align-items:center; gap:0.8rem; border-bottom:none; }
+    .card-header h3{ margin:0; color:#fff; font-weight:800; }
+    .card-body{ padding:1.2rem 1.6rem; color:rgba(255,255,255,0.9); }
 
-                    <hr>
+    .status-badge{ padding:0.45rem 0.9rem; border-radius:20px; font-size:0.85rem; font-weight:700; text-transform:uppercase; letter-spacing:0.5px; border:1px solid; }
+    .status-badge.live{ background:linear-gradient(135deg, var(--success) 0%, #059669 100%); color:#fff; border-color:var(--success); box-shadow:0 0 20px rgba(16,185,129,0.35); animation:pulse 2s infinite; }
+    .status-badge.upcoming{ background:rgba(255,193,7,0.16); color:#ffc107; border-color:#ffc107; }
+    .status-badge.completed{ background:rgba(16,185,129,0.12); color:var(--success); border-color:var(--success); }
+    .status-badge.pending{ background:rgba(255,255,255,0.04); color:rgba(255,255,255,0.7); border-color:rgba(255,255,255,0.06); }
+    @keyframes pulse{ 0%{box-shadow:0 0 20px rgba(16,185,129,0.35)} 50%{box-shadow:0 0 30px rgba(16,185,129,0.55)} 100%{box-shadow:0 0 20px rgba(16,185,129,0.35)} }
 
-                    <!-- General Instructions -->
-                    <h5><i class="fas fa-clipboard-list text-warning"></i> General Instructions</h5>
-                    <div class="alert alert-info">
-                        <p><strong>Special Instructions:</strong> {{ exam.instructions }}</p>
-                    </div>
+    .exam-meta{ display:grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap:1rem; margin-bottom:1rem; }
+    .exam-meta-item{ background:rgba(255,255,255,0.04); padding:0.7rem; border-radius:10px; border:1px solid rgba(255,255,255,0.06); display:flex; gap:0.6rem; align-items:center; }
 
-                    <ol class="mb-4">
-                        <li class="mb-2">
-                            <strong>Secure Exam Environment:</strong> The exam will open in a secure, maximized window.
-                            Do not try to minimize, close, or navigate away from the exam window during the test.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Do not refresh or close the browser window</strong> once the exam starts.
-                            This may result in loss of progress.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Time Management:</strong> Keep track of the timer displayed on the screen.
-                            The exam will auto-submit when time expires.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Navigation:</strong> Use the question palette to navigate between questions.
-                            You can move forward, backward, or jump to any question.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Answer Selection:</strong>
-                            <ul class="mt-2">
-                                <li><strong>MCQ:</strong> Click the radio button to select your answer.</li>
-                                <li><strong>MSQ:</strong> Click checkboxes to select multiple answers. You must select ALL correct options to get full marks.</li>
-                                <li><strong>Numerical:</strong> Type your numerical answer in the input field. Decimals are allowed.</li>
-                            </ul>
-                        </li>
-                        <li class="mb-2">
-                            <strong>Review System:</strong> Use "Mark for Review" for questions you want to revisit later.
-                            These will be highlighted in the question palette.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Final Submission:</strong> Click "Submit Exam" when you're ready to finish.
-                            You'll get a confirmation prompt before final submission.
-                        </li>
-                        <li class="mb-2">
-                            <strong>Result Analysis:</strong> After submission, you can view detailed response analysis
-                            showing your answers, correct answers, and download a comprehensive report.
-                        </li>
-                    </ol>
+    /* Action button + mirror hover effect (match dashboard) */
+    .action-btn{ padding:0.9rem 1.3rem; border-radius:12px; font-weight:700; border:none; cursor:pointer; display:inline-flex; align-items:center; gap:0.6rem; position:relative; overflow:hidden; text-decoration:none; }
+    .action-btn::before{ content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.12), transparent); transition:left 0.45s; }
+    .action-btn:hover::before{ left:100%; }
 
-                    <!-- Question Palette Legend -->
-                    <h6><i class="fas fa-palette text-info"></i> Question Palette Legend</h6>
-                    <div class="row mb-4">
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="btn btn-sm btn-secondary me-2"></span>Not Visited
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="btn btn-sm" style="background-color: #17a2b8; color: white;"></span>Visited
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="btn btn-sm btn-success me-2"></span>Answered
-                        </div>
-                        <div class="col-6 col-md-3 mb-2">
-                            <span class="btn btn-sm btn-warning me-2"></span>Marked for Review
-                        </div>
-                    </div>
+    /* MAKE START BUTTON MATCH DASHBOARD EXACTLY */
+    .action-btn.start-exam{ background:linear-gradient(135deg, var(--success) 0%, #059669 100%); color:#fff; box-shadow:0 10px 30px rgba(16,185,129,0.35); }
+    .action-btn.start-exam:hover{ transform: translateY(-4px); box-shadow:0 20px 50px rgba(16,185,129,0.45); }
 
-                    <!-- Question Type Indicators -->
-                    <h6><i class="fas fa-icons text-info"></i> Question Type Indicators</h6>
-                    <div class="row mb-4">
-                        <div class="col-4 mb-2">
-                            <small><strong>● MCQ:</strong> Single Choice</small>
-                        </div>
-                        <div class="col-4 mb-2">
-                            <small><strong>■ MSQ:</strong> Multiple Choice</small>
-                        </div>
-                        <div class="col-4 mb-2">
-                            <small><strong>▲ NUMERIC:</strong> Numerical Answer</small>
-                        </div>
-                    </div>
+    /* small mirrored shine on hover (like dashboard) */
+    .action-btn.start-exam::after{ content:''; position:absolute; top:-30%; left:-30%; width:60%; height:160%; background:linear-gradient(120deg, rgba(255,255,255,0.08), rgba(255,255,255,0)); transform:rotate(25deg); transition:all .6s ease; opacity:0; }
+    .action-btn.start-exam:hover::after{ left:120%; opacity:1; }
 
-                    <!-- Enhanced Marking Details -->
-                    <div class="alert alert-warning">
-                        <h6><i class="fas fa-exclamation-triangle"></i> Important Marking Information</h6>
-                        <ul class="mb-0">
-                            <li><strong>MCQ Questions:</strong> Only one correct answer. Select carefully.</li>
-                            <li><strong>MSQ Questions:</strong> Multiple correct answers possible. You must select ALL correct options to get full marks.</li>
-                            <li><strong>Numerical Questions:</strong> Enter exact numerical value. Some questions may have tolerance limits.</li>
-                            <li><strong>Negative Marking:</strong>
-                                
-                                    <span class="text-danger">{{ exam.negative_marks }} mark(s) will be deducted for each wrong answer.</span>
-                             
-                            </li>
-                        </ul>
-                    </div>
+    .action-btn.view-result{ background:linear-gradient(135deg, var(--accent-a), var(--accent-b)); color:#fff; box-shadow:0 10px 30px rgba(102,126,234,0.28); }
+    .action-btn.disabled{ background:rgba(255,255,255,0.03); color:rgba(255,255,255,0.6); cursor:not-allowed; }
 
-                    <!-- System Requirements -->
-                    <div class="alert alert-info">
-                        <h6><i class="fas fa-desktop"></i> System Requirements</h6>
-                        <ul class="mb-0">
-                            <li>Stable internet connection required</li>
-                            <li>Use latest version of Chrome, Firefox, or Safari</li>
-                            <li>Ensure your device is fully charged or plugged in</li>
-                            <li>Close unnecessary applications to ensure smooth performance</li>
-                            <li><strong>The exam will open in full-screen mode for security</strong></li>
-                        </ul>
-                    </div>
+    .modern-table{ background:rgba(255,255,255,0.04); border-radius:12px; overflow:hidden; border:1px solid rgba(255,255,255,0.08); }
+    .modern-table table{ color:#fff; width:100%; }
+    .modern-table th,.modern-table td{ padding:1rem 1.2rem; border-bottom:1px solid rgba(255,255,255,0.04); }
 
-                    <!-- ENHANCED Loading Status with Professional Design -->
-                    <div class="alert alert-primary" id="preloadingAlert" style="display: none;">
-                        <div class="d-flex align-items-center">
-                            <div class="spinner-border spinner-border-sm me-3 text-primary" role="status">
-                                <span class="visually-hidden">Loading...</span>
-                            </div>
-                            <div class="flex-grow-1">
-                                <div class="d-flex justify-content-between align-items-center">
-                                    <div>
-                                        <strong id="loadingTitle">Preparing Your Exam...</strong>
-                                        <div class="small" id="loadingSubtitle">Please wait while we load your questions and resources</div>
-                                    </div>
-                                    <div id="loadingPercentage" class="fw-bold text-primary">0%</div>
-                                </div>
-                                <div class="progress mt-2" style="height: 10px; border-radius: 5px;">
-                                    <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                                         role="progressbar" style="width: 0%; transition: width 0.3s ease;" id="preloadProgress"></div>
-                                </div>
-                                <div class="small mt-2 text-muted" id="loadingDetails">
-                                    Initializing exam environment...
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+    .marking-scheme{ display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
+    .mark-box{ background:linear-gradient(135deg, rgba(102,126,234,0.06), rgba(118,75,162,0.03)); padding:0.8rem; border-radius:10px; min-width:160px; }
 
-                    <!-- Success Alert (initially hidden) -->
-                    <div class="alert alert-success" id="successAlert" style="display: none;">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-check-circle me-3 text-success fa-lg"></i>
-                            <div>
-                                <strong>Exam Ready!</strong>
-                                <div class="small">All questions and resources have been loaded successfully</div>
-                            </div>
-                        </div>
-                    </div>
+/* ===== Neon Glowing Loading for Exam Instructions ===== */
+#preloadingAlert {
+  background: linear-gradient(180deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03));
+  border: 1px solid rgba(34,197,94,0.12);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(34,197,94,0.08);
+}
 
-                    <!-- Error Alert (initially hidden) -->
-                    <div class="alert alert-danger" id="errorAlert" style="display: none;">
-                        <div class="d-flex align-items-center">
-                            <i class="fas fa-exclamation-triangle me-3 text-danger fa-lg"></i>
-                            <div>
-                                <strong>Loading Error</strong>
-                                <div class="small" id="errorMessage">Please try again or contact support if the problem persists</div>
-                            </div>
-                        </div>
-                    </div>
+/* Title glowing */
+#loadingTitle {
+  color: #bbf7d0 !important;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(34,197,94,0.9),
+               0 0 16px rgba(34,197,94,0.6),
+               0 0 22px rgba(34,197,94,0.5);
+}
 
-                    <!-- Action Buttons -->
-                    <div class="text-center mt-4">
-                        <div class="d-grid gap-2 d-md-flex justify-content-md-center">
-                            <button class="btn btn-success btn-lg me-md-2" id="startExamBtn">
-                                <i class="fas fa-play"></i> Start Exam Now
-                            </button>
-                            <a href="{{ url_for('dashboard') }}" class="btn btn-outline-secondary btn-lg">
-                                <i class="fas fa-arrow-left"></i> Back to Dashboard
-                            </a>
-                        </div>
-                    </div>
+/* Subtitle glowing */
+#loadingSubtitle {
+  color: #d1fae5 !important;
+  font-weight: 500;
+  text-shadow: 0 0 6px rgba(16,185,129,0.8),
+               0 0 14px rgba(16,185,129,0.5);
+}
+
+/* Details */
+#loadingDetails {
+  color: #86efac !important;
+  font-weight: 500;
+}
+
+/* Animated glowing green progress bar */
+#preloadProgress.bg-success {
+  background: linear-gradient(90deg, #22c55e, #2dd4bf 40%, #16a34a);
+  background-size: 200% 100%;
+  animation: pulsePreloadBar 3s linear infinite;
+  box-shadow: 0 8px 40px rgba(34,197,94,0.18),
+              inset 0 0 10px rgba(255,255,255,0.04);
+}
+
+@keyframes pulsePreloadBar {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* Percentage glowing */
+#loadingPercentage {
+  color: #bbf7d0 !important;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(34,197,94,0.9),
+               0 0 12px rgba(34,197,94,0.6);
+}
+
+
+    /* ENHANCED: Color indicators with green glow effect */
+    .color-indicator-section { 
+        display: flex; 
+        gap: 1rem; 
+        flex-wrap: wrap; 
+        align-items: center; 
+        margin-bottom: 1rem; 
+        padding: 1rem;
+        background: rgba(255,255,255,0.02);
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.05);
+    }
+    .color-indicator { 
+        display: flex; 
+        gap: 0.5rem; 
+        align-items: center; 
+        padding: 0.5rem 0.8rem;
+        background: rgba(255,255,255,0.03);
+        border-radius: 8px;
+        border: 1px solid rgba(255,255,255,0.08);
+        transition: all 0.3s ease;
+    }
+    .color-indicator:hover {
+        background: rgba(16,185,129,0.08);
+        border-color: rgba(16,185,129,0.2);
+        box-shadow: 0 0 15px rgba(16,185,129,0.15);
+    }
+    .color-box { 
+        width: 36px; 
+        height: 20px; 
+        border-radius: 6px; 
+        display: inline-block; 
+        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        transition: all 0.3s ease;
+    }
+    .color-indicator:hover .color-box {
+        box-shadow: 0 0 12px rgba(16,185,129,0.4);
+        transform: scale(1.05);
+    }
+
+    /* Enhanced loading state visibility */
+    .loading-active .color-indicator-section {
+        background: rgba(16,185,129,0.05);
+        border-color: rgba(16,185,129,0.12);
+        box-shadow: 0 0 20px rgba(16,185,129,0.08);
+    }
+    .loading-active .color-indicator {
+        background: rgba(16,185,129,0.04);
+        border-color: rgba(16,185,129,0.15);
+        color: rgba(255,255,255,0.95);
+    }
+    .loading-active .color-box {
+        box-shadow: 0 0 8px rgba(16,185,129,0.3);
+    }
+
+    @media(max-width:768px){ .container-wrap{padding:0 1rem;} .welcome-section h2{font-size:1.6rem;} }
+</style>
+
+<div class="dashboard-body">
+    <div class="particles" aria-hidden="true">
+        <div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div><div class="particle"></div>
+    </div>
+
+    <div class="container-wrap">
+        <div class="welcome-section">
+            <h2><i class="fas fa-info-circle"></i> Exam Instructions</h2>
+            <p>Please read the following instructions carefully before proceeding with the examination.</p>
+        </div>
+
+        <div class="modern-card">
+            <div class="card-header">
+                <h3>{{ exam.name }}</h3>
+                <div style="margin-left:auto; display:flex; align-items:center; gap:0.6rem;">
+                    {% if exam.status == 'ongoing' %}
+                        <span class="status-badge live">LIVE</span>
+                    {% elif exam.status == 'upcoming' %}
+                        <span class="status-badge upcoming">Upcoming</span>
+                    {% elif exam.status == 'completed' %}
+                        <span class="status-badge completed">Completed</span>
+                    {% else %}
+                        <span class="status-badge pending">Status</span>
+                    {% endif %}
                 </div>
             </div>
+
+            <div class="card-body">
+                <div class="exam-meta">
+                    <div class="exam-meta-item"><i class="fas fa-calendar"></i><div>{{ exam.date }}</div></div>
+                    <div class="exam-meta-item"><i class="fas fa-clock"></i><div>{{ exam.start_time }}</div></div>
+                    <div class="exam-meta-item"><i class="fas fa-stopwatch"></i><div>{{ exam.duration }} mins</div></div>
+                    <div class="exam-meta-item"><i class="fas fa-question-circle"></i><div>{{ exam.total_questions }} questions</div></div>
+                </div>
+
+                <!-- Marking Scheme -->
+                <div class="marking-scheme">
+                    <div class="mark-box">
+                        <div style="font-weight:800;">Correct Answer</div>
+                        <div style="color:#34d399; font-weight:700;">{{ exam.positive_marks }} Mark(s)</div>
+                    </div>
+                    <div class="mark-box">
+                        <div style="font-weight:800;">Wrong Answer</div>
+                        <div style="color:#fb7185; font-weight:700;">{{ exam.negative_marks }} Mark(s) deduction</div>
+                    </div>
+                    <div class="mark-box">
+                        <div style="font-weight:800;">Unanswered</div>
+                        <div style="color:rgba(255,255,255,0.85);">0 Marks</div>
+                    </div>
+                </div>
+
+                <div style="margin-bottom:1rem; color:rgba(255,255,255,0.85);">{{ exam.instructions }}</div>
+
+                <hr style="border:none; border-top:1px solid rgba(255,255,255,0.04); margin:1rem 0;">
+
+                <h5 style="margin:0 0 0.6rem 0;">Question Types</h5>
+                <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; margin-bottom:1rem;">
+                    <div class="modern-card" style="padding:0.8rem; background:rgba(255,255,255,0.02);">
+                        <div style="font-weight:800;">MCQ</div>
+                        <div class="small">Single correct choice. Select one option.</div>
+                    </div>
+                    <div class="modern-card" style="padding:0.8rem; background:rgba(255,255,255,0.02);">
+                        <div style="font-weight:800;">MSQ</div>
+                        <div class="small">Multiple correct choices. Select all correct options to score.</div>
+                    </div>
+                    <div class="modern-card" style="padding:0.8rem; background:rgba(255,255,255,0.02);">
+                        <div style="font-weight:800;">NUMERIC</div>
+                        <div class="small">Enter a numerical value. Decimals allowed.</div>
+                    </div>
+                </div>
+
+                <h5 style="margin-bottom:0.6rem;">General Instructions</h5>
+                <ol style="margin:0 0 1rem 1.1rem; color:rgba(255,255,255,0.9);">
+                    <li><strong>Secure Exam Environment:</strong> The exam opens in a secure, maximized window. Do not minimize or navigate away.</li>
+                    <li><strong>Do not refresh or close the browser</strong> once the exam starts — you may lose progress.</li>
+                    <li><strong>Time Management:</strong> The timer will auto-submit when it expires.</li>
+                    <li><strong>Navigation:</strong> Use the palette to jump between questions.</li>
+                    <li><strong>Answer Selection:</strong> MCQ-radio, MSQ-checkboxes, Numeric-input.</li>
+                    <li><strong>Review System:</strong> Mark for review to revisit questions later.</li>
+                    <li><strong>Submission:</strong> Confirm before final submit. Reports available after submission.</li>
+                </ol>
+
+                <h5 style="margin-bottom:0.6rem;">Question Status Indicators</h5>
+                <div class="color-indicator-section" id="colorIndicatorSection">
+                    <div class="color-indicator">
+                        <span class="color-box" style="background:#6b7280;"></span> 
+                        <span>Not Visited</span>
+                    </div>
+                    <div class="color-indicator">
+                        <span class="color-box" style="background:#17a2b8;"></span> 
+                        <span>Visited</span>
+                    </div>
+                    <div class="color-indicator">
+                        <span class="color-box" style="background:var(--success);"></span> 
+                        <span>Answered</span>
+                    </div>
+                    <div class="color-indicator">
+                        <span class="color-box" style="background:#f59e0b;"></span> 
+                        <span>Marked for Review</span>
+                    </div>
+                </div>
+
+                <div style="margin-top:0.8rem; display:flex; gap:0.6rem; align-items:center;">
+                    <button id="startExamBtn" class="action-btn start-exam"><i class="fas fa-play"></i> Start Exam Now</button>
+                    <a href="{{ url_for('dashboard') }}" class="action-btn view-result"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
+                </div>
+
+                <!-- Preloading UI -->
+                <div class="modern-card" id="preloadingAlert" style="display:none; margin-top:1rem; padding:0.8rem;">
+                    <div style="display:flex; align-items:center; gap:0.8rem;">
+                        <div class="spinner-border spinner-border-sm text-success" role="status"><span class="visually-hidden">Loading...</span></div>
+                        <div style="flex:1;">
+                            <div id="loadingTitle" style="font-weight:700;">Preparing Your Exam...</div>
+                            <div id="loadingSubtitle" class="small">Please wait while we load your questions and resources</div>
+                        </div>
+                        <div id="loadingPercentage" style="font-weight:700; color:var(--success);">0%</div>
+                    </div>
+                    <div class="progress mt-2" style="height:10px; border-radius:6px; background:rgba(255,255,255,0.03); overflow:hidden; margin-top:0.6rem;">
+                        <div id="preloadProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width:0%; transition:width 0.3s ease;"></div>
+                    </div>
+                    <div id="loadingDetails" class="small text-muted" style="margin-top:0.5rem;">Initializing exam environment...</div>
+                </div>
+
+                <div id="successAlert" class="modern-card" style="display:none; margin-top:0.8rem; padding:0.9rem; color:var(--success);"><i class="fas fa-check-circle"></i> Exam Ready!</div>
+                <div id="errorAlert" class="modern-card" style="display:none; margin-top:0.8rem; padding:0.9rem; color:#ef4444;"></div>
+
+            </div>
         </div>
+
     </div>
 </div>
 
 <script>
-// Enhanced Loading System with Actual Data Loading
-document.addEventListener('DOMContentLoaded', function() {
-    const startBtn = document.getElementById('startExamBtn');
-    const preloadingAlert = document.getElementById('preloadingAlert');
-    const successAlert = document.getElementById('successAlert');
-    const errorAlert = document.getElementById('errorAlert');
-    const progressBar = document.getElementById('preloadProgress');
-    const loadingTitle = document.getElementById('loadingTitle');
-    const loadingSubtitle = document.getElementById('loadingSubtitle');
-    const loadingDetails = document.getElementById('loadingDetails');
-    const loadingPercentage = document.getElementById('loadingPercentage');
-
-    if (startBtn) {
-        startBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-
-            // Hide other alerts and show loading
-            successAlert.style.display = 'none';
-            errorAlert.style.display = 'none';
-            preloadingAlert.style.display = 'block';
-
-            // Disable the start button
-            startBtn.disabled = true;
-            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-
-            // Start actual preloading process immediately
-            startActualPreloading();
-        });
-    }
-
-    function startActualPreloading() {
-        // Start real preloading process
-        loadingTitle.textContent = "Connecting to Server...";
-        loadingSubtitle.textContent = "Establishing secure connection";
-        loadingDetails.textContent = "Initializing exam session";
-        progressBar.style.width = '10%';
-        loadingPercentage.textContent = '10%';
-
-        fetch(`/preload-exam/{{ exam.id }}`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json',
-            }
-        })
-        .then(response => {
-            // Update progress during fetch
-            loadingTitle.textContent = "Loading Exam Data...";
-            loadingSubtitle.textContent = "Downloading questions and resources";
-            loadingDetails.textContent = "Processing exam configuration";
-            progressBar.style.width = '50%';
-            loadingPercentage.textContent = '50%';
-
-            return response.json();
-        })
-        .then(data => {
-            // Update progress after receiving data
-            loadingTitle.textContent = "Processing Questions...";
-            loadingSubtitle.textContent = "Preparing exam interface";
-            loadingDetails.textContent = "Loading images and media content";
-            progressBar.style.width = '80%';
-            loadingPercentage.textContent = '80%';
-
-            if (data.success) {
-                // Success - finalize loading
-                loadingTitle.textContent = "Finalizing Setup...";
-                loadingSubtitle.textContent = "Preparing secure exam environment";
-                loadingDetails.textContent = "Setting up question navigation";
-                progressBar.style.width = '95%';
-                loadingPercentage.textContent = '95%';
-
-                setTimeout(() => {
-                    // Complete loading
-                    progressBar.style.width = '100%';
-                    loadingPercentage.textContent = '100%';
-                    loadingTitle.textContent = "Exam Ready!";
-                    loadingSubtitle.textContent = "Opening secure exam window...";
-                    loadingDetails.textContent = "Launching exam interface";
-
-                    setTimeout(() => {
-                        preloadingAlert.style.display = 'none';
-                        successAlert.style.display = 'block';
-
-                        // Open exam in secure maximized window
-                        openSecureExamWindow();
-                    }, 1000);
-                }, 800);
-
-            } else {
-                // Error occurred
-                showError(data.message || "Failed to load exam data");
-            }
-        })
-        .catch(error => {
-            console.error('Preload error:', error);
-            showError("Network error occurred. Please check your connection and try again.");
-        });
-    }
-
-    function openSecureExamWindow() {
-        try {
-            // Get screen dimensions
-            const screenWidth = screen.availWidth || window.screen.width;
-            const screenHeight = screen.availHeight || window.screen.height;
-
-            // Create maximized window features
-            const features = [
-                'width=' + screenWidth,
-                'height=' + screenHeight,
-                'top=0',
-                'left=0',
-                'resizable=no',
-                'scrollbars=yes',
-                'menubar=no',
-                'toolbar=no',
-                'location=no',
-                'status=no',
-                'directories=no',
-                'copyhistory=no',
-                'fullscreen=yes'
-            ].join(',');
-
-            // Open the exam window
-            const examWindow = window.open(
-                '{{ url_for("exam_page", exam_id=exam.id) }}?new_attempt=1',
-                '_blank',
-                features
-            );
-
-            if (examWindow) {
-                // Focus the new window
-                examWindow.focus();
-
-                // Try to maximize the window (browser dependent)
-                try {
-                    examWindow.moveTo(0, 0);
-                    examWindow.resizeTo(screenWidth, screenHeight);
-                } catch (e) {
-                    console.log('Could not programmatically resize window:', e);
-                }
-
-                // Monitor if the exam window is closed
-                const windowChecker = setInterval(() => {
-                    if (examWindow.closed) {
-                        clearInterval(windowChecker);
-                        // Reset the start button when exam window is closed
-                        startBtn.disabled = false;
-                        startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now';
-                        successAlert.style.display = 'none';
-                    }
-                }, 1000);
-
-                // Show success message
-                setTimeout(() => {
-                    successAlert.style.display = 'none';
-                }, 3000);
-
-            } else {
-                // Popup blocked or failed
-                showError("Popup blocked! Please allow popups for this site and try again.");
-            }
-
-        } catch (error) {
-            console.error('Error opening exam window:', error);
-            showError("Error opening exam window. Please try again.");
+(function () {
+    // Enhanced fullscreen and security functions
+    function requestFullscreen(element) {
+        if (element.requestFullscreen) {
+            element.requestFullscreen();
+        } else if (element.mozRequestFullScreen) {
+            element.mozRequestFullScreen();
+        } else if (element.webkitRequestFullscreen) {
+            element.webkitRequestFullscreen();
+        } else if (element.msRequestFullscreen) {
+            element.msRequestFullscreen();
         }
     }
 
-    function showError(message) {
-        preloadingAlert.style.display = 'none';
-        errorAlert.style.display = 'block';
-        document.getElementById('errorMessage').textContent = message;
-
-        // Re-enable start button
-        startBtn.disabled = false;
-        startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now';
+    function exitFullscreen() {
+        if (document.exitFullscreen) {
+            document.exitFullscreen();
+        } else if (document.mozCancelFullScreen) {
+            document.mozCancelFullScreen();
+        } else if (document.webkitExitFullscreen) {
+            document.webkitExitFullscreen();
+        } else if (document.msExitFullscreen) {
+            document.msExitFullscreen();
+        }
     }
-});
 
-// Page visibility handling
-document.addEventListener('visibilitychange', function() {
-    if (document.hidden) {
-        console.log('Page hidden - pausing any ongoing processes');
-    } else {
-        console.log('Page visible - resuming processes');
+    function isFullscreen() {
+        return !!(document.fullscreenElement || document.mozFullScreenElement || 
+                  document.webkitFullscreenElement || document.msFullscreenElement);
     }
-});
 
-// Prevent accidental page navigation during loading
-window.addEventListener('beforeunload', function(e) {
-    const preloadingAlert = document.getElementById('preloadingAlert');
-    if (preloadingAlert && preloadingAlert.style.display === 'block') {
-        const message = 'Exam is currently loading. Are you sure you want to leave?';
-        e.returnValue = message;
-        return message;
+    function initParticles() {
+        function createDynamicParticle() {
+            const particle = document.createElement('div');
+            particle.className = 'particle';
+            particle.style.width = Math.random() * 6 + 2 + 'px';
+            particle.style.height = particle.style.width;
+            particle.style.left = Math.random() * 100 + '%';
+            particle.style.top = Math.random() * 100 + '%';
+            particle.style.animationDuration = Math.random() * 4 + 4 + 's';
+            particle.style.animationDelay = Math.random() * 2 + 's';
+            document.querySelector('.particles').appendChild(particle);
+            setTimeout(() => {
+                particle.remove();
+            }, 10000);
+        }
+        setInterval(createDynamicParticle, 3000);
     }
-});
+
+    document.addEventListener('DOMContentLoaded', function () {
+        initParticles();
+
+        // ripple CSS injection
+        const rippleCSS = `
+        .ripple{
+            position:absolute;
+            border-radius:50%;
+            background:rgba(255,255,255,0.6);
+            transform:scale(0);
+            animation:ripple-animation 0.6s linear;
+            pointer-events:none;
+            z-index:5;
+        }
+        @keyframes ripple-animation { to { transform:scale(4); opacity:0; } }
+        `;
+        const styleEl = document.createElement('style');
+        styleEl.textContent = rippleCSS;
+        document.head.appendChild(styleEl);
+
+        // add ripple to action buttons
+        document.querySelectorAll('.action-btn').forEach(btn => {
+            btn.addEventListener('click', function (e) {
+                if (this.classList.contains('disabled')) return;
+                const rect = this.getBoundingClientRect();
+                const size = Math.max(rect.width, rect.height);
+                const ripple = document.createElement('span');
+                ripple.className = 'ripple';
+                ripple.style.width = ripple.style.height = size + 'px';
+                ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+                ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+                this.appendChild(ripple);
+                setTimeout(() => ripple.remove(), 600);
+            });
+        });
+
+        // Elements
+        const startBtn = document.getElementById('startExamBtn');
+        const preloadingAlert = document.getElementById('preloadingAlert');
+        const successAlert = document.getElementById('successAlert');
+        const errorAlert = document.getElementById('errorAlert');
+        const progressBar = document.getElementById('preloadProgress');
+        const loadingTitle = document.getElementById('loadingTitle');
+        const loadingSubtitle = document.getElementById('loadingSubtitle');
+        const loadingDetails = document.getElementById('loadingDetails');
+        const loadingPercentage = document.getElementById('loadingPercentage');
+        const colorIndicatorSection = document.getElementById('colorIndicatorSection');
+
+        if (startBtn) {
+            startBtn.addEventListener('click', function (e) {
+                e.preventDefault();
+                
+                // Add loading state to color indicators
+                if (colorIndicatorSection) {
+                    colorIndicatorSection.parentElement.classList.add('loading-active');
+                }
+                
+                // show loader
+                if (successAlert) successAlert.style.display = 'none';
+                if (errorAlert) errorAlert.style.display = 'none';
+                if (preloadingAlert) preloadingAlert.style.display = 'block';
+                startBtn.disabled = true;
+                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+                startActualPreloading();
+            });
+        }
+
+        function startActualPreloading() {
+            if (loadingTitle) loadingTitle.textContent = 'Connecting to Server...';
+            if (loadingSubtitle) loadingSubtitle.textContent = 'Establishing secure connection';
+            if (loadingDetails) loadingDetails.textContent = 'Initializing exam session';
+            if (progressBar) progressBar.style.width = '10%';
+            if (loadingPercentage) loadingPercentage.textContent = '10%';
+
+            // Fetch preload endpoint
+            fetch(`/preload-exam/{{ exam.id }}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
+                .then(response => {
+                    if (loadingTitle) loadingTitle.textContent = 'Loading Exam Data...';
+                    if (loadingSubtitle) loadingSubtitle.textContent = 'Downloading questions and resources';
+                    if (loadingDetails) loadingDetails.textContent = 'Processing exam configuration';
+                    if (progressBar) progressBar.style.width = '50%';
+                    if (loadingPercentage) loadingPercentage.textContent = '50%';
+                    return response.json();
+                })
+                .then(data => {
+                    if (loadingTitle) loadingTitle.textContent = 'Processing Questions...';
+                    if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing exam interface';
+                    if (loadingDetails) loadingDetails.textContent = 'Loading images and media content';
+                    if (progressBar) progressBar.style.width = '80%';
+                    if (loadingPercentage) loadingPercentage.textContent = '80%';
+
+                    if (data && data.success) {
+                        if (loadingTitle) loadingTitle.textContent = 'Finalizing Setup...';
+                        if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing secure exam environment';
+                        if (loadingDetails) loadingDetails.textContent = 'Setting up question navigation';
+                        if (progressBar) progressBar.style.width = '95%';
+                        if (loadingPercentage) loadingPercentage.textContent = '95%';
+
+                        setTimeout(() => {
+                            if (progressBar) progressBar.style.width = '100%';
+                            if (loadingPercentage) loadingPercentage.textContent = '100%';
+                            if (loadingTitle) loadingTitle.textContent = 'Exam Ready!';
+                            if (loadingSubtitle) loadingSubtitle.textContent = 'Opening secure exam window...';
+                            if (loadingDetails) loadingDetails.textContent = 'Launching exam interface';
+
+                            setTimeout(() => {
+                                if (preloadingAlert) preloadingAlert.style.display = 'none';
+                                if (successAlert) successAlert.style.display = 'block';
+                                openSecureExamWindow();
+                            }, 1000);
+                        }, 800);
+                    } else {
+                        showError((data && data.message) || 'Failed to load exam data');
+                    }
+                })
+                .catch(err => {
+                    console.error('Preload error:', err);
+                    showError('Network error occurred. Please check your connection and try again.');
+                });
+        }
+
+        function openSecureExamWindow() {
+            try {
+                // First, try to enter fullscreen mode on current document
+                requestFullscreen(document.documentElement);
+                
+                setTimeout(() => {
+                    const screenWidth = screen.availWidth || window.screen.width;
+                    const screenHeight = screen.availHeight || window.screen.height;
+                    
+                    // Ultra-secure window features - removing all browser controls
+                    const features = [
+                        'width=' + screenWidth,
+                        'height=' + screenHeight,
+                        'top=0', 'left=0',
+                        'resizable=no', 'scrollbars=yes',
+                        'menubar=no', 'toolbar=no', 'location=no', 'status=no',
+                        'directories=no', 'copyhistory=no', 'fullscreen=yes',
+                        'titlebar=no', 'minimizable=no', 'maximizable=no', 'closable=no'
+                    ].join(',');
+                    
+                    const examWindow = window.open('{{ url_for("exam_page", exam_id=exam.id) }}?new_attempt=1&secure=1', '_blank', features);
+
+                    if (examWindow) {
+                        examWindow.focus();
+                        
+                        // Advanced security measures
+                        try { 
+                            examWindow.moveTo(0, 0); 
+                            examWindow.resizeTo(screenWidth, screenHeight); 
+                            
+                            // Disable browser controls in the exam window
+                            examWindow.addEventListener('load', function() {
+                                // Try to enter fullscreen in the exam window too
+                                if (examWindow.document && examWindow.document.documentElement) {
+                                    requestFullscreen(examWindow.document.documentElement);
+                                }
+                                
+                                // Disable right-click, F12, Ctrl+Shift+I, etc.
+                                examWindow.document.addEventListener('contextmenu', function(e) {
+                                    e.preventDefault();
+                                    return false;
+                                });
+                                
+                                examWindow.document.addEventListener('keydown', function(e) {
+                                    // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
+                                    if (e.keyCode === 123 || // F12
+                                        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                                        (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                                        (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+                                        (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
+                                        (e.keyCode === 116) || // F5 refresh
+                                        (e.ctrlKey && e.keyCode === 82) || // Ctrl+R
+                                        (e.altKey && e.keyCode === 115) || // Alt+F4
+                                        (                                        e.altKey && e.keyCode === 9)) { // Alt+Tab
+                                        e.preventDefault();
+                                        return false;
+                                    }
+                                });
+                                
+                                // Prevent window minimize/maximize
+                                examWindow.addEventListener('blur', function() {
+                                    setTimeout(() => {
+                                        examWindow.focus();
+                                    }, 100);
+                                });
+                                
+                                // Monitor fullscreen changes
+                                examWindow.document.addEventListener('fullscreenchange', function() {
+                                    if (!isFullscreen()) {
+                                        // Force back to fullscreen if user exits
+                                        setTimeout(() => {
+                                            requestFullscreen(examWindow.document.documentElement);
+                                        }, 100);
+                                    }
+                                });
+                            });
+                            
+                        } catch (e) { 
+                            console.warn('Advanced security features may not be fully supported:', e);
+                        }
+
+                        // Monitor exam window
+                        const checker = setInterval(() => {
+                            if (examWindow.closed) {
+                                clearInterval(checker);
+                                
+                                // Exit fullscreen when exam window closes
+                                if (isFullscreen()) {
+                                    exitFullscreen();
+                                }
+                                
+                                // Remove loading state
+                                if (colorIndicatorSection) {
+                                    colorIndicatorSection.parentElement.classList.remove('loading-active');
+                                }
+                                
+                                if (startBtn) {
+                                    startBtn.disabled = false;
+                                    startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now';
+                                }
+                                if (successAlert) successAlert.style.display = 'none';
+                            } else {
+                                // Continuously ensure exam window stays focused and fullscreen
+                                try {
+                                    if (examWindow.document && !document.hasFocus()) {
+                                        examWindow.focus();
+                                    }
+                                } catch (e) {
+                                    // Cross-origin restrictions may apply
+                                }
+                            }
+                        }, 1000);
+
+                        // Advanced: Try to disable taskbar and other windows access
+                        try {
+                            // Hide taskbar (Windows specific - may not work in all browsers)
+                            if (navigator.platform.indexOf('Win') > -1) {
+                                examWindow.resizeTo(screen.width, screen.height + 40);
+                            }
+                        } catch (e) {
+                            console.warn('Platform-specific optimizations not available');
+                        }
+
+                        setTimeout(() => { 
+                            if (successAlert) successAlert.style.display = 'none';
+                            if (colorIndicatorSection) {
+                                colorIndicatorSection.parentElement.classList.remove('loading-active');
+                            }
+                        }, 3000);
+                        
+                    } else {
+                        showError('Popup blocked! Please allow popups for this site and try again.');
+                    }
+                }, 500); // Delay to ensure fullscreen is activated first
+
+            } catch (err) {
+                console.error('Error opening exam window:', err);
+                showError('Error opening exam window. Please try again.');
+            }
+        }
+
+        function showError(message) {
+            if (preloadingAlert) preloadingAlert.style.display = 'none';
+            if (errorAlert) { 
+                errorAlert.style.display = 'block'; 
+                errorAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message; 
+            }
+            if (startBtn) { 
+                startBtn.disabled = false; 
+                startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now'; 
+            }
+            if (colorIndicatorSection) {
+                colorIndicatorSection.parentElement.classList.remove('loading-active');
+            }
+        }
+
+        // Additional security: Monitor tab/window switching
+        document.addEventListener('visibilitychange', function() {
+            if (document.hidden && preloadingAlert && preloadingAlert.style.display === 'block') {
+                // Warn user if they try to switch tabs during loading
+                console.warn('Please stay on this page while the exam is loading');
+            }
+        });
+
+        // Prevent common cheating shortcuts on this page too
+        document.addEventListener('keydown', function(e) {
+            if (preloadingAlert && preloadingAlert.style.display === 'block') {
+                // During loading, prevent various shortcuts
+                if (e.keyCode === 123 || // F12
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
+                    (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
+                    (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
+                    (e.altKey && e.keyCode === 9)) { // Alt+Tab
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
+
+        // Prevent right-click during loading
+        document.addEventListener('contextmenu', function(e) {
+            if (preloadingAlert && preloadingAlert.style.display === 'block') {
+                e.preventDefault();
+                return false;
+            }
+        });
+    });
+
+    // Enhanced beforeunload prevention
+    window.addEventListener('beforeunload', function (e) {
+        const pre = document.getElementById('preloadingAlert');
+        if (pre && pre.style.display === 'block') {
+            const msg = 'Exam is currently loading. Are you sure you want to leave? This may affect your exam access.';
+            e.returnValue = msg;
+            return msg;
+        }
+    });
+
+    // Additional security: Disable print screen and other capture methods
+    document.addEventListener('keyup', function(e) {
+        if (e.keyCode === 44) { // Print Screen
+            alert('Screenshots are not allowed during exam preparation.');
+        }
+    });
+
+    // Monitor for developer tools opening
+    let devtools = {open: false, orientation: null};
+    let threshold = 160;
+    const checkDevTools = () => {
+        if (window.outerHeight - window.innerHeight > threshold || 
+            window.outerWidth - window.innerWidth > threshold) {
+            if (!devtools.open) {
+                devtools.open = true;
+                console.clear();
+                alert('Developer tools detected. Please close them before starting the exam.');
+            }
+        } else {
+            devtools.open = false;
+        }
+    };
+    
+    setInterval(checkDevTools, 500);
+
+})();
 </script>
+
 {% endblock %}

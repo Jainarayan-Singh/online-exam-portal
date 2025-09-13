@@ -3,13 +3,387 @@
 {% block title %}Exam Results - ExamPortal{% endblock %}
 
 {% block content %}
+<style>
+:root{
+  --bg-1: #0f1724;
+  --bg-2: #141428;
+  --accent-a: #667eea;
+  --accent-b: #764ba2;
+  --success: #10b981;
+  --muted: #cbd5e1;
+  --glass: rgba(255,255,255,0.03);
+  --card-radius: 14px;
+  --strong-shadow: 0 30px 60px rgba(2,6,23,0.6);
+  --btn-glow-color: rgba(102,126,234,0.28);
+  --white: #ffffff;
+  --muted-light: #cfe3ff;
+}
+
+.container.mt-5 { position: relative; z-index: 10; }
+
+.result-card {
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  border: 1px solid rgba(255,255,255,0.04);
+  border-radius: var(--card-radius);
+  padding: 1.4rem;
+  box-shadow: var(--strong-shadow);
+  transition: transform .18s ease, box-shadow .18s ease;
+  color: var(--white);
+  overflow: hidden;
+}
+.result-card:hover { transform: translateY(-6px); box-shadow: 0 40px 80px rgba(2,6,23,0.75); }
+
+.fa-trophy {
+  display:inline-block;
+  padding:18px;
+  border-radius:12px;
+  background: linear-gradient(135deg,#ffd166,#ffc107);
+  color:#07203a;
+  box-shadow: 0 10px 30px rgba(118,75,162,0.06);
+}
+
+.result-card h2,
+.result-card h3,
+.result-card h4,
+.result-card h5,
+.result-card p,
+.result-card strong,
+.result-card small,
+.result-card .card-header,
+.result-card .card-body,
+.result-card .alert,
+.result-card .badge,
+.result-card .text-muted,
+.result-card .btn,
+.result-card .badge {
+  color: var(--white) !important;
+}
+
+.result-card .text-muted { color: var(--muted-light) !important; font-weight:600; }
+
+.card { border-radius: 10px; border: 1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.00)); }
+.card .card-header { background: linear-gradient(90deg, rgba(102,126,234,0.06), rgba(118,75,162,0.03)); font-weight:700; color: #fff; }
+
+.row.mb-4 .card { transition: transform .18s ease; }
+.row.mb-4 .card:hover { transform: translateY(-6px); box-shadow: 0 18px 40px rgba(2,6,23,0.35); }
+
+.btn {
+  border-radius: 10px;
+  font-weight:800;
+  letter-spacing: .2px;
+  transition: transform .15s ease, box-shadow .18s ease;
+  position: relative;
+  color: #fff !important;
+}
+.btn:focus { box-shadow: 0 0 0 6px rgba(102,126,234,0.08); outline: none; }
+
+#viewResponseBtn,
+.btn.btn-primary {
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  border: none;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(102,126,234,0.12);
+}
+.btn.btn-success {
+  background: linear-gradient(135deg, var(--success), #059669);
+  border: none;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(6,178,133,0.12);
+}
+.btn.btn-outline-secondary {
+  border:1px solid rgba(255,255,255,0.06);
+  color:#e6eef8;
+  background:transparent;
+}
+
+#viewResponseBtn:hover,
+.btn.btn-primary:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 32px 80px var(--btn-glow-color);
+}
+.btn.btn-success:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 32px 80px rgba(6,178,133,0.28);
+}
+
+.btn::before {
+  content: '';
+  position: absolute;
+  top: -30%; left: -120%;
+  width: 60%; height: 160%;
+  background: linear-gradient(120deg, rgba(255,255,255,0.06), rgba(255,255,255,0));
+  transform: rotate(25deg);
+  transition: left .6s ease;
+  pointer-events: none;
+}
+.btn:hover::before { left: 120%; }
+
+.btn { font-size: 0.95rem; }
+
+.alert { border-radius: 10px; font-weight:700; color: #fff; }
+.alert .fa { margin-right: 6px; }
+
+.badge { font-weight:800; color: #fff !important; }
+
+.pct-badge { padding:.35rem .6rem; border-radius:999px; font-weight:800; color:#fff; display:inline-block; }
+.pct-badge.green{ background: linear-gradient(135deg,#06b285,#059669); box-shadow:0 6px 18px rgba(6,178,133,0.12); }
+.pct-badge.info{ background: linear-gradient(135deg,#3fb0f5,#1d7ed6); }
+.pct-badge.warn{ background: linear-gradient(135deg,#f59e0b,#f97316); color:#111; }
+.pct-badge.danger{ background: linear-gradient(135deg,#ef4444,#dc2626); }
+
+body, .container, main, .result-card { -webkit-font-smoothing:antialiased; text-rendering:optimizeLegibility; }
+.result-card, .result-card * { color: inherit !important; }
+
+.result-card .card .card-header small,
+.result-card .card .card-body small { color: var(--muted-light) !important; }
+
+@media print {
+  .navbar, .btn, #responseLoadingAlert { display: none !important; }
+  body { background: white !important; color: #000 !important; }
+  .result-card { box-shadow: none !important; border: none !important; background: transparent !important; transform:none !important; }
+}
+
+@keyframes fadeUp { 0%{ opacity:0; transform: translateY(10px);} 100%{ opacity:1; transform: translateY(0);} }
+.result-card { animation: fadeUp .4s ease both; }
+
+.card-header {
+  background: linear-gradient(90deg, rgba(102,126,234,0.15), rgba(118,75,162,0.12));
+  color: #fff !important;
+  font-weight: 700;
+  border-bottom: 1px solid rgba(255,255,255,0.05);
+}
+
+.alert-success {
+  background: linear-gradient(135deg, #065f46, #059669);
+  color: #fff !important;
+  border: none;
+}
+.alert-info {
+  background: linear-gradient(135deg, #1e3a8a, #2563eb);
+  color: #fff !important;
+  border: none;
+}
+.alert-warning {
+  background: linear-gradient(135deg, #92400e, #f59e0b);
+  color: #fff !important;
+  border: none;
+}
+.alert-danger {
+  background: linear-gradient(135deg, #7f1d1d, #dc2626);
+  color: #fff !important;
+  border: none;
+}
+
+.alert strong {
+  font-weight: 800;
+  color: #fff !important;
+}
+
+.custom-header {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  border-bottom: none;
+  padding: 0.7rem 1rem;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.custom-header .exam-name {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+  font-size: 1.1rem;
+  margin: 0;
+  letter-spacing: 0.2px;
+  text-shadow: none !important;
+  filter: none !important;
+  opacity: 1 !important;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.custom-header .exam-name i {
+  color: #ffffff;
+  margin-right: 0.5rem;
+  font-size: 1.1rem;
+}
+
+.custom-header,
+.custom-header * {
+  background: transparent !important;
+  -webkit-backdrop-filter: none !important;
+  backdrop-filter: none !important;
+}
+
+.stats-header {
+  background: linear-gradient(90deg, #6366f1, #8b5cf6);
+  color: #fff;
+  font-weight: 700;
+  font-size: 1.1rem;
+  border: none;
+  padding: 0.8rem 1rem;
+  letter-spacing: 0.3px;
+}
+
+.stats-card {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+  overflow: hidden;
+}
+
+.stat-box {
+  padding: 1rem 0.5rem;
+}
+
+.stat-inner {
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 1.2rem 0.8rem;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.stat-inner:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 28px rgba(0,0,0,0.45);
+}
+
+.stat-value {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.stat-label {
+  margin-top: 0.4rem;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.stat-inner.attempt {
+  border: 1px solid rgba(59, 130, 246, 0.5);
+}
+.stat-inner.accuracy {
+  border: 1px solid rgba(16, 185, 129, 0.6);
+}
+.stat-inner.overall {
+  border: 1px solid rgba(234, 179, 8, 0.6);
+}
+
+.golden-trophy {
+  background: linear-gradient(135deg, #FFD700, #FFA500, #FF8C00);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: glow 2s infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    text-shadow: 0 0 8px rgba(255, 215, 0, 0.6), 0 0 16px rgba(255, 165, 0, 0.5);
+  }
+  to {
+    text-shadow: 0 0 14px rgba(255, 223, 0, 0.9), 0 0 28px rgba(255, 140, 0, 0.8);
+  }
+}
+
+.exam-success-title {
+  color: #ffffff !important;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.metric-glow {
+  background: linear-gradient(90deg,#ffd166,#ffd700,#ffb703);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  font-weight: 900;
+  font-size: 2rem;
+  text-shadow: 0 6px 18px rgba(255, 190, 0, 0.14), 0 0 28px rgba(255,160,0,0.08);
+  animation: metricPulse 2s infinite alternate;
+}
+
+@keyframes metricPulse {
+  from { text-shadow: 0 6px 18px rgba(255, 190, 0, 0.12), 0 0 18px rgba(255,160,0,0.06); transform: translateY(0); }
+  to { text-shadow: 0 14px 34px rgba(255, 210, 80, 0.28), 0 0 46px rgba(255,160,0,0.12); transform: translateY(-4px); }
+}
+
+.glow-star {
+  background: linear-gradient(90deg,#ffd700,#ffb703);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 8px 24px rgba(255,200,0,0.2);
+  animation: starPulse 2s infinite alternate;
+  font-size: 1.8rem;
+}
+
+@keyframes starPulse {
+  from { text-shadow: 0 6px 12px rgba(255,200,0,0.14); transform: scale(1); }
+  to { text-shadow: 0 14px 36px rgba(255,220,80,0.36); transform: scale(1.06); }
+}
+
+/* ===== Response Loading Glowing Style (same as submit_confirm) ===== */
+#responseLoadingAlert {
+  background: linear-gradient(180deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03));
+  border: 1px solid rgba(34,197,94,0.12);
+  border-radius: 14px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(34,197,94,0.08);
+}
+
+#responseLoadingTitle {
+  color: #bbf7d0 !important;
+  font-weight: 700;
+  text-shadow: 0 0 8px rgba(34,197,94,0.9),
+               0 0 16px rgba(34,197,94,0.6),
+               0 0 22px rgba(34,197,94,0.5);
+}
+
+#responseLoadingSubtitle {
+  color: #d1fae5 !important;
+  font-weight: 500;
+  text-shadow: 0 0 6px rgba(16,185,129,0.8),
+               0 0 14px rgba(16,185,129,0.5);
+}
+
+#responseLoadingDetails {
+  color: #86efac !important;
+  font-weight: 500;
+}
+
+/* glowing animated green progress bar */
+#responseProgress.bg-primary {
+  background: linear-gradient(90deg, #22c55e, #2dd4bf 40%, #16a34a);
+  background-size: 200% 100%;
+  animation: pulseResponseBar 3s linear infinite;
+  box-shadow: 0 8px 40px rgba(34,197,94,0.18),
+              inset 0 0 10px rgba(255,255,255,0.04);
+}
+
+@keyframes pulseResponseBar {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+#responseLoadingPercentage {
+  color: #bbf7d0 !important;
+  font-weight: 700;
+  text-shadow: 0 0 6px rgba(34,197,94,0.9),
+               0 0 12px rgba(34,197,94,0.6);
+}
+
+
+</style>
+
 <div class="container mt-5">
 
     {% if from_history %}
     <div class="row mb-3">
         <div class="col text-center">
-            <a href="{{ url_for('dashboard') }}" class="btn btn-sm"
-               style="border:1px solid #fff; color:#fff;">
+            <a href="{{ url_for('dashboard') }}" class="btn btn-sm" style="border:1px solid #fff; color:#fff;">
                 <i class="fas fa-arrow-left"></i> Back to Dashboard
             </a>
         </div>
@@ -19,17 +393,16 @@
     <div class="row justify-content-center">
         <div class="col-md-8">
             <div class="result-card text-center">
-                <!-- Success Icon and Title -->
                 <div class="mb-4">
-                    <i class="fas fa-trophy fa-4x text-warning mb-3"></i>
-                    <h2 class="text-primary">Exam Completed Successfully!</h2>
+                    <i class="fas fa-trophy fa-4x golden-trophy mb-3"></i>
+                    <h2 class="exam-success-title">Exam Completed Successfully!</h2>
                 </div>
 
-                <!-- Exam Information -->
                 <div class="card mb-4">
-                    <div class="card-header bg-light">
-                        <h5 class="mb-0"><i class="fas fa-file-alt"></i> {{ exam.name }}</h5>
+                    <div class="card-header custom-header text-center">
+                        <h5 class="mb-0 exam-name"><i class="fas fa-file-alt"></i> {{ exam.name }}</h5>
                     </div>
+
                     <div class="card-body">
                         <div class="row">
                             <div class="col-md-6">
@@ -45,87 +418,84 @@
                     </div>
                 </div>
 
-                <!-- Enhanced Score Display -->
                 <div class="row mb-4">
                     <div class="col-md-3">
                         <div class="card border-primary">
-                            <div class="card-body">
-                                <h3 class="text-primary">{{ result.score }}</h3>
+                            <div class="card-body text-center">
+                                <div class="metric-glow">{{ result.score }}</div>
                                 <p class="text-muted mb-0">Score Obtained</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card border-info">
-                            <div class="card-body">
-                                <h3 class="text-info">{{ result.max_score }}</h3>
+                            <div class="card-body text-center">
+                                <h3 style="color:var(--white);">{{ result.max_score }}</h3>
                                 <p class="text-muted mb-0">Maximum Score</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card border-warning">
-                            <div class="card-body">
-                                <h3 class="text-warning">{{ result.total_questions }}</h3>
+                            <div class="card-body text-center">
+                                <h3 style="color:var(--white);">{{ result.total_questions }}</h3>
                                 <p class="text-muted mb-0">Total Questions</p>
                             </div>
                         </div>
                     </div>
                     <div class="col-md-3">
                         <div class="card border-success">
-                            <div class="card-body">
-                                <h3 class="text-success">{{ result.percentage }}%</h3>
+                            <div class="card-body text-center">
+                                <h3 style="color:var(--white);">{{ result.percentage }}%</h3>
                                 <p class="text-muted mb-0">Percentage</p>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Grade Display -->
                 <div class="mb-4">
-                    <h3>Your Grade:
+                    <h3 style="color:var(--white); font-weight:800;">Your Grade:
                         <span class="badge
                             {% if result.grade == 'A+' or result.grade == 'A' %}bg-success
                             {% elif result.grade == 'B' %}bg-primary
                             {% elif result.grade == 'C' %}bg-warning
-                            {% else %}bg-danger{% endif %} fs-4">
+                            {% else %}bg-danger{% endif %} fs-4" style="font-weight:900;">
                             {{ result.grade }}
                         </span>
                     </h3>
                 </div>
 
-                <!-- Performance Analysis with Fixed Metrics -->
                 <div class="card mb-4">
                     <div class="card-header">
                         <h5 class="mb-0"><i class="fas fa-chart-pie"></i> Performance Analysis</h5>
                     </div>
                     <div class="card-body">
-                        <div class="row">
+                        <div class="row text-center">
                             <div class="col-md-3">
                                 <div class="text-success">
                                     <i class="fas fa-check-circle fa-2x mb-2"></i>
-                                    <h4>{{ result.correct_answers if result.correct_answers is defined else 0 }}</h4>
+                                    <h4 style="color:var(--white);">{{ result.correct_answers if result.correct_answers is defined else 0 }}</h4>
                                     <p class="mb-0">Correct</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="text-danger">
                                     <i class="fas fa-times-circle fa-2x mb-2"></i>
-                                    <h4>{{ result.incorrect_answers if result.incorrect_answers is defined else 0 }}</h4>
+                                    <h4 style="color:var(--white);">{{ result.incorrect_answers if result.incorrect_answers is defined else 0 }}</h4>
                                     <p class="mb-0">Incorrect</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="text-muted">
                                     <i class="fas fa-question-circle fa-2x mb-2"></i>
-                                    <h4>{{ result.unanswered_questions if result.unanswered_questions is defined else 0 }}</h4>
+                                    <h4 style="color:var(--white);">{{ result.unanswered_questions if result.unanswered_questions is defined else 0 }}</h4>
                                     <p class="mb-0">Unanswered</p>
                                 </div>
                             </div>
                             <div class="col-md-3">
                                 <div class="text-warning">
-                                    <i class="fas fa-star fa-2x mb-2"></i>
-                                    <h4>{{ result.grade }}</h4>
+                                    <i class="fas fa-star fa-2x mb-2 glow-star"></i>
+                                    <h4 style="color:var(--white);">{{ result.grade }}</h4>
                                     <p class="mb-0">Grade</p>
                                 </div>
                             </div>
@@ -133,38 +503,48 @@
                     </div>
                 </div>
 
-                <!-- Detailed Statistics -->
-                <div class="card mb-4">
-                    <div class="card-header bg-info text-white">
+                <div class="card mb-4 stats-card">
+                    <div class="card-header stats-header text-center">
                         <h6 class="mb-0"><i class="fas fa-chart-bar"></i> Detailed Statistics</h6>
                     </div>
                     <div class="card-body">
                         <div class="row text-center">
-                            <div class="col-md-4">
-                                <strong>Attempted:</strong> {{ (result.correct_answers if result.correct_answers is defined else 0) + (result.incorrect_answers if result.incorrect_answers is defined else 0) }} / {{ result.total_questions }}
+                            <div class="col-md-4 stat-box">
+                                <div class="stat-inner attempt">
+                                    <div class="stat-value">
+                                        {{ (result.correct_answers if result.correct_answers is defined else 0) + (result.incorrect_answers if result.incorrect_answers is defined else 0) }} / {{ result.total_questions }}
+                                    </div>
+                                    <div class="stat-label">Attempted</div>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <strong>Accuracy:</strong>
-                                {% set attempted = (result.correct_answers if result.correct_answers is defined else 0) + (result.incorrect_answers if result.incorrect_answers is defined else 0) %}
-                                {% if attempted > 0 %}
-                                    {{ ((result.correct_answers if result.correct_answers is defined else 0) / attempted * 100) | round(1) }}%
-                                {% else %}
-                                    N/A
-                                {% endif %}
+                            <div class="col-md-4 stat-box">
+                                <div class="stat-inner accuracy">
+                                    <div class="stat-value">
+                                        {% set attempted = (result.correct_answers if result.correct_answers is defined else 0) + (result.incorrect_answers if result.incorrect_answers is defined else 0) %}
+                                        {% if attempted > 0 %}
+                                          {{ ((result.correct_answers if result.correct_answers is defined else 0) / attempted * 100) | round(1) }}%
+                                        {% else %}
+                                          N/A
+                                        {% endif %}
+                                    </div>
+                                    <div class="stat-label">Accuracy</div>
+                                </div>
                             </div>
-                            <div class="col-md-4">
-                                <strong>Overall Score:</strong> {{ result.percentage }}%
+                            <div class="col-md-4 stat-box">
+                                <div class="stat-inner overall">
+                                    <div class="stat-value">{{ result.percentage }}%</div>
+                                    <div class="stat-label">Overall Score</div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Performance Message -->
                 <div class="alert
                     {% if result.percentage >= 80 %}alert-success
                     {% elif result.percentage >= 60 %}alert-info
                     {% elif result.percentage >= 40 %}alert-warning
-                    {% else %}alert-danger{% endif %} mb-4">
+                    {% else %}alert-danger{% endif %} mb-4" role="status">
                     {% if result.percentage >= 80 %}
                         <i class="fas fa-trophy"></i> <strong>Excellent Performance!</strong>
                         You have demonstrated a strong understanding of the subject matter.
@@ -180,7 +560,6 @@
                     {% endif %}
                 </div>
 
-                <!-- Enhanced Loading Alert for Response Analysis -->
                 <div class="alert alert-primary" id="responseLoadingAlert" style="display: none;">
                     <div class="d-flex align-items-center">
                         <div class="spinner-border spinner-border-sm me-3 text-primary" role="status">
@@ -195,8 +574,7 @@
                                 <div id="responseLoadingPercentage" class="fw-bold text-primary">0%</div>
                             </div>
                             <div class="progress mt-2" style="height: 8px; border-radius: 4px;">
-                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
-                                     role="progressbar" style="width: 0%; transition: width 0.3s ease;" id="responseProgress"></div>
+                                <div class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%; transition: width 0.3s ease;" id="responseProgress"></div>
                             </div>
                             <div class="small mt-2 text-muted" id="responseLoadingDetails">
                                 Fetching response data...
@@ -205,7 +583,6 @@
                     </div>
                 </div>
 
-                <!-- Action Buttons -->
                 <div class="d-grid gap-2 d-md-flex justify-content-md-center">
                     <button class="btn btn-success btn-lg me-md-2" id="viewResponseBtn" onclick="openResponseAnalysisWithLoading()">
                         <i class="fas fa-clipboard-check"></i> View Detailed Response
@@ -233,140 +610,94 @@
 
 <script>
 function closeExamWindow() {
-    window.close();
+  window.close();
 }
 
 function openResponseAnalysisWithLoading() {
-    const loadingAlert = document.getElementById('responseLoadingAlert');
-    const viewResponseBtn = document.getElementById('viewResponseBtn');
-    const progressBar = document.getElementById('responseProgress');
-    const loadingTitle = document.getElementById('responseLoadingTitle');
-    const loadingSubtitle = document.getElementById('responseLoadingSubtitle');
-    const loadingDetails = document.getElementById('responseLoadingDetails');
-    const loadingPercentage = document.getElementById('responseLoadingPercentage');
+  const loadingAlert = document.getElementById('responseLoadingAlert');
+  const viewResponseBtn = document.getElementById('viewResponseBtn');
+  const progressBar = document.getElementById('responseProgress');
+  const loadingTitle = document.getElementById('responseLoadingTitle');
+  const loadingSubtitle = document.getElementById('responseLoadingSubtitle');
+  const loadingDetails = document.getElementById('responseLoadingDetails');
+  const loadingPercentage = document.getElementById('responseLoadingPercentage');
 
-    // Show loading and disable button
-    loadingAlert.style.display = 'block';
-    viewResponseBtn.disabled = true;
-    viewResponseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
+  loadingAlert.style.display = 'block';
+  viewResponseBtn.disabled = true;
+  viewResponseBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
 
-    // Scroll to loading alert
-    loadingAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  loadingAlert.scrollIntoView({ behavior: 'smooth', block: 'center' });
 
-    // Professional loading sequence for response analysis
-    const loadingSteps = [
-        { progress: 15, title: "Fetching Your Responses...", subtitle: "Retrieving your submitted answers", details: "Loading your exam responses from database" },
-        { progress: 35, title: "Loading Question Details...", subtitle: "Gathering question information", details: "Fetching question text and options" },
-        { progress: 55, title: "Processing Answer Analysis...", subtitle: "Comparing your answers", details: "Analyzing correct vs incorrect responses" },
-        { progress: 75, title: "Loading Question Images...", subtitle: "Preparing visual content", details: "Optimizing diagrams and images for display" },
-        { progress: 90, title: "Generating Performance Report...", subtitle: "Creating detailed analysis", details: "Calculating performance metrics and insights" },
-        { progress: 100, title: "Opening Response Analysis...", subtitle: "Analysis ready!", details: "Launching detailed response viewer" }
-    ];
+  const loadingSteps = [
+    { progress: 15, title: "Fetching Your Responses...", subtitle: "Retrieving your submitted answers", details: "Loading your exam responses from database" },
+    { progress: 35, title: "Loading Question Details...", subtitle: "Gathering question information", details: "Fetching question text and options" },
+    { progress: 55, title: "Processing Answer Analysis...", subtitle: "Comparing your answers", details: "Analyzing correct vs incorrect responses" },
+    { progress: 75, title: "Loading Question Images...", subtitle: "Preparing visual content", details: "Optimizing diagrams and images for display" },
+    { progress: 90, title: "Generating Performance Report...", subtitle: "Creating detailed analysis", details: "Calculating performance metrics and insights" },
+    { progress: 100, title: "Opening Response Analysis...", subtitle: "Analysis ready!", details: "Launching detailed response viewer" }
+  ];
 
-    let currentStep = 0;
+  let currentStep = 0;
 
-    function updateLoadingProgress() {
-        if (currentStep < loadingSteps.length) {
-            const step = loadingSteps[currentStep];
-
-            // Update progress bar and text
-            progressBar.style.width = step.progress + '%';
-            loadingPercentage.textContent = step.progress + '%';
-            loadingTitle.textContent = step.title;
-            loadingSubtitle.textContent = step.subtitle;
-            loadingDetails.textContent = step.details;
-
-            currentStep++;
-
-            if (step.progress < 100) {
-                // Continue to next step after delay
-                setTimeout(updateLoadingProgress, Math.random() * 600 + 300); // 300-900ms random delay
-            } else {
-                // Loading complete - open the response page
-                setTimeout(openActualResponsePage, 500);
-            }
-        }
+  function updateLoadingProgress() {
+    if (currentStep < loadingSteps.length) {
+      const step = loadingSteps[currentStep];
+      progressBar.style.width = step.progress + '%';
+      loadingPercentage.textContent = step.progress + '%';
+      loadingTitle.textContent = step.title;
+      loadingSubtitle.textContent = step.subtitle;
+      loadingDetails.textContent = step.details;
+      currentStep++;
+      if (step.progress < 100) {
+        setTimeout(updateLoadingProgress, Math.random() * 600 + 300);
+      } else {
+        setTimeout(openActualResponsePage, 500);
+      }
     }
+  }
 
-    function openActualResponsePage() {
-        // Hide loading alert
-        loadingAlert.style.display = 'none';
-
-        // Reset button
-        viewResponseBtn.disabled = false;
-        viewResponseBtn.innerHTML = '<i class="fas fa-clipboard-check"></i> View Detailed Response';
-
-        // Open response analysis in a new window
-        let width = screen.availWidth * 0.9;
-        let height = screen.availHeight * 0.9;
-        let left = (screen.availWidth - width) / 2;
-        let top = (screen.availHeight - height) / 2;
-
-        let features = `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no`;
-
-        let responseWindow = window.open('{{ url_for("response_page", exam_id=exam.id) }}', '_blank', features);
-        if (responseWindow) {
-            responseWindow.focus();
-        } else {
-            alert('Please allow popups for this site to view detailed response.');
-            // Fallback - redirect in same window
-            window.location.href = '{{ url_for("response_page", exam_id=exam.id) }}';
-        }
-    }
-
-    function showLoadingError(message) {
-        loadingAlert.style.display = 'none';
-        viewResponseBtn.disabled = false;
-        viewResponseBtn.innerHTML = '<i class="fas fa-clipboard-check"></i> View Detailed Response';
-        alert('Error loading response analysis: ' + message + '\n\nTrying direct access...');
-        // Fallback to direct access
-        openActualResponsePage();
-    }
-
-    // Start the loading sequence
-    updateLoadingProgress();
-}
-
-// Alternative function for simple opening (fallback)
-function openResponseAnalysis() {
+  function openActualResponsePage() {
+    loadingAlert.style.display = 'none';
+    viewResponseBtn.disabled = false;
+    viewResponseBtn.innerHTML = '<i class="fas fa-clipboard-check"></i> View Detailed Response';
     let width = screen.availWidth * 0.9;
     let height = screen.availHeight * 0.9;
     let left = (screen.availWidth - width) / 2;
     let top = (screen.availHeight - height) / 2;
-
     let features = `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no`;
-
     let responseWindow = window.open('{{ url_for("response_page", exam_id=exam.id) }}', '_blank', features);
     if (responseWindow) {
-        responseWindow.focus();
+      responseWindow.focus();
     } else {
-        alert('Please allow popups for this site to view detailed response.');
+      alert('Please allow popups for this site to view detailed response.');
+      window.location.href = '{{ url_for("response_page", exam_id=exam.id) }}';
     }
+  }
+
+  function showLoadingError(message) {
+    loadingAlert.style.display = 'none';
+    viewResponseBtn.disabled = false;
+    viewResponseBtn.innerHTML = '<i class="fas fa-clipboard-check"></i> View Detailed Response';
+    alert('Error loading response analysis: ' + message + '\n\nTrying direct access...');
+    openActualResponsePage();
+  }
+
+  updateLoadingProgress();
+}
+
+function openResponseAnalysis() {
+  let width = screen.availWidth * 0.9;
+  let height = screen.availHeight * 0.9;
+  let left = (screen.availWidth - width) / 2;
+  let top = (screen.availHeight - height) / 2;
+  let features = `width=${width},height=${height},top=${top},left=${left},resizable=yes,scrollbars=yes,menubar=no,toolbar=no,location=no,status=no`;
+  let responseWindow = window.open('{{ url_for("response_page", exam_id=exam.id) }}', '_blank', features);
+  if (responseWindow) {
+    responseWindow.focus();
+  } else {
+    alert('Please allow popups for this site to view detailed response.');
+  }
 }
 </script>
 
-<style>
-@media print {
-    .navbar, .btn, #responseLoadingAlert { display: none !important; }
-    body { background: white !important; }
-    .result-card { box-shadow: none !important; }
-}
-
-/* Loading animation styles */
-#responseLoadingAlert {
-    border-left: 5px solid #0d6efd;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(13, 110, 253, 0.2);
-}
-
-#responseProgress {
-    border-radius: 4px;
-    box-shadow: 0 2px 4px rgba(13, 110, 253, 0.3);
-}
-
-.btn:disabled {
-    opacity: 0.7;
-    cursor: not-allowed;
-}
-</style>
 {% endblock %}

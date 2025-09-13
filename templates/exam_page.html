@@ -2,1168 +2,964 @@
 {% block title %}{{ exam.name }} - ExamPortal{% endblock %}
 
 {% block content %}
+
 <style>
-/* Enhanced Numeric Keypad Styles */
+:root{
+  --bg-1: #0f1724;
+  --bg-2: #141428;
+  --accent-a: #667eea;
+  --accent-b: #764ba2;
+  --success: #10b981;
+  --danger: #ef4444;
+  --muted: #cbd5e1;
+  --card-radius: 14px;
+  --strong-shadow: 0 30px 60px rgba(2,6,23,0.6);
+  --btn-glow-color: rgba(102,126,234,0.28);
+  --white: #ffffff;
+  --muted-light: #cfe3ff;
+  --gold-1: #ffd166;
+  --gold-2: #ffb703;
+}
+
+body { color: var(--muted-light); }
+
+.container-fluid { position: relative; z-index: 10; }
+
+.header {
+  display:flex;
+  align-items:center;
+  gap:1rem;
+}
+.header h3 { margin:0; font-weight:800; color:var(--white); }
+.badge-info {
+  background: linear-gradient(90deg,#3b82f6,#6366f1);
+  color:#fff;
+  font-weight:700;
+}
+
+.timer {
+  background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
+  color: white;
+  padding: 12px 16px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  font-weight: 800;
+  box-shadow: 0 10px 30px rgba(238,90,82,0.14);
+  display:inline-flex;
+  align-items:center;
+  gap:0.5rem;
+}
+
+.question-card {
+  background: linear-gradient(135deg, #1f2937, #111827) !important; /* dark grey gradient */
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: var(--strong-shadow);
+  color: var(--white);
+}
+
+
+.card { border-radius: 12px; border: 1px solid rgba(255,255,255,0.04); background: transparent; color:var(--muted-light); }
+.card .card-header { background: linear-gradient(90deg, rgba(102,126,234,0.08), rgba(118,75,162,0.04)); color:#fff; font-weight:700; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+.question-image .image-loading,
+.question-image .image-error {
+  border-radius: 10px;
+  padding: 18px;
+  color: #333;
+}
+
+.image-loading { background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%); border: 2px dashed rgba(255,255,255,0.06); color:#3b3b3b; }
+.image-error { background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%); border: 2px dashed rgba(255,193,7,0.18); color:#856404; }
+.image-loaded { opacity:0; transition: opacity .45s ease-in-out; border-radius:10px; box-shadow: 0 8px 30px rgba(0,0,0,0.35); }
+.image-loaded.show { opacity:1; }
+
+.option-container { transition: all .28s ease; border-left:4px solid transparent; padding:14px; border-radius:10px; background: rgba(255,255,255,0.02); cursor:pointer; }
+.option-container:hover { background: linear-gradient(90deg, rgba(59,130,246,0.06), rgba(102,126,234,0.04)); transform: translateX(3px); border-left-color: rgba(59,130,246,0.9); }
+.option-container.selected { background: linear-gradient(90deg, rgba(6,178,133,0.06), rgba(6,178,133,0.04)); border-left-color: rgba(6,178,133,0.9); box-shadow:0 8px 20px rgba(6,178,133,0.08); }
+.option-container.selected-msq { background: linear-gradient(90deg, rgba(3,169,244,0.06), rgba(3,169,244,0.03)); border-left-color: rgba(3,169,244,0.9); box-shadow:0 8px 20px rgba(3,169,244,0.08); }
+
 .numeric-keypad {
-    background: #f8f9fa;
-    border: 1px solid #dee2e6;
-    border-radius: 8px;
-    padding: 12px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    max-width: 200px; /* Reduced from 220px */
+  background: linear-gradient(180deg,#ffffff, #f6f9ff);
+  border-radius:10px;
+  padding:16px; /* thoda padding badhaya */
+  border:1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 8px 30px rgba(2,6,23,0.2), 0 0 15px rgba(102,126,234,0.2);
+  max-width:280px; /* pehle 220px tha, ab bada */
 }
 
 .numeric-display {
-    background: #ffffff;
-    border: 2px solid #007bff;
-    border-radius: 6px;
-    font-size: 1.2rem; /* Reduced from 1.3rem */
-    font-weight: bold;
-    text-align: center;
-    padding: 8px; /* Reduced from 10px */
-    min-height: 40px; /* Reduced from 45px */
-    color: #333;
-    font-family: 'Courier New', monospace;
-    margin-bottom: 8px; /* Reduced from 10px */
-    position: relative;
-}
-
-.cursor-blink {
-    animation: blink 1s infinite;
-}
-
-@keyframes blink {
-    0%, 50% { opacity: 1; }
-    51%, 100% { opacity: 0; }
+  background: #ffffff;
+  border-radius:8px;
+  padding:8px;
+  font-weight:800;
+  font-family:'Courier New', monospace;
+  color:#07203a;
+  min-height:44px;
+  border:2px solid rgba(102,126,234,0.4);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:6px;
+  box-shadow: 0 0 12px rgba(102,126,234,0.25);
 }
 
 .keypad-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 4px; /* Reduced from 6px */
+  display:grid;
+  grid-template-columns: repeat(4,1fr);
+  gap:8px;
 }
 
 .keypad-btn {
-    aspect-ratio: 1;
-    border: 2px solid #dee2e6;
-    border-radius: 6px; /* Reduced from 8px */
-    background: #ffffff;
-    font-size: 1rem; /* Reduced from 1.1rem */
-    font-weight: bold;
-    transition: all 0.2s ease;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 35px; /* Reduced from 40px */
-    min-width: 35px; /* Reduced from 40px */
+  aspect-ratio:1;
+  border-radius:8px;
+  background:#fff;
+  border:1px solid rgba(0,0,0,0.1);
+  font-weight:800;
+  transition: transform .12s ease, box-shadow .2s ease, border .2s ease;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  cursor:pointer;
+  color:#1e293b;
 }
-
 .keypad-btn:hover {
-    background: #e9ecef;
-    border-color: #007bff;
-    transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-}
-
-.keypad-btn:active {
-    transform: translateY(1px);
-    box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
-}
-
-.keypad-btn.number {
-    color: #333;
-}
-
-.keypad-btn.decimal {
-    background: #fff3cd;
-    color: #856404;
-}
-
-.keypad-btn.decimal:hover {
-    background: #ffeaa7;
+  transform: translateY(-2px);
+  border:1px solid rgba(99,102,241,0.6);
+  box-shadow: 0 0 20px rgba(99,102,241,0.5);
 }
 
 .keypad-btn.clear {
-    background: #f8d7da;
-    color: #721c24;
+  background: linear-gradient(135deg,#fee2e2,#fca5a5);
+  color:#7f1d1d;
+  border:1px solid rgba(239,68,68,0.4);
+  box-shadow: 0 0 10px rgba(239,68,68,0.2);
 }
-
 .keypad-btn.clear:hover {
-    background: #f5c6cb;
+  box-shadow: 0 0 18px rgba(239,68,68,0.6);
 }
 
 .keypad-btn.backspace {
-    background: #d1ecf1;
-    color: #0c5460;
+  background: linear-gradient(135deg,#dbeafe,#bfdbfe);
+  color:#0b3d91;
+  border:1px solid rgba(59,130,246,0.4);
+  box-shadow: 0 0 10px rgba(59,130,246,0.2);
 }
-
 .keypad-btn.backspace:hover {
-    background: #bee5eb;
+  box-shadow: 0 0 18px rgba(59,130,246,0.6);
 }
 
-.keypad-btn.sign {
-    background: #e2e3e5;
-    color: #383d41;
+.keypad-btn.decimal {
+  background: linear-gradient(135deg,#fff7ed,#ffedd5);
+  color:#7c2d12;
+  border:1px solid rgba(245,158,11,0.4);
+  box-shadow: 0 0 10px rgba(245,158,11,0.2);
+}
+.keypad-btn.decimal:hover {
+  box-shadow: 0 0 18px rgba(245,158,11,0.6);
 }
 
-.keypad-btn.sign:hover {
-    background: #d6d8db;
-}
-
-/* Enhanced Image Loading Styles */
-.question-image {
-    position: relative;
-    margin-bottom: 20px;
-}
-
-.image-loading {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 200px;
-    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
-    border-radius: 10px;
-    border: 2px dashed #6c757d;
-}
-
-.image-error {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 150px;
-    background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-    border-radius: 10px;
-    border: 2px dashed #ffc107;
-    color: #856404;
-}
-
-.image-loaded {
-    opacity: 0;
-    transition: opacity 0.5s ease-in-out;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-}
-
-.image-loaded.show {
-    opacity: 1;
-}
-
-/* Enhanced Question Card */
-.question-card {
-    background: #fff;
-    border-radius: 15px;
-    padding: 25px;
-    box-shadow: 0 5px 20px rgba(0,0,0,0.1);
-    margin-bottom: 20px;
-}
-
-/* Option Container Enhancements */
-.option-container {
-    transition: all 0.3s ease;
-    border-left: 4px solid transparent !important;
-}
-
-.option-container:hover {
-    background: #e3f2fd !important;
-    border-left: 4px solid #2196f3 !important;
-    transform: translateX(3px);
-}
-
-.option-container.selected {
-    background: #e8f5e8 !important;
-    border-left: 4px solid #4caf50 !important;
-    border-color: #4caf50 !important;
-}
-
-.option-container.selected-msq {
-    background: #e1f5fe !important;
-    border-left: 4px solid #03a9f4 !important;
-    border-color: #03a9f4 !important;
-}
-
-/* Question Palette Enhancements */
-.question-palette a {
-    width: 40px;
-    height: 40px;
-    margin: 2px;
-    position: relative;
-    font-weight: bold;
-    border-radius: 8px;
-    transition: all 0.2s ease;
-}
-
-.question-palette a:hover {
-    transform: scale(1.1);
-    z-index: 10;
-}
-
-.question-palette a.answered {
-    background-color: #28a745;
-    color: white;
-}
-
-.question-palette a.review {
-    background-color: #ffc107;
-    color: #212529;
-}
-
-.question-palette a.visited {
-    background-color: #17a2b8;
-    color: white;
-}
-
-.question-palette a.not-visited {
-    background-color: #6c757d;
-    color: white;
-}
-
-/* Timer Enhancement */
-.timer {
-    background: linear-gradient(135deg, #ff6b6b 0%, #ee5a52 100%);
-    color: white;
-    padding: 15px 20px;
-    border-radius: 10px;
-    font-size: 1.1rem;
-    font-weight: bold;
-    box-shadow: 0 4px 15px rgba(255,107,107,0.3);
-}
-
-/* Loading Spinner */
-.loading-spinner {
-    border: 3px solid #f3f3f3;
-    border-top: 3px solid #007bff;
-    border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-}
-
-/* Numeric Question Layout Fix */
-.numeric-answer-section {
-    max-width: 100%;
-}
 
 .keypad-guide-card {
-    max-width: 100%;
+  background: linear-gradient(180deg,#ffffff,#f8fafc);
+  border-radius: 10px;
+  border: 1px solid rgba(0,0,0,0.08);
+  box-shadow: 0 6px 20px rgba(2,6,23,0.15);
+  color: #1e293b;
+  max-width:220px; /* chota kiya */
+  margin:auto; /* center align */
 }
 
 .keypad-guide-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-    margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: repeat(2,1fr);
+  gap: 12px;
+  margin-top: 10px;
 }
 
 .keypad-guide-item {
-    padding: 8px;
-    background: #f8f9fa;
-    border-radius: 6px;
-    text-align: center;
-    font-size: 0.85rem;
+  background: rgba(255,255,255,0.85);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 8px;
+  padding: 10px;
+  text-align: center;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #0f172a;
+  box-shadow: 0 3px 10px rgba(0,0,0,0.1);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.keypad-guide-item:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(59,130,246,0.35);
 }
 
-/* Responsive Design */
-@media (max-width: 768px) {
-    .question-card {
-        padding: 15px;
-        margin-bottom: 15px;
-    }
 
-    .keypad-btn {
-        min-height: 32px;
-        min-width: 32px;
-        font-size: 0.9rem;
-    }
+.btn {
+  border-radius: 10px;
+  font-weight:800;
+  transition: transform .15s ease, box-shadow .18s ease;
+  position: relative;
+  color: #fff !important;
+  padding: .6rem 1rem;
+}
+.btn:focus { outline: none; box-shadow: 0 0 0 6px rgba(102,126,234,0.06); }
 
-    .numeric-display {
-        font-size: 1rem;
-        padding: 6px;
-        min-height: 36px;
-    }
+.btn-primary, .btn-primary.exam-navigation-btn {
+  background: linear-gradient(135deg,var(--accent-a),var(--accent-b));
+  border:none;
+  box-shadow: 0 12px 36px rgba(102,126,234,0.12);
+}
+.btn-primary:hover { transform: translateY(-4px); box-shadow: 0 34px 86px rgba(102,126,234,0.18); }
 
-    .numeric-keypad {
-        max-width: 180px;
-        padding: 8px;
-    }
+.btn-success, .btn-success.exam-navigation-btn {
+  background: linear-gradient(135deg,var(--success), #059669);
+  border:none;
+  box-shadow: 0 12px 36px rgba(6,178,133,0.12);
+}
+.btn-success:hover { transform: translateY(-4px); box-shadow: 0 34px 86px rgba(6,178,133,0.18); }
 
-    .option-container {
-        margin-bottom: 10px;
-        padding: 10px !important;
-    }
+.btn-warning { background: linear-gradient(135deg,#f59e0b,#f97316); color:#111; border:none; }
+.btn-outline-secondary { border:1px solid rgba(255,255,255,0.06); color:var(--muted-light); background:transparent; }
 
-    .keypad-guide-grid {
-        grid-template-columns: 1fr;
-        gap: 4px;
-    }
+.palette-link { display:inline-flex; align-items:center; justify-content:center; width:42px; height:42px; margin:4px; border-radius:8px; font-weight:800; position:relative; color:#fff; text-decoration:none; }
+.palette-link.answered { background: linear-gradient(90deg,#16a34a,#059669); }
+.palette-link.review { background: linear-gradient(90deg,#f59e0b,#f97316); color:#111; }
+.palette-link.visited { background: linear-gradient(90deg,#0ea5e9,#0369a1); }
+.palette-link.not-visited { background: linear-gradient(90deg,#6c757d,#495057); }
+
+.legend-box { display:flex; align-items:center; gap:8px; margin-bottom:6px; color:var(--muted-light); }
+.legend-box .swatch { width:18px; height:18px; border-radius:4px; display:inline-block; }
+
+.stats-card { background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); border-radius:12px; padding:12px; color:var(--white); box-shadow: 0 12px 36px rgba(2,6,23,0.2); }
+.stat-inner { padding:12px; border-radius:10px; background: rgba(255,255,255,0.02); box-shadow: 0 6px 18px rgba(0,0,0,0.2); }
+
+.metric-glow { background: linear-gradient(90deg,var(--gold-1),var(--gold-2)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; font-weight:900; font-size:1.5rem; text-shadow: 0 6px 18px rgba(255,190,0,0.12); }
+
+.label-glow-gold { display:inline-block; padding:.2rem .5rem; border-radius:8px; background: linear-gradient(90deg, rgba(255,215,0,0.06), rgba(255,215,0,0.02)); color:var(--white); font-weight:800; box-shadow: 0 8px 28px rgba(255,200,0,0.06); }
+.label-glow-green { display:inline-block; padding:.2rem .5rem; border-radius:8px; background: linear-gradient(90deg, rgba(6,178,133,0.06), rgba(6,178,133,0.02)); color:var(--white); font-weight:800; box-shadow: 0 8px 28px rgba(6,178,133,0.06); }
+.label-glow-teal { display:inline-block; padding:.2rem .5rem; border-radius:8px; background: linear-gradient(90deg, rgba(45,212,191,0.06), rgba(45,212,191,0.02)); color:var(--white); font-weight:800; box-shadow: 0 8px 28px rgba(45,212,191,0.06); }
+
+@media (max-width: 767px) {
+  .timer { font-size: .95rem; padding:10px; }
+  .numeric-keypad { max-width:190px; }
+  .question-card { padding:16px; }
+  .palette-link { width:36px; height:36px; }
 }
 
-@media (max-width: 992px) {
-    .numeric-keypad {
-        max-width: 190px;
-    }
-    
-    .keypad-guide-card {
-        margin-top: 15px;
-    }
+.btn-outline-secondary.exam-navigation-btn {
+  border: 1px solid rgba(102,126,234,0.4);
+  color: #fff !important;
+  background: transparent;
+  font-weight: 700;
+  -webkit-text-fill-color: initial;
+  -webkit-background-clip: initial;
+  box-shadow: 0 6px 18px rgba(102,126,234,0.06);
 }
+
+.btn-outline-secondary.exam-navigation-btn:hover {
+  background: linear-gradient(135deg,#3b82f6,#6366f1);
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(99,102,241,0.6);
+  transform: translateY(-3px);
+}
+
+
+.btn-outline-danger {
+  border: 1px solid rgba(239,68,68,0.5);
+  color: #ef4444 !important;
+  background: rgba(255,255,255,0.05);
+}
+.btn-outline-danger:hover {
+  background: linear-gradient(135deg,#ef4444,#dc2626);
+  color: #fff !important;
+  box-shadow: 0 0 20px rgba(239,68,68,0.6);
+  transform: translateY(-3px);
+}
+
+.exam-navigation-btn {
+  transition: all 0.25s ease;
+  border-radius: 10px;
+}
+.exam-navigation-btn:hover {
+  border: 1px solid rgba(255,255,255,0.25);
+  box-shadow: 0 0 20px rgba(255,255,255,0.15);
+  transform: translateY(-3px);
+}
+
+
+/* Override only the light panel inside question-card (keeps global bg-light intact) */
+.question-card .bg-light {
+  background: linear-gradient(135deg, #0f1724 0%, #111827 100%) !important;
+  border-radius: 10px;
+  border: 1px solid rgba(255,255,255,0.03) !important;
+  color: var(--muted-light) !important;
+  box-shadow: 0 8px 30px rgba(2,6,23,0.35) !important;
+}
+
+/* Make inner text / small elements visible */
+.question-card .bg-light a,
+.question-card .bg-light p,
+.question-card .bg-light small,
+.question-card .bg-light .fw-bold,
+.question-card .bg-light .form-check-label {
+  color: var(--muted-light) !important;
+}
+
+
+.question-card .text-muted .text-success {
+  color: #4ade80 !important;
+  text-shadow: 0 0 4px rgba(34,197,94,0.8), 0 0 8px rgba(34,197,94,0.6);
+  font-weight: 700;
+}
+
+.question-card .text-muted .text-danger {
+  color: #f87171 !important;
+  text-shadow: 0 0 4px rgba(239,68,68,0.8), 0 0 8px rgba(239,68,68,0.6);
+  font-weight: 700;
+}
+
+/* Keep the buttons bright and maintain their styles */
+.question-card .bg-light .btn {
+  background-clip: padding-box;
+  color: #fff !important;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+}
+
+/* For the left chevron 'Previous' disabled look - keep legible */
+.question-card .bg-light .btn:disabled {
+  background: rgba(255,255,255,0.03) !important;
+  color: rgba(255,255,255,0.6) !important;
+  border-color: rgba(255,255,255,0.04) !important;
+}
+
+/* If there are any light borders inside that panel, tone them down */
+.question-card .bg-light .border,
+.question-card .bg-light .rounded {
+  border-color: rgba(255,255,255,0.03) !important;
+}
+
+/* small responsive tweak so right sticky cards remain readable */
+@media (min-width: 992px) {
+  .question-card + .col-lg-4 .card,
+  .question-card ~ .col-lg-4 .card {
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+  }
+}
+
+/* Hide scrollbars and browser UI */
+::-webkit-scrollbar { display: none; }
+html, body { 
+  margin: 0 !important; 
+  padding: 0 !important; 
+  overflow-x: hidden; 
+}
+
+
+
 </style>
 
 <div class="container-fluid mt-3">
-    <!-- Enhanced Exam Header -->
-    <div class="row mb-3">
-        <div class="col-md-8">
-            <div class="d-flex align-items-center">
-                <h3 class="mb-0 me-3">
-                    <i class="fas fa-file-alt text-primary"></i> {{ exam.name }}
-                </h3>
-                <span class="badge bg-info fs-6">Question {{ current_index + 1 }} of {{ total_questions }}</span>
-            </div>
-        </div>
-        <div class="col-md-4">
-            <div class="timer text-center">
-                <i class="fas fa-clock"></i> Time Left: <span id="timer">{{ exam.duration }}:00</span>
-            </div>
-        </div>
+  <div class="row mb-3">
+    <div class="col-md-8">
+      <div class="header">
+        <h3><i class="fas fa-file-alt" style="color:var(--accent-b)"></i> {{ exam.name }}</h3>
+        <span class="badge badge-info">Question {{ current_index + 1 }} of {{ total_questions }}</span>
+      </div>
     </div>
+    <div class="col-md-4 text-md-end">
+      <div class="timer">
+        <i class="fas fa-clock"></i>
+        <span>Time Left:</span>
+        <strong id="timer" style="margin-left:6px;">{{ exam.duration }}:00</strong>
+      </div>
+    </div>
+  </div>
 
-    <div class="row">
-        <!-- Question Section -->
-        <div class="col-lg-8">
-            <div class="question-card">
-                {% if question %}
-                <form method="POST" action="{{ url_for('navigate_exam', exam_id=exam.id) }}" id="examForm">
-                    <input type="hidden" name="current_index" value="{{ current_index }}">
-                    <input type="hidden" name="question_id" value="{{ question.id }}">
+  <div class="row">
+    <div class="col-lg-8">
+      <div class="question-card">
+        {% if question %}
+        <form method="POST" action="{{ url_for('navigate_exam', exam_id=exam.id) }}" id="examForm">
+          <input type="hidden" name="current_index" value="{{ current_index }}">
+          <input type="hidden" name="question_id" value="{{ question.id }}">
 
-                    <!-- Enhanced Question Header -->
-                    <div class="d-flex justify-content-between align-items-start mb-4">
-                        <div class="flex-grow-1">
-                            <h5 class="mb-2">
-                                <span class="badge bg-primary me-2">Q{{ current_index + 1 }}</span>
-                                {{ question.question_text | safe }}
-                            </h5>
-                        </div>
-                        <div class="text-end">
-                            <span class="badge
-                                {% if question.question_type == 'MCQ' %}bg-success
-                                {% elif question.question_type == 'MSQ' %}bg-warning text-dark
-                                {% elif question.question_type == 'NUMERIC' %}bg-info
-                                {% else %}bg-secondary{% endif %} fs-6">
-                                {% if question.question_type == 'MCQ' %}Single Choice
-                                {% elif question.question_type == 'MSQ' %}Multiple Choice
-                                {% elif question.question_type == 'NUMERIC' %}Numerical
-                                {% else %}{{ question.question_type }}{% endif %}
-                            </span>
-                            <div class="mt-2">
-                                <small class="text-muted">
-                                    <i class="fas fa-plus text-success"></i> +{{ question.positive_marks or exam.positive_marks or 1 }}
-                                    {% if question.negative_marks or exam.negative_marks %}
-                                        <i class="fas fa-minus text-danger ms-2"></i> -{{ question.negative_marks or exam.negative_marks }}
-                                    {% else %}
-                                        <i class="fas fa-shield-alt text-info ms-2"></i> No negative
-                                    {% endif %}
-                                </small>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- COMPLETELY FIXED Image Display -->
-                    {% if question.has_image and question.image_url %}
-                    <div class="question-image">
-                        <div class="card border-0 shadow-sm">
-                            <div class="card-body p-3">
-                                <!-- Loading State -->
-                                <div id="imageLoading{{ current_index }}" class="image-loading">
-                                    <div class="text-center">
-                                        <div class="loading-spinner mb-3"></div>
-                                        <div class="text-muted">Loading question image...</div>
-                                        <div class="small mt-2">Please wait while we load the diagram</div>
-                                    </div>
-                                </div>
-
-                                <!-- Error State -->
-                                <div id="imageError{{ current_index }}" class="image-error" style="display: none;">
-                                    <div class="text-center">
-                                        <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
-                                        <div><strong>Image Loading Failed</strong></div>
-                                        <div class="small mt-2 mb-3">Unable to load the question image</div>
-                                        <div>
-                                            <button type="button" class="btn btn-sm btn-warning me-2" onclick="retryImageLoad({{ current_index }})">
-                                                <i class="fas fa-redo"></i> Retry Loading
-                                            </button>
-                                            <a href="{{ question.image_url }}" target="_blank" class="btn btn-sm btn-info">
-                                                <i class="fas fa-external-link-alt"></i> Open in New Tab
-                                            </a>
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <!-- Image Container -->
-                                <div id="imageContainer{{ current_index }}" class="text-center" style="display: none;">
-                                    <img id="questionImage{{ current_index }}"
-                                         src="{{ question.image_url }}"
-                                         alt="Question {{ current_index + 1 }} Image"
-                                         class="img-fluid image-loaded"
-                                         style="max-width: 100%; max-height: 500px; cursor: pointer;"
-                                         onclick="openImageModal(this.src, 'Question {{ current_index + 1 }} Image')"
-                                         onload="handleImageLoad({{ current_index }})"
-                                         onerror="handleImageError({{ current_index }})"
-                                         title="Click to enlarge image">
-                                    <div class="mt-2">
-                                        <small class="text-muted">
-                                            <i class="fas fa-search-plus"></i> Click image to enlarge
-
-                                        </small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+          <div class="d-flex justify-content-between align-items-start mb-4">
+            <div class="flex-grow-1">
+              <h5 class="mb-2">
+                <span class="badge bg-primary me-2">Q{{ current_index + 1 }}</span>
+                {{ question.question_text | safe }}
+              </h5>
+            </div>
+            <div class="text-end">
+              <span class="badge
+                {% if question.question_type == 'MCQ' %}bg-success
+                {% elif question.question_type == 'MSQ' %}bg-warning text-dark
+                {% elif question.question_type == 'NUMERIC' %}bg-info
+                {% else %}bg-secondary{% endif %} fs-6">
+                {% if question.question_type == 'MCQ' %}Single Choice
+                {% elif question.question_type == 'MSQ' %}Multiple Choice
+                {% elif question.question_type == 'NUMERIC' %}Numerical
+                {% else %}{{ question.question_type }}{% endif %}
+              </span>
+              <div class="mt-2">
+                    <small class="text-muted">
+                    <i class="fas fa-plus text-success"></i>
+                    <span class="text-success">{{ question.positive_marks or exam.positive_marks or 1 }}</span>
+                    {% if question.negative_marks or exam.negative_marks %}
+                        <i class="fas fa-minus text-danger ms-2"></i>
+                        <span class="text-danger">{{ question.negative_marks}}</span>
+                    {% else %}
+                        <i class="fas fa-shield-alt text-info ms-2"></i> No negative
                     {% endif %}
+                    </small>
 
-                    <!-- Question Type Specific Answer Section -->
-                    <div class="mt-4">
-                        {% if question.question_type == 'MCQ' %}
-                            <!-- Single Choice Questions (MCQ) -->
-                            {% set options = [
-                                {'id': 'A', 'text': question.option_a},
-                                {'id': 'B', 'text': question.option_b},
-                                {'id': 'C', 'text': question.option_c},
-                                {'id': 'D', 'text': question.option_d}
-                            ] %}
+              </div>
+            </div>
+          </div>
 
-                            {% for opt in options %}
-                            {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
-                            <div class="option-container mcq-option mb-3 p-3"
-                                 style="background: #f8f9fa; border-radius: 10px; cursor: pointer; border: 2px solid transparent;"
-                                 onclick="selectMCQOption('{{ opt.id }}')"
-                                 data-option-id="{{ opt.id }}">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="radio" name="answer" value="{{ opt.id }}"
-                                           id="opt{{ opt.id }}" {% if selected_answer == opt.id %}checked{% endif %}>
-                                    <label class="form-check-label w-100" for="opt{{ opt.id }}" style="cursor: pointer;">
-                                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe }}
-                                    </label>
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
+          {% if question.has_image and question.image_url %}
+          <div class="question-image mb-3">
+            <div class="card border-0">
+              <div class="card-body p-2">
+                <div id="imageLoading{{ current_index }}" class="image-loading text-center">
+                  <div class="loading-spinner mb-3"></div>
+                  <div class="text-muted">Loading question image...</div>
+                </div>
 
-                        {% elif question.question_type == 'MSQ' %}
-                            <!-- Multiple Choice Questions (MSQ) -->
-                            <div class="alert alert-info mb-4" id="msq-alert">
-                                <i class="fas fa-info-circle"></i> <strong>Multiple Select Question:</strong>
-                                Select ALL correct options. You must choose all correct answers to get full marks.
-                            </div>
-
-                            {% set options = [
-                                {'id': 'A', 'text': question.option_a},
-                                {'id': 'B', 'text': question.option_b},
-                                {'id': 'C', 'text': question.option_c},
-                                {'id': 'D', 'text': question.option_d}
-                            ] %}
-
-                            {% for opt in options %}
-                            {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
-                            <div class="option-container msq-option mb-3 p-3"
-                                 style="background: #f8f9fa; border-radius: 10px; cursor: pointer; border: 2px solid transparent;"
-                                 onclick="selectMSQOption('{{ opt.id }}')"
-                                 data-option-id="{{ opt.id }}">
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="answer" value="{{ opt.id }}"
-                                           id="optMSQ{{ opt.id }}"
-                                           {% if selected_answer and opt.id in selected_answer %}checked{% endif %}>
-                                    <label class="form-check-label w-100" for="optMSQ{{ opt.id }}" style="cursor: pointer;">
-                                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe }}
-                                    </label>
-                                </div>
-                            </div>
-                            {% endif %}
-                            {% endfor %}
-
-                        {% elif question.question_type == 'NUMERIC' %}
-                            <!-- Numerical Answer Questions with FIXED Layout -->
-                            <div class="alert alert-warning mb-4" id="num-alert">
-                                <i class="fas fa-calculator"></i> <strong>Numerical Answer:</strong>
-                                Enter your numerical answer using the keypad below.
-                                {% if question.tolerance %}
-                                    <br><small>Tolerance: ±{{ question.tolerance }}</small>
-                                {% endif %}
-                            </div>
-
-                            <div class="numeric-answer-section">
-                                <!-- Enhanced Answer Display -->
-                                <div class="mb-3">
-                                    <label class="form-label">
-                                        <strong><i class="fas fa-hashtag me-2"></i>Your Answer:</strong>
-                                    </label>
-                                    <div class="numeric-display" id="numericDisplay">
-                                        <span id="displayValue">{{ selected_answer or '' }}</span>
-                                        <span id="cursor" class="cursor-blink">|</span>
-                                    </div>
-                                    <input type="hidden" name="numeric_answer" id="numericAnswer" value="{{ selected_answer or '' }}">
-                                </div>
-
-                                <div class="row">
-                                    <div class="col-md-6">
-                                        <!-- Compact Numeric Keypad -->
-                                        <div class="numeric-keypad">
-                                            <div class="keypad-grid">
-                                                <!-- Row 1 -->
-                                                <button type="button" class="keypad-btn clear" onclick="clearAll()" title="Clear All">
-                                                    <i class="fas fa-times"></i>
-                                                </button>
-                                                <button type="button" class="keypad-btn sign" onclick="toggleSign()" title="Toggle +/-">
-                                                    <i class="fas fa-plus-minus"></i>
-                                                </button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('0')">0</button>
-                                                <button type="button" class="keypad-btn backspace" onclick="backspace()" title="Backspace">
-                                                    <i class="fas fa-backspace"></i>
-                                                </button>
-
-                                                <!-- Row 2 -->
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('1')">1</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('2')">2</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('3')">3</button>
-                                                <button type="button" class="keypad-btn decimal" onclick="addDecimal()" title="Decimal Point">
-                                                    <i class="fas fa-circle" style="font-size: 0.5rem;"></i>
-                                                </button>
-
-                                                <!-- Row 3 -->
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('4')">4</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('5')">5</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('6')">6</button>
-                                                <div></div>
-
-                                                <!-- Row 4 -->
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('7')">7</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('8')">8</button>
-                                                <button type="button" class="keypad-btn number" onclick="addDigit('9')">9</button>
-                                                <div></div>
-                                            </div>
-
-                                            <div class="text-center mt-2">
-                                                <small class="text-muted">
-                                                    <i class="fas fa-info-circle"></i> Use keypad only
-                                                </small>
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div class="col-md-6">
-                                        <div class="keypad-guide-card">
-                                            <h6 class="mb-2"><i class="fas fa-keyboard"></i> Keypad Guide</h6>
-                                            <div class="keypad-guide-grid">
-                                                <div class="keypad-guide-item">
-                                                    <div class="fw-bold">0-9</div>
-                                                    <small>Numbers</small>
-                                                </div>
-                                                <div class="keypad-guide-item">
-                                                    <div class="fw-bold"><i class="fas fa-circle" style="font-size: 0.5rem;"></i></div>
-                                                    <small>Decimal</small>
-                                                </div>
-                                                <div class="keypad-guide-item">
-                                                    <div class="fw-bold"><i class="fas fa-plus-minus"></i></div>
-                                                    <small>Sign</small>
-                                                </div>
-                                                <div class="keypad-guide-item">
-                                                    <div class="fw-bold"><i class="fas fa-backspace"></i></div>
-                                                    <small>Delete</small>
-                                                </div>
-                                            </div>
-                                            <div class="text-center">
-                                                <div class="keypad-guide-item bg-danger text-white">
-                                                    <div class="fw-bold"><i class="fas fa-times"></i></div>
-                                                    <small>Clear All</small>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                        {% else %}
-                            <!-- Fallback for unknown question types -->
-                            <div class="alert alert-danger">
-                                <i class="fas fa-exclamation-triangle"></i>
-                                Unknown question type: {{ question.question_type }}
-                            </div>
-                        {% endif %}
-                    </div>
-
-                    <!-- Clear Selection Button -->
-                    <div class="mb-4">
-                        <button type="button" id="clearSelectionBtn" class="btn btn-outline-danger btn-sm">
-                            <i class="fas fa-times-circle"></i> Clear Selection
-                        </button>
-                    </div>
-
-                    <!-- Enhanced Navigation Buttons -->
-                    <div class="d-flex justify-content-between align-items-center mt-4 p-3 bg-light rounded">
-                        <div>
-                            <button type="submit" name="action" value="prev"
-                                    class="btn btn-outline-secondary exam-navigation-btn"
-                                    {% if current_index == 0 %}disabled{% endif %}>
-                                <i class="fas fa-chevron-left"></i> Previous
-                            </button>
-                        </div>
-
-                        <div class="d-flex gap-2">
-                            <button type="submit" name="action" value="review"
-                                    class="btn btn-warning exam-navigation-btn">
-                                <i class="fas fa-flag"></i> Mark for Review
-                            </button>
-
-                            {% if current_index < total_questions - 1 %}
-                            <button type="submit" name="action" value="next"
-                                    class="btn btn-primary exam-navigation-btn">
-                                Save & Next <i class="fas fa-chevron-right"></i>
-                            </button>
-                            {% endif %}
-
-                            <button type="submit" name="action" value="submit"
-                                    class="btn btn-success exam-navigation-btn"
-                                    onclick="return confirmSubmit()">
-                                <i class="fas fa-paper-plane"></i> Submit Exam
-                            </button>
-                        </div>
-                    </div>
-                </form>
-                {% else %}
-                <div class="text-center p-5">
-                    <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
-                    <h4>No Question Data Available</h4>
-                    <p class="text-muted">Unable to load question for this exam.</p>
-                    <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
-                        <i class="fas fa-home"></i> Return to Dashboard
+                <div id="imageError{{ current_index }}" class="image-error text-center" style="display:none;">
+                  <i class="fas fa-exclamation-triangle fa-2x mb-3"></i>
+                  <div><strong>Image Loading Failed</strong></div>
+                  <div class="small mt-2 mb-3">Unable to load the question image</div>
+                  <div>
+                    <button type="button" class="btn btn-sm btn-warning me-2" onclick="retryImageLoad({{ current_index }})">
+                      <i class="fas fa-redo"></i> Retry
+                    </button>
+                    <a href="{{ question.image_url }}" target="_blank" class="btn btn-sm btn-info">
+                      <i class="fas fa-external-link-alt"></i> Open
                     </a>
+                  </div>
                 </div>
+
+                <div id="imageContainer{{ current_index }}" class="text-center" style="display:none;">
+                  <img id="questionImage{{ current_index }}" src="{{ question.image_url }}" alt="Question {{ current_index + 1 }} Image"
+                       class="img-fluid image-loaded" style="max-width:100%; max-height:520px; cursor:pointer;"
+                       onclick="openImageModal(this.src, 'Question {{ current_index + 1 }} Image')"
+                       onload="handleImageLoad({{ current_index }})"
+                       onerror="handleImageError({{ current_index }})"
+                       title="Click to enlarge image">
+                  <div class="mt-2">
+                    <small class="text-muted"><i class="fas fa-search-plus"></i> Click image to enlarge</small>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          {% endif %}
+
+          <div class="mt-4">
+            {% if question.question_type == 'MCQ' %}
+              {% set options = [
+                {'id': 'A', 'text': question.option_a},
+                {'id': 'B', 'text': question.option_b},
+                {'id': 'C', 'text': question.option_c},
+                {'id': 'D', 'text': question.option_d}
+              ] %}
+              {% for opt in options %}
+                {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
+                  <div class="option-container mcq-option mb-3" onclick="selectMCQOption('{{ opt.id }}')" data-option-id="{{ opt.id }}">
+                    <div class="form-check">
+                      <input class="form-check-input" type="radio" name="answer" value="{{ opt.id }}" id="opt{{ opt.id }}" {% if selected_answer == opt.id %}checked{% endif %}>
+                      <label class="form-check-label w-100" for="opt{{ opt.id }}" style="cursor:pointer;">
+                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe }}
+                      </label>
+                    </div>
+                  </div>
                 {% endif %}
-            </div>
-        </div>
+              {% endfor %}
 
-        <!-- Enhanced Question Palette -->
-        <div class="col-lg-4">
-            <div class="card sticky-top" style="top: 20px;">
-                <div class="card-header bg-primary text-white">
-                    <h6 class="mb-0"><i class="fas fa-th"></i> Question Navigation</h6>
-                </div>
-                <div class="card-body">
-                    <div class="question-palette d-flex flex-wrap justify-content-center">
-                        {% for idx in range(total_questions) %}
-                            {% set status = palette[idx] %}
-                            <a href="{{ url_for('exam_page', exam_id=exam.id, q=idx) }}"
-                               class="btn btn-sm palette-link
-                               {% if status == 'answered' %}answered
-                               {% elif status == 'review' %}review
-                               {% elif status == 'visited' %}visited
-                               {% else %}not-visited{% endif %}
-                               {% if idx == current_index %}border border-dark border-3{% endif %}"
-                               data-question-index="{{ idx }}"
-                               title="Question {{ idx + 1 }} - {{ questions[idx].question_type }}{% if questions[idx].has_image %} (Has Image){% endif %}">
-                               {{ idx + 1 }}
-                               {% if questions[idx].has_image %}
-                               <i class="fas fa-image position-absolute top-0 end-0" style="font-size: 8px;"></i>
-                               {% endif %}
-                               <!-- Question type indicator -->
-                               <span class="position-absolute bottom-0 end-0 small">
-                                   {% if questions[idx].question_type == 'MCQ' %}●
-                                   {% elif questions[idx].question_type == 'MSQ' %}■
-                                   {% elif questions[idx].question_type == 'NUMERIC' %}▲
-                                   {% endif %}
-                               </span>
-                            </a>
-                        {% endfor %}
+            {% elif question.question_type == 'MSQ' %}
+              <div class="alert alert-info mb-4" id="msq-alert">
+                <i class="fas fa-info-circle"></i> <strong>Multiple Select Question:</strong> Select ALL correct options.
+              </div>
+
+              {% set options = [
+                {'id': 'A', 'text': question.option_a},
+                {'id': 'B', 'text': question.option_b},
+                {'id': 'C', 'text': question.option_c},
+                {'id': 'D', 'text': question.option_d}
+              ] %}
+              {% for opt in options %}
+                {% if opt.text and opt.text != 'nan' and opt.text|string|trim != '' and opt.text != 'None' %}
+                  <div class="option-container msq-option mb-3" onclick="selectMSQOption('{{ opt.id }}')" data-option-id="{{ opt.id }}">
+                    <div class="form-check">
+                      <input class="form-check-input" type="checkbox" name="answer" value="{{ opt.id }}" id="optMSQ{{ opt.id }}" {% if selected_answer and opt.id in selected_answer %}checked{% endif %}>
+                      <label class="form-check-label w-100" for="optMSQ{{ opt.id }}" style="cursor:pointer;">
+                        <strong>{{ opt.id }}.</strong> {{ opt.text | safe }}
+                      </label>
                     </div>
+                  </div>
+                {% endif %}
+              {% endfor %}
 
-                    <!-- Enhanced Legend -->
-                    <div class="mt-4">
-                        <h6 class="mb-3">Legend:</h6>
-                        <div class="row g-2">
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="btn btn-sm answered me-2" style="width: 20px; height: 20px;"></span>
-                                    <small>Answered (<span id="answeredCount">0</span>)</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="btn btn-sm review me-2" style="width: 20px; height: 20px;"></span>
-                                    <small>Review (<span id="reviewCount">0</span>)</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="btn btn-sm visited me-2" style="width: 20px; height: 20px;"></span>
-                                    <small>Visited (<span id="visitedCount">0</span>)</small>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="d-flex align-items-center">
-                                    <span class="btn btn-sm not-visited me-2" style="width: 20px; height: 20px;"></span>
-                                    <small>Not Visited (<span id="notVisitedCount">0</span>)</small>
-                                </div>
-                            </div>
+            {% elif question.question_type == 'NUMERIC' %}
+              <div class="alert alert-warning mb-4" id="num-alert">
+                <i class="fas fa-calculator"></i> <strong>Numerical Answer:</strong> Enter using keypad
+                {% if question.tolerance %}<br><small>Tolerance: ±{{ question.tolerance }}</small>{% endif %}
+              </div>
+
+              <div class="numeric-answer-section">
+                <div class="mb-3">
+                  <label class="form-label"><strong><i class="fas fa-hashtag me-2"></i>Your Answer:</strong></label>
+                  <div class="numeric-display" id="numericDisplay">
+                    <span id="displayValue">{{ selected_answer or '' }}</span>
+                    <span id="cursor" class="cursor-blink" style="color:#07203a; font-weight:900;">|</span>
+                  </div>
+                  <input type="hidden" name="numeric_answer" id="numericAnswer" value="{{ selected_answer or '' }}">
+                </div>
+
+                <div class="row g-3">
+                  <div class="col-md-6">
+                    <div class="numeric-keypad">
+                      <div class="keypad-grid">
+                        <button type="button" class="keypad-btn clear" onclick="clearAll()"><i class="fas fa-times"></i></button>
+                        <button type="button" class="keypad-btn sign" onclick="toggleSign()"><i class="fas fa-plus-minus"></i></button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('0')">0</button>
+                        <button type="button" class="keypad-btn backspace" onclick="backspace()"><i class="fas fa-backspace"></i></button>
+
+                        <button type="button" class="keypad-btn number" onclick="addDigit('1')">1</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('2')">2</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('3')">3</button>
+                        <button type="button" class="keypad-btn decimal" onclick="addDecimal()"><i class="fas fa-circle" style="font-size:0.5rem"></i></button>
+
+                        <button type="button" class="keypad-btn number" onclick="addDigit('4')">4</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('5')">5</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('6')">6</button>
+                        <div></div>
+
+                        <button type="button" class="keypad-btn number" onclick="addDigit('7')">7</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('8')">8</button>
+                        <button type="button" class="keypad-btn number" onclick="addDigit('9')">9</button>
+                        <div></div>
+                      </div>
+                      <div class="text-center mt-2"><small class="text-muted">Use keypad only</small></div>
+                    </div>
+                  </div>
+
+                  <div class="col-md-6">
+                    <div class="card keypad-guide-card p-3">
+                      <h6 class="mb-2"><i class="fas fa-keyboard"></i> Keypad Guide</h6>
+                      <div class="keypad-guide-grid">
+                        <div class="keypad-guide-item"><div class="fw-bold">0-9</div><small>Numbers</small></div>
+                        <div class="keypad-guide-item"><div class="fw-bold"><i class="fas fa-circle" style="font-size:0.5rem"></i></div><small>Decimal</small></div>
+                        <div class="keypad-guide-item"><div class="fw-bold"><i class="fas fa-plus-minus"></i></div><small>Sign</small></div>
+                        <div class="keypad-guide-item"><div class="fw-bold"><i class="fas fa-backspace"></i></div><small>Delete</small></div>
+                      </div>
+                      <div class="text-center mt-3">
+                        <div class="keypad-guide-item bg-danger text-white d-inline-block" style="padding:.5rem .8rem;">
+                          <div class="fw-bold"><i class="fas fa-times"></i></div><small>Clear All</small>
                         </div>
-
-                        <hr>
-
-                        <div>
-                            <h6 class="mb-2">Question Types:</h6>
-                            <div class="small">
-                                <div>● Single Choice (MCQ)</div>
-                                <div>■ Multiple Choice (MSQ)</div>
-                                <div>▲ Numerical Answer</div>
-                                <div><i class="fas fa-image"></i> Has Image</div>
-                            </div>
-                        </div>
+                      </div>
                     </div>
+                  </div>
                 </div>
+              </div>
+
+            {% else %}
+              <div class="alert alert-danger">
+                <i class="fas fa-exclamation-triangle"></i> Unknown question type: {{ question.question_type }}
+              </div>
+            {% endif %}
+          </div>
+
+          <div class="mb-4 mt-4">
+            <button type="button" id="clearSelectionBtn" class="btn btn-outline-danger btn-sm">
+              <i class="fas fa-times-circle"></i> Clear Selection
+            </button>
+          </div>
+
+          <div class="d-flex justify-content-between align-items-center mt-4 p-3 bg-light rounded">
+            <div>
+              <button type="submit" name="action" value="prev" class="btn btn-outline-secondary exam-navigation-btn" {% if current_index == 0 %}disabled{% endif %}>
+                <i class="fas fa-chevron-left"></i> Previous
+              </button>
             </div>
 
-            <!-- Instructions Card -->
-            <div class="card mt-3">
-                <div class="card-header">
-                    <h6 class="mb-0"><i class="fas fa-info-circle"></i> Quick Guide</h6>
-                </div>
-                <div class="card-body">
-                    <div class="small">
-                        <div class="mb-2"><strong>Navigation:</strong> Click question numbers to jump</div>
-                        <div class="mb-2"><strong>MCQ:</strong> Select one correct option</div>
-                        <div class="mb-2"><strong>MSQ:</strong> Select all correct options</div>
-                        <div class="mb-2"><strong>Numerical:</strong> Use keypad to enter answer</div>
-                        <div class="mb-2"><strong>Review:</strong> Mark questions to revisit later</div>
-                        <div><strong>Submit:</strong> Double-click to confirm submission</div>
-                    </div>
-                </div>
+            <div class="d-flex gap-2">
+              <button type="submit" name="action" value="review" class="btn btn-warning exam-navigation-btn"><i class="fas fa-flag"></i> Mark for Review</button>
+
+              {% if current_index < total_questions - 1 %}
+              <button type="submit" name="action" value="next" class="btn btn-primary exam-navigation-btn">Save & Next <i class="fas fa-chevron-right"></i></button>
+              {% endif %}
+
+              <button type="submit" name="action" value="submit" class="btn btn-success exam-navigation-btn" onclick="return confirmSubmit()"><i class="fas fa-paper-plane"></i> Submit Exam</button>
             </div>
+          </div>
+        </form>
+
+        {% else %}
+        <div class="text-center p-5">
+          <i class="fas fa-exclamation-triangle fa-4x text-warning mb-3"></i>
+          <h4>No Question Data Available</h4>
+          <p class="text-muted">Unable to load question for this exam.</p>
+          <a href="{{ url_for('dashboard') }}" class="btn btn-primary">
+            <i class="fas fa-home"></i> Return to Dashboard
+          </a>
         </div>
+        {% endif %}
+      </div>
     </div>
+
+    <div class="col-lg-4">
+      <div class="card sticky-top" style="top:20px;">
+        <div class="card-header bg-primary text-white">
+          <h6 class="mb-0"><i class="fas fa-th"></i> Question Navigation</h6>
+        </div>
+        <div class="card-body">
+          <div class="question-palette d-flex flex-wrap justify-content-center mb-3">
+            {% for idx in range(total_questions) %}
+              {% set status = palette[idx] %}
+              <a href="{{ url_for('exam_page', exam_id=exam.id, q=idx) }}"
+                 class="palette-link {% if status == 'answered' %}answered{% elif status == 'review' %}review{% elif status == 'visited' %}visited{% else %}not-visited{% endif %} {% if idx == current_index %}border border-dark border-3{% endif %}"
+                 data-question-index="{{ idx }}" title="Question {{ idx + 1 }} - {{ questions[idx].question_type }}{% if questions[idx].has_image %} (Has Image){% endif %}">
+                 {{ idx + 1 }}
+                 {% if questions[idx].has_image %}
+                 <i class="fas fa-image position-absolute" style="font-size:8px; top:4px; right:6px;"></i>
+                 {% endif %}
+              </a>
+            {% endfor %}
+          </div>
+
+          <div class="mt-3">
+            <h6 class="mb-2">Legend:</h6>
+            <div class="row g-2">
+              <div class="col-6">
+                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#16a34a,#059669)"></span><small>Answered (<span id="answeredCount">0</span>)</small></div>
+              </div>
+              <div class="col-6">
+                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#f59e0b,#f97316)"></span><small>Review (<span id="reviewCount">0</span>)</small></div>
+              </div>
+              <div class="col-6">
+                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#0ea5e9,#0369a1)"></span><small>Visited (<span id="visitedCount">0</span>)</small></div>
+              </div>
+              <div class="col-6">
+                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#6c757d,#495057)"></span><small>Not Visited (<span id="notVisitedCount">0</span>)</small></div>
+              </div>
+            </div>
+
+            <hr>
+
+            <div>
+              <h6 class="mb-2">Question Types:</h6>
+              <div class="small">
+                <div>● Single Choice (MCQ)</div>
+                <div>■ Multiple Choice (MSQ)</div>
+                <div>▲ Numerical Answer</div>
+                <div><i class="fas fa-image"></i> Has Image</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card mt-3">
+        <div class="card-header">
+          <h6 class="mb-0"><i class="fas fa-info-circle"></i> Quick Guide</h6>
+        </div>
+        <div class="card-body">
+          <div class="small">
+            <div class="mb-2"><strong>Navigation:</strong> Click question numbers to jump</div>
+            <div class="mb-2"><strong>MCQ:</strong> Select one correct option</div>
+            <div class="mb-2"><strong>MSQ:</strong> Select all correct options</div>
+            <div class="mb-2"><strong>Numerical:</strong> Use keypad to enter answer</div>
+            <div class="mb-2"><strong>Review:</strong> Mark questions to revisit later</div>
+            <div><strong>Submit:</strong> Double-click to confirm submission</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
 </div>
 
-<!-- Enhanced Image Modal -->
 <div class="modal fade" id="imageModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title" id="imageModalTitle">
-                    <i class="fas fa-image me-2"></i>Question Image
-                </h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-            <div class="modal-body text-center p-4">
-                <img id="modalImage" src="" alt="Question image"
-                     class="img-fluid rounded shadow"
-                     style="max-height: 80vh; max-width: 100%;">
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
-                    <i class="fas fa-times"></i> Close
-                </button>
-            </div>
-        </div>
+  <div class="modal-dialog modal-dialog-centered modal-xl">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="imageModalTitle"><i class="fas fa-image me-2"></i>Question Image</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body text-center p-4">
+        <img id="modalImage" src="" alt="Question image" class="img-fluid rounded shadow" style="max-height:80vh; max-width:100%;">
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"><i class="fas fa-times"></i> Close</button>
+      </div>
     </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
+
 <script>
-// Global Variables
 let currentValue = '{{ selected_answer or "" }}';
 let hasDecimal = currentValue.includes('.');
 let timerInterval;
 let duration;
 
-// COMPLETELY FIXED Image Loading Functions
 function handleImageLoad(questionIndex) {
-    console.log(`Image loaded successfully for question ${questionIndex}`);
-    const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
-    const errorEl = document.getElementById(`imageError${questionIndex}`);
-    const containerEl = document.getElementById(`imageContainer${questionIndex}`);
-    const imageEl = document.getElementById(`questionImage${questionIndex}`);
-
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (errorEl) errorEl.style.display = 'none';
-    if (containerEl) {
-        containerEl.style.display = 'block';
-        if (imageEl) {
-            setTimeout(() => imageEl.classList.add('show'), 100);
-        }
-    }
+  const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
+  const errorEl = document.getElementById(`imageError${questionIndex}`);
+  const containerEl = document.getElementById(`imageContainer${questionIndex}`);
+  const imageEl = document.getElementById(`questionImage${questionIndex}`);
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (errorEl) errorEl.style.display = 'none';
+  if (containerEl) {
+    containerEl.style.display = 'block';
+    if (imageEl) setTimeout(()=>imageEl.classList.add('show'), 80);
+  }
 }
 
 function handleImageError(questionIndex) {
-    console.error(`Image failed to load for question ${questionIndex}`);
-    const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
-    const errorEl = document.getElementById(`imageError${questionIndex}`);
-    const containerEl = document.getElementById(`imageContainer${questionIndex}`);
-
-    if (loadingEl) loadingEl.style.display = 'none';
-    if (containerEl) containerEl.style.display = 'none';
-    if (errorEl) errorEl.style.display = 'block';
+  const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
+  const errorEl = document.getElementById(`imageError${questionIndex}`);
+  const containerEl = document.getElementById(`imageContainer${questionIndex}`);
+  if (loadingEl) loadingEl.style.display = 'none';
+  if (containerEl) containerEl.style.display = 'none';
+  if (errorEl) errorEl.style.display = 'block';
 }
 
 function retryImageLoad(questionIndex) {
-    console.log(`Retrying image load for question ${questionIndex}`);
-    const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
-    const errorEl = document.getElementById(`imageError${questionIndex}`);
-    const containerEl = document.getElementById(`imageContainer${questionIndex}`);
-    const imageEl = document.getElementById(`questionImage${questionIndex}`);
-
-    if (errorEl) errorEl.style.display = 'none';
-    if (containerEl) containerEl.style.display = 'none';
-    if (loadingEl) loadingEl.style.display = 'block';
-
-    if (imageEl) {
-        const originalSrc = imageEl.src;
-        imageEl.src = originalSrc + (originalSrc.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
-    }
+  const loadingEl = document.getElementById(`imageLoading${questionIndex}`);
+  const errorEl = document.getElementById(`imageError${questionIndex}`);
+  const containerEl = document.getElementById(`imageContainer${questionIndex}`);
+  const imageEl = document.getElementById(`questionImage${questionIndex}`);
+  if (errorEl) errorEl.style.display = 'none';
+  if (containerEl) containerEl.style.display = 'none';
+  if (loadingEl) loadingEl.style.display = 'block';
+  if (imageEl) {
+    const originalSrc = imageEl.src;
+    imageEl.src = originalSrc + (originalSrc.includes('?') ? '&' : '?') + 't=' + new Date().getTime();
+  }
 }
 
 function openImageModal(imageSrc, title) {
-    document.getElementById('modalImage').src = imageSrc;
-    document.getElementById('imageModalTitle').textContent = title || 'Question Image';
-    new bootstrap.Modal(document.getElementById('imageModal')).show();
+  document.getElementById('modalImage').src = imageSrc;
+  document.getElementById('imageModalTitle').textContent = title || 'Question Image';
+  new bootstrap.Modal(document.getElementById('imageModal')).show();
 }
 
-// MCQ/MSQ Selection Functions
 function selectMCQOption(optionId) {
-    const radio = document.getElementById('opt' + optionId);
-    if (radio) {
-        radio.checked = true;
-        updateOptionVisuals();
-    }
+  const radio = document.getElementById('opt' + optionId);
+  if (radio) { radio.checked = true; updateOptionVisuals(); }
 }
 
 function selectMSQOption(optionId) {
-    const checkbox = document.getElementById('optMSQ' + optionId);
-    if (checkbox) {
-        checkbox.checked = !checkbox.checked;
-        updateOptionVisuals();
-    }
+  const checkbox = document.getElementById('optMSQ' + optionId);
+  if (checkbox) { checkbox.checked = !checkbox.checked; updateOptionVisuals(); }
 }
 
 function updateOptionVisuals() {
-    // Update MCQ options
-    document.querySelectorAll('.mcq-option').forEach(container => {
-        const radio = container.querySelector('input[type="radio"]');
-        container.classList.toggle('selected', radio && radio.checked);
-    });
-
-    // Update MSQ options
-    document.querySelectorAll('.msq-option').forEach(container => {
-        const checkbox = container.querySelector('input[type="checkbox"]');
-        container.classList.toggle('selected-msq', checkbox && checkbox.checked);
-    });
+  document.querySelectorAll('.mcq-option').forEach(container => {
+    const radio = container.querySelector('input[type="radio"]');
+    container.classList.toggle('selected', radio && radio.checked);
+  });
+  document.querySelectorAll('.msq-option').forEach(container => {
+    const checkbox = container.querySelector('input[type="checkbox"]');
+    container.classList.toggle('selected-msq', checkbox && checkbox.checked);
+  });
 }
 
-// Enhanced Numeric Keypad Functions
 function updateDisplay() {
-    const display = document.getElementById('displayValue');
-    const hiddenInput = document.getElementById('numericAnswer');
-    const cursor = document.getElementById('cursor');
-
-    if (!display || !hiddenInput) return;
-
-    display.textContent = currentValue || '';
-    hiddenInput.value = currentValue;
-
-    if (cursor) {
-        cursor.style.display = currentValue === '' ? 'inline' : 'none';
-    }
+  const display = document.getElementById('displayValue');
+  const hiddenInput = document.getElementById('numericAnswer');
+  const cursor = document.getElementById('cursor');
+  if (!display || !hiddenInput) return;
+  display.textContent = currentValue || '';
+  hiddenInput.value = currentValue;
+  if (cursor) cursor.style.display = currentValue === '' ? 'inline' : 'none';
 }
 
 function addDigit(digit) {
-    if (currentValue.replace('-', '').replace('.', '').length >= 12) return;
-    currentValue += digit;
-    updateDisplay();
+  if (currentValue.replace('-', '').replace('.', '').length >= 12) return;
+  currentValue += digit;
+  updateDisplay();
 }
 
 function addDecimal() {
-    if (hasDecimal || currentValue.includes('.')) return;
-    if (currentValue === '' || currentValue === '-') currentValue += '0';
-    currentValue += '.';
-    hasDecimal = true;
-    updateDisplay();
+  if (hasDecimal || currentValue.includes('.')) return;
+  if (currentValue === '' || currentValue === '-') currentValue += '0';
+  currentValue += '.';
+  hasDecimal = true;
+  updateDisplay();
 }
 
 function toggleSign() {
-    if (currentValue === '') {
-        currentValue = '-';
-    } else if (currentValue === '-') {
-        currentValue = '';
-    } else if (currentValue.startsWith('-')) {
-        currentValue = currentValue.substring(1);
-    } else {
-        currentValue = '-' + currentValue;
-    }
-    updateDisplay();
+  if (currentValue === '') currentValue = '-';
+  else if (currentValue === '-') currentValue = '';
+  else if (currentValue.startsWith('-')) currentValue = currentValue.substring(1);
+  else currentValue = '-' + currentValue;
+  updateDisplay();
 }
 
 function backspace() {
-    if (currentValue.length > 0) {
-        const lastChar = currentValue.slice(-1);
-        currentValue = currentValue.slice(0, -1);
-        if (lastChar === '.') hasDecimal = false;
-        updateDisplay();
-    }
+  if (currentValue.length > 0) {
+    const lastChar = currentValue.slice(-1);
+    currentValue = currentValue.slice(0, -1);
+    if (lastChar === '.') hasDecimal = false;
+    updateDisplay();
+  }
 }
 
 function clearAll() {
-    currentValue = '';
-    hasDecimal = false;
-    updateDisplay();
+  currentValue = '';
+  hasDecimal = false;
+  updateDisplay();
 }
 
-// Clear Selection Function
 function clearSelection() {
-    const questionId = document.querySelector('input[name="question_id"]').value;
-
-    fetch(`/exam/{{ exam.id }}/clear-answer`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({question_id: questionId})
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            // Clear all inputs
-            document.querySelectorAll('input[name="answer"]').forEach(input => {
-                input.checked = false;
-            });
-
-            const numericInput = document.querySelector('input[name="numeric_answer"]');
-            if (numericInput) {
-                numericInput.value = '';
-                currentValue = '';
-                hasDecimal = false;
-                updateDisplay();
-            }
-
-            updateOptionVisuals();
-            updatePaletteStatus({{ current_index }}, 'visited');
-
-            // Feedback
-            const btn = document.getElementById('clearSelectionBtn');
-            const originalText = btn.innerHTML;
-            btn.innerHTML = '<i class="fas fa-check"></i> Cleared!';
-            btn.className = 'btn btn-success btn-sm';
-            setTimeout(() => {
-                btn.innerHTML = originalText;
-                btn.className = 'btn btn-outline-danger btn-sm';
-            }, 2000);
-        }
-    })
-    .catch(error => {
-        console.error('Error:', error);
-        alert('Error clearing selection. Please try again.');
-    });
+  const questionId = document.querySelector('input[name="question_id"]').value;
+  fetch(`/exam/{{ exam.id }}/clear-answer`, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({question_id: questionId})
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.success) {
+      document.querySelectorAll('input[name="answer"]').forEach(input => input.checked = false);
+      const numericInput = document.querySelector('input[name="numeric_answer"]');
+      if (numericInput) { numericInput.value = ''; currentValue = ''; hasDecimal = false; updateDisplay(); }
+      updateOptionVisuals();
+      updatePaletteStatus({{ current_index }}, 'visited');
+      const btn = document.getElementById('clearSelectionBtn');
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="fas fa-check"></i> Cleared!';
+      btn.className = 'btn btn-success btn-sm';
+      setTimeout(()=>{ btn.innerHTML = originalText; btn.className = 'btn btn-outline-danger btn-sm'; }, 1600);
+    }
+  })
+  .catch(()=> alert('Error clearing selection. Please try again.'));
 }
 
-// Palette Functions
 function updatePaletteStatus(questionIndex, status) {
-    const paletteBtn = document.querySelector(`[data-question-index="${questionIndex}"]`);
-    if (paletteBtn) {
-        paletteBtn.className = paletteBtn.className.replace(/\b(answered|review|visited|not-visited)\b/g, '');
-        paletteBtn.classList.add(status);
-        updateMetricsCounts();
-    }
+  const paletteBtn = document.querySelector(`[data-question-index="${questionIndex}"]`);
+  if (paletteBtn) {
+    paletteBtn.className = paletteBtn.className.replace(/\b(answered|review|visited|not-visited)\b/g, '');
+    paletteBtn.classList.add(status);
+    updateMetricsCounts();
+  }
 }
 
 function updateMetricsCounts() {
-    const counts = {answered: 0, review: 0, visited: 0, 'not-visited': 0};
-
-    document.querySelectorAll('.palette-link').forEach(btn => {
-        if (btn.classList.contains('answered')) counts.answered++;
-        else if (btn.classList.contains('review')) counts.review++;
-        else if (btn.classList.contains('visited')) counts.visited++;
-        else if (btn.classList.contains('not-visited')) counts['not-visited']++;
-    });
-
-    document.getElementById('answeredCount').textContent = counts.answered;
-    document.getElementById('reviewCount').textContent = counts.review;
-    document.getElementById('visitedCount').textContent = counts.visited;
-    document.getElementById('notVisitedCount').textContent = counts['not-visited'];
+  const counts = {answered: 0, review: 0, visited: 0, 'not-visited': 0};
+  document.querySelectorAll('.palette-link').forEach(btn => {
+    if (btn.classList.contains('answered')) counts.answered++;
+    else if (btn.classList.contains('review')) counts.review++;
+    else if (btn.classList.contains('visited')) counts.visited++;
+    else if (btn.classList.contains('not-visited')) counts['not-visited']++;
+  });
+  document.getElementById('answeredCount').textContent = counts.answered;
+  document.getElementById('reviewCount').textContent = counts.review;
+  document.getElementById('visitedCount').textContent = counts.visited;
+  document.getElementById('notVisitedCount').textContent = counts['not-visited'];
 }
 
-// Timer Functions
 function startTimer() {
-    const stored = sessionStorage.getItem('exam_timer_{{ exam.id }}');
-
-    if (stored !== null) {
-        duration = parseInt(stored);
-    } else {
-        duration = {{ exam.duration }} * 60;
-        sessionStorage.setItem('exam_timer_{{ exam.id }}', duration);
-    }
-
-    timerInterval = setInterval(updateTimer, 1000);
-    updateTimer();
+  const stored = sessionStorage.getItem('exam_timer_{{ exam.id }}');
+  if (stored !== null) duration = parseInt(stored);
+  else { duration = {{ exam.duration }} * 60; sessionStorage.setItem('exam_timer_{{ exam.id }}', duration); }
+  timerInterval = setInterval(updateTimer, 1000);
+  updateTimer();
 }
 
 function updateTimer() {
-    const timerEl = document.getElementById("timer");
-
-    if (duration > 0) {
-        const mins = Math.floor(duration / 60);
-        const secs = duration % 60;
-        timerEl.textContent = `${mins}:${secs.toString().padStart(2, '0')}`;
-
-        // Change color when time is running out
-        if (duration <= 300) { // 5 minutes
-            timerEl.parentElement.style.background = 'linear-gradient(135deg, #dc3545 0%, #c82333 100%)';
-        } else if (duration <= 600) { // 10 minutes
-            timerEl.parentElement.style.background = 'linear-gradient(135deg, #ffc107 0%, #e0a800 100%)';
-            timerEl.parentElement.style.color = '#212529';
-        }
-
-        duration--;
-        sessionStorage.setItem('exam_timer_{{ exam.id }}', duration);
-    } else {
-        clearInterval(timerInterval);
-        alert('Time is up! Auto-submitting exam...');
-        autoSubmitExam();
-    }
+  const timerEl = document.getElementById("timer");
+  if (duration > 0) {
+    const mins = Math.floor(duration / 60);
+    const secs = duration % 60;
+    timerEl.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
+    if (duration <= 300) timerEl.parentElement.style.background = 'linear-gradient(135deg,#dc3545 0%,#c82333 100%)';
+    else if (duration <= 600) { timerEl.parentElement.style.background = 'linear-gradient(135deg,#ffc107 0%,#e0a800 100%)'; timerEl.parentElement.style.color = '#212529'; }
+    duration--;
+    sessionStorage.setItem('exam_timer_{{ exam.id }}', duration);
+  } else {
+    clearInterval(timerInterval);
+    alert('Time is up! Auto-submitting exam...');
+    autoSubmitExam();
+  }
 }
 
 function autoSubmitExam() {
-    const form = document.querySelector('form');
-    if (form) {
-        const submitBtn = document.createElement('input');
-        submitBtn.type = 'hidden';
-        submitBtn.name = 'action';
-        submitBtn.value = 'submit';
-        form.appendChild(submitBtn);
-        form.submit();
-    } else {
-        window.location.href = "{{ url_for('submit_exam', exam_id=exam.id) }}";
-    }
+  const form = document.querySelector('form');
+  if (form) {
+    const submitBtn = document.createElement('input');
+    submitBtn.type = 'hidden';
+    submitBtn.name = 'action';
+    submitBtn.value = 'submit';
+    form.appendChild(submitBtn);
+    form.submit();
+  } else {
+    window.location.href = "{{ url_for('submit_exam', exam_id=exam.id) }}";
+  }
 }
 
-function confirmSubmit() {
-    return confirm('Are you sure you want to submit the exam? This action cannot be undone.');
-}
+function confirmSubmit() { return confirm('Are you sure you want to submit the exam? This action cannot be undone.'); }
 
-
-// Initialize on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Initializing exam page...');
-
-    // Start timer
-    startTimer();
-
-    // Update counts
-    updateMetricsCounts();
-
-    // Update option visuals
-    updateOptionVisuals();
-
-    // Initialize numeric keypad if present
-    if (document.getElementById('numericDisplay')) {
-        updateDisplay();
-
-        // Prevent keyboard input on numeric questions
-        document.addEventListener('keydown', function(e) {
-            if (document.getElementById('numericDisplay') &&
-                !['Tab', 'Enter', 'Escape'].includes(e.key) &&
-                !e.ctrlKey && !e.altKey) {
-                e.preventDefault();
-            }
-        });
-    }
-
-    // Clear Selection button event
-    document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
-
-    // Auto-save answers and update palette
-    document.querySelectorAll('input[name="answer"], input[name="numeric_answer"]').forEach(function(input) {
-        input.addEventListener('change', function() {
-            updatePaletteStatus({{ current_index }}, 'answered');
-            updateOptionVisuals();
-        });
+  startTimer();
+  updateMetricsCounts();
+  updateOptionVisuals();
+  if (document.getElementById('numericDisplay')) {
+    updateDisplay();
+    document.addEventListener('keydown', function(e){
+      if (document.getElementById('numericDisplay') && !['Tab','Enter','Escape'].includes(e.key) && !e.ctrlKey && !e.altKey) e.preventDefault();
     });
-
-    // Navigation button handlers
-    document.querySelectorAll('.exam-navigation-btn').forEach(function(btn) {
-        btn.addEventListener('click', function(e) {
-            const action = this.getAttribute('name') === 'action' ? this.value :
-                          this.querySelector('input[name="action"]')?.value;
-
-            // Check if any answer is selected
-            const hasAnswer = document.querySelector('input[name="answer"]:checked') ||
-                            document.querySelector('input[name="numeric_answer"]')?.value;
-
-            if (action === 'review') {
-                updatePaletteStatus({{ current_index }}, 'review');
-            } else if (hasAnswer && action !== 'prev' && action !== 'submit') {
-                updatePaletteStatus({{ current_index }}, 'answered');
-            } else if (action !== 'prev' && action !== 'submit') {
-                updatePaletteStatus({{ current_index }}, 'visited');
-            }
-        });
+  }
+  document.getElementById('clearSelectionBtn')?.addEventListener('click', clearSelection);
+  document.querySelectorAll('input[name="answer"], input[name="numeric_answer"]').forEach(function(input){
+    input.addEventListener('change', function(){
+      updatePaletteStatus({{ current_index }}, 'answered');
+      updateOptionVisuals();
     });
-
-    // Navigation safety
-    let isNavigating = false;
-    document.querySelectorAll('.exam-navigation-btn, .palette-link').forEach(function(element) {
-        element.addEventListener('click', function() {
-            isNavigating = true;
-        });
+  });
+  document.querySelectorAll('.exam-navigation-btn').forEach(function(btn){
+    btn.addEventListener('click', function(e){
+      const action = this.getAttribute('name') === 'action' ? this.value : this.querySelector('input[name="action"]')?.value;
+      const hasAnswer = document.querySelector('input[name="answer"]:checked') || document.querySelector('input[name="numeric_answer"]')?.value;
+      if (action === 'review') updatePaletteStatus({{ current_index }}, 'review');
+      else if (hasAnswer && action !== 'prev' && action !== 'submit') updatePaletteStatus({{ current_index }}, 'answered');
+      else if (action !== 'prev' && action !== 'submit') updatePaletteStatus({{ current_index }}, 'visited');
     });
-
-    window.addEventListener('beforeunload', function(e) {
-        if (!isNavigating) {
-            e.preventDefault();
-            e.returnValue = 'Are you sure you want to leave? Your progress may be lost.';
-        }
-    });
-
-    // Initialize image loading if present
-    {% if question.has_image and question.image_url %}
-    const questionImage = document.getElementById('questionImage{{ current_index }}');
-    if (questionImage) {
-        if (questionImage.complete && questionImage.naturalHeight !== 0) {
-            handleImageLoad({{ current_index }});
-        } else if (questionImage.complete && questionImage.naturalHeight === 0) {
-            handleImageError({{ current_index }});
-        }
-
-        // Timeout fallback
-        setTimeout(() => {
-            const containerEl = document.getElementById('imageContainer{{ current_index }}');
-            const loadingEl = document.getElementById('imageLoading{{ current_index }}');
-            if (loadingEl && loadingEl.style.display !== 'none' &&
-                containerEl && containerEl.style.display === 'none') {
-                handleImageError({{ current_index }});
-            }
-        }, 15000); // 15 second timeout
-    }
-    {% endif %}
-
-    console.log('Exam page initialization complete');
+  });
+  let isNavigating = false;
+  document.querySelectorAll('.exam-navigation-btn, .palette-link').forEach(function(element){ element.addEventListener('click', function(){ isNavigating = true; }); });
+  window.addEventListener('beforeunload', function(e){ if (!isNavigating) { e.preventDefault(); e.returnValue = 'Are you sure you want to leave? Your progress may be lost.'; } });
+  {% if question.has_image and question.image_url %}
+  const questionImage = document.getElementById('questionImage{{ current_index }}');
+  if (questionImage) {
+    if (questionImage.complete && questionImage.naturalHeight !== 0) handleImageLoad({{ current_index }});
+    else if (questionImage.complete && questionImage.naturalHeight === 0) handleImageError({{ current_index }});
+    setTimeout(()=> {
+      const containerEl = document.getElementById('imageContainer{{ current_index }}');
+      const loadingEl = document.getElementById('imageLoading{{ current_index }}');
+      if (loadingEl && loadingEl.style.display !== 'none' && containerEl && containerEl.style.display === 'none') handleImageError({{ current_index }});
+    }, 15000);
+  }
+  {% endif %}
 });
 
-// Cleanup timer on page unload
-window.addEventListener('unload', function() {
-    if (timerInterval) clearInterval(timerInterval);
-});
+window.addEventListener('unload', function(){ if (timerInterval) clearInterval(timerInterval); });
 
-// Preload next question image for better performance
 {% if current_index + 1 < total_questions %}
 {% set next_question = questions[current_index + 1] %}
 {% if next_question.has_image and next_question.image_url %}
-setTimeout(() => {
-    const preloadImg = new Image();
-    preloadImg.src = '{{ next_question.image_url }}';
-    console.log('Preloading next question image');
-}, 2000);
+setTimeout(()=>{ const preloadImg = new Image(); preloadImg.src = '{{ next_question.image_url }}'; }, 2000);
 {% endif %}
 {% endif %}
+
+
+
 </script>
 {% endblock %}

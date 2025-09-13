@@ -3,210 +3,416 @@
 {% block title %}Submit Exam Confirmation - ExamPortal{% endblock %}
 
 {% block content %}
+<style>
+/* ===========================
+   Theme / Card / Buttons
+   =========================== */
+:root{
+  --bg-card-1: #0b1220;
+  --bg-card-2: #0f1724;
+  --accent-green-a: #22c55e;
+  --accent-green-b: #16a34a;
+  --accent-purple-a: #6366f1;
+  --accent-purple-b: #8b5cf6;
+  --muted: #9ca3af;
+  --muted-strong: #cbd5e1;
+}
+
+.container { z-index: 10; }
+
+/* card */
+.card {
+  background: linear-gradient(180deg, var(--bg-card-1), var(--bg-card-2));
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,0.03);
+  box-shadow: 0 18px 60px rgba(2,6,23,0.7), 0 0 40px rgba(34,197,94,0.06);
+  color: var(--muted-strong);
+}
+
+/* header with neon strip */
+.card-header {
+  background: linear-gradient(90deg, rgba(34,197,94,0.14), rgba(34,197,94,0.04));
+  border-bottom: 1px solid rgba(34,197,94,0.08);
+  color: var(--accent-green-a);
+  font-weight: 800;
+  text-align: center;
+  padding: 14px 20px;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  position: relative;
+}
+
+/* small top green band */
+.card-header::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: -8px;
+  height: 8px;
+  width: 100%;
+  border-top-left-radius: 14px;
+  border-top-right-radius: 14px;
+  background: linear-gradient(90deg, var(--accent-green-a), var(--accent-green-b));
+  box-shadow: 0 6px 24px rgba(34,197,94,0.18);
+}
+
+/* big icon glow */
+.fa-paper-plane {
+  color: var(--accent-green-a);
+  text-shadow: 0 6px 28px rgba(34,197,94,0.28), 0 0 40px rgba(34,197,94,0.14);
+}
+
+/* headings and small text */
+h4 { color: #e6eef8; font-weight:700; }
+.text-secondary { color: var(--muted) !important; }
+
+/* info box - tinted blue but dark */
+.alert-info {
+  background: linear-gradient(180deg, rgba(99,102,241,0.06), rgba(59,130,246,0.03));
+  border: 1px solid rgba(99,102,241,0.12);
+  color: #cfe2ff;
+  border-radius: 12px;
+  padding: 18px;
+  box-shadow: 0 10px 30px rgba(59,130,246,0.04);
+}
+
+/* progress styles */
+.progress {
+  background: rgba(255,255,255,0.04);
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.progress-bar {
+  font-weight: 800;
+  text-shadow: 0 1px 0 rgba(0,0,0,0.6);
+}
+
+/* animated neon gradient for success bar */
+.progress-bar.bg-success {
+  background: linear-gradient(90deg, var(--accent-green-a), #2dd4bf 40%, var(--accent-green-b));
+  background-size: 200% 100%;
+  animation: pulseGradient 3s linear infinite;
+  box-shadow: 0 8px 40px rgba(34,197,94,0.18), inset 0 0 10px rgba(255,255,255,0.02);
+  color: #04281a;
+}
+
+@keyframes pulseGradient {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+/* buttons */
+#submitExamBtn {
+  background: linear-gradient(135deg,var(--accent-green-a), var(--accent-green-b));
+  border: none;
+  color: white;
+  font-weight: 800;
+  border-radius: 12px;
+  padding: 12px 28px;
+  box-shadow: 0 12px 40px rgba(34,197,94,0.18);
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+#submitExamBtn:hover { transform: translateY(-3px); box-shadow: 0 26px 60px rgba(34,197,94,0.26); }
+
+#goBackBtn {
+  background: linear-gradient(180deg, rgba(99,102,241,0.06), rgba(139,92,246,0.03));
+  border: 1px solid rgba(99,102,241,0.18);
+  color: #c7b3ff;
+  font-weight: 700;
+  border-radius: 12px;
+  padding: 12px 22px;
+  margin-left: 12px;
+  transition: transform .18s ease, box-shadow .18s ease;
+}
+#goBackBtn:hover { transform: translateY(-3px); box-shadow: 0 18px 50px rgba(99,102,241,0.12); color: white; }
+
+/* small helper */
+.small-muted { color: var(--muted); }
+
+/* responsive tweaks */
+@media (max-width: 767px) {
+  .card-body { padding: 20px; }
+  #goBackBtn { margin-top: 10px; display: inline-block; }
+}
+
+/* loader icon spin color */
+.fa-cog.text-success { color: var(--accent-green-b); }
+
+/* error bar color */
+.progress-bar.bg-danger {
+  background: linear-gradient(90deg,#ef4444,#f97316);
+  color: #fff;
+  box-shadow: 0 12px 40px rgba(239,68,68,0.12);
+}
+
+
+#progressText {
+  color: #bbf7d0 !important; 
+  font-weight: 600;
+  text-shadow: 0 0 8px rgba(34,197,94,0.9),
+               0 0 16px rgba(34,197,94,0.6),
+               0 0 22px rgba(34,197,94,0.5);
+}
+
+
+#progressDetails {
+  color: #d1fae5 !important; 
+  font-weight: 500;
+  text-shadow: 0 0 6px rgba(16,185,129,0.8),
+               0 0 14px rgba(16,185,129,0.5);
+}
+
+#submissionProgress .text-muted {
+  color: #34d399 !important;
+}
+
+
+
+</style>
+
 <div class="container mt-5">
-    <div class="row justify-content-center">
-        <div class="col-md-8">
-            <div class="card shadow-lg">
-                <div class="card-header bg-warning text-dark text-center">
-                    <h3 class="mb-0">
-                        <i class="fas fa-exclamation-triangle"></i> Confirm Exam Submission
-                    </h3>
-                </div>
-                <div class="card-body p-5 text-center">
-                    <div class="mb-4">
-                        <i class="fas fa-paper-plane fa-4x text-primary mb-3"></i>
-                        <h4>Are you sure you want to submit your exam?</h4>
-                        <p class="text-muted">Once submitted, you cannot return to answer or modify any questions.</p>
-                    </div>
-
-                    <div class="alert alert-info">
-                        <h5><i class="fas fa-info-circle"></i> Important Notes:</h5>
-                        <ul class="list-unstyled mb-0">
-                            <li class="mb-2">• Your answers have been automatically saved</li>
-                            <li class="mb-2">• You can view detailed results after submission</li>
-                            <li class="mb-2">• Your response analysis will be available for review</li>
-                            <li>• This action cannot be undone</li>
-                        </ul>
-                    </div>
-
-                    <!-- Progress Bar (initially hidden) -->
-                    <div id="submissionProgress" class="mb-4" style="display: none;">
-                        <div class="card">
-                            <div class="card-body">
-                                <h6 class="mb-3">
-                                    <i class="fas fa-cog fa-spin me-2"></i>
-                                    <span id="progressText">Processing your submission...</span>
-                                </h6>
-                                <div class="progress mb-3" style="height: 25px;">
-                                    <div id="progressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-success"
-                                         role="progressbar" style="width: 0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
-                                        <span id="progressPercent">0%</span>
-                                    </div>
-                                </div>
-                                <div id="progressDetails" class="text-muted small">
-                                    Initializing submission process...
-                                </div>
-                                <div class="alert alert-info mt-3">
-                                    <i class="fas fa-info-circle me-2"></i>
-                                    Please do not close this window or navigate away during submission.
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="mt-4 text-center" id="actionButtons">
-                        <button type="button" id="submitExamBtn" class="btn btn-success btn-lg me-3" onclick="handleSubmission()">
-                            <i class="fas fa-check"></i> Yes, Submit Exam
-                        </button>
-                        <button id="goBackBtn" class="btn btn-outline-secondary btn-lg" onclick="goBack()">
-                            <i class="fas fa-arrow-left"></i> Go Back to Exam
-                        </button>
-                    </div>
-
-                    <div class="mt-4">
-                        <small class="text-muted">
-                            <i class="fas fa-clock"></i> Take your time - there's no rush to submit until you're ready.
-                        </small>
-                    </div>
-                </div>
-            </div>
+  <div class="row justify-content-center">
+    <div class="col-xl-7 col-lg-8 col-md-10">
+      <div class="card">
+        <div class="card-header">
+          <h3 class="mb-0"><i class="fas fa-exclamation-triangle me-2"></i> Confirm Exam Submission</h3>
         </div>
+
+        <div class="card-body p-5 text-center">
+          <div class="mb-4">
+            <i class="fas fa-paper-plane fa-4x mb-3"></i>
+            <h4 class="mb-1">Are you sure you want to submit your exam?</h4>
+            <p class="small-muted mb-0">Once submitted, you cannot return to answer or modify any questions.</p>
+          </div>
+
+          <div class="alert alert-info text-start">
+            <h6 class="fw-bold mb-2"><i class="fas fa-info-circle me-2"></i> Important Notes:</h6>
+            <ul class="mb-0" style="margin-left: 18px;">
+              <li>Your answers have been automatically saved</li>
+              <li>You can view detailed results after submission</li>
+              <li>Your response analysis will be available for review</li>
+              <li>This action cannot be undone</li>
+            </ul>
+          </div>
+
+          <!-- Progress area -->
+          <div id="submissionProgress" class="mb-4" style="display:none;">
+            <div class="card bg-transparent border-0 p-2">
+              <div class="card-body p-0 text-start">
+                <div class="d-flex align-items-center mb-2">
+                  <i class="fas fa-cog fa-spin text-success me-2"></i>
+                  <div>
+                    <div id="progressText" style="font-weight:800; color:var(--accent-green-a)">Processing your submission...</div>
+                    <div id="progressDetails" class="small text-muted">Initializing submission process...</div>
+                  </div>
+                </div>
+
+                <div class="progress mb-2" style="height:28px;">
+                  <div id="progressBar" class="progress-bar bg-success progress-bar-striped progress-bar-animated"
+                       role="progressbar" style="width:0%" aria-valuenow="0" aria-valuemin="0" aria-valuemax="100">
+                    <span id="progressPercent">0%</span>
+                  </div>
+                </div>
+
+                <div id="progressLog" class="small text-muted" style="min-height:28px;"></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mt-4" id="actionButtons">
+            <button id="submitExamBtn" class="me-2" onclick="handleSubmission()">
+              <i class="fas fa-check me-2"></i> Yes, Submit Exam
+            </button>
+
+            <button id="goBackBtn" onclick="goBack()">
+              <i class="fas fa-arrow-left me-2"></i> Go Back to Exam
+            </button>
+          </div>
+
+          <div class="mt-4">
+            <small class="small-muted"><i class="fas fa-clock me-1"></i> Take your time - there's no rush to submit until you're ready.</small>
+          </div>
+        </div> <!-- card-body -->
+      </div> <!-- card -->
     </div>
+  </div>
 </div>
 
 <script>
+/*
+  Full client-side submission logic:
+   - Visual progress simulation with steps
+   - Real POST via fetch to submit endpoint
+   - Handles redirect responses, JSON errors, network errors
+   - Graceful UI rollback on failure
+*/
+
+const submitUrl = '{{ url_for("submit_exam", exam_id=exam_id) }}';
 let submissionInProgress = false;
 
-function finalConfirm() {
-    return confirm('Final confirmation: Are you absolutely sure you want to submit your exam? This cannot be undone.');
-}
+/* Utility: set progress UI */
+function updateProgress(percent, text, details, logMsg) {
+  const progressBar = document.getElementById('progressBar');
+  const progressPercent = document.getElementById('progressPercent');
+  const progressText = document.getElementById('progressText');
+  const progressDetails = document.getElementById('progressDetails');
+  const progressLog = document.getElementById('progressLog');
 
-function goBack() {
-    if (!submissionInProgress) {
-        history.back();
-    }
-}
-
-function updateProgress(percent, text, details) {
-    const progressBar = document.getElementById('progressBar');
-    const progressPercent = document.getElementById('progressPercent');
-    const progressText = document.getElementById('progressText');
-    const progressDetails = document.getElementById('progressDetails');
-
+  if (progressBar) {
     progressBar.style.width = percent + '%';
     progressBar.setAttribute('aria-valuenow', percent);
-    progressPercent.textContent = percent + '%';
-    progressText.textContent = text;
-    progressDetails.textContent = details;
+  }
+  if (progressPercent) progressPercent.textContent = percent + '%';
+  if (progressText && text) progressText.textContent = text;
+  if (progressDetails && details) progressDetails.textContent = details;
+  if (progressLog && logMsg) {
+    // prepend new log line
+    progressLog.innerHTML = `<div>• ${logMsg}</div>` + progressLog.innerHTML;
+  }
 }
 
-async function simulateRealProgress() {
-    // Phase 1: Loading exam data
-    updateProgress(5, 'Loading exam data...', 'Retrieving your answers and exam configuration');
-    await new Promise(resolve => setTimeout(resolve, 800));
+/* Simulate realistic progress but allow the server call to run in parallel */
+async function simulateProgressUntilDone(doneSignal) {
+  // small phases with awaits but will stop early if doneSignal resolves
+  const phases = [
+    {p:6, text:'Loading exam data...', details:'Retrieving your answers and exam configuration', log:'Reading local answers'},
+    {p:18, text:'Validating responses...', details:'Checking answer format and completeness', log:'Validating formats'},
+    {p:30, text:'Processing questions...', details:'Analyzing your responses against correct answers', log:'Running evaluations'},
+    {p:50, text:'Calculating scores...', details:'Computing marks for each question', log:'Scoring attempt'},
+    {p:68, text:'Generating results...', details:'Creating your performance summary', log:'Formatting summary'},
+    {p:82, text:'Saving to database...', details:'Storing your results and responses', log:'Writing to storage'},
+    {p:92, text:'Creating response analysis...', details:'Preparing detailed answer breakdown', log:'Preparing analysis'},
+    {p:98, text:'Finalizing submission...', details:'Completing the submission process', log:'Final sync'}
+  ];
 
-    updateProgress(15, 'Validating responses...', 'Checking answer format and completeness');
-    await new Promise(resolve => setTimeout(resolve, 600));
-
-    updateProgress(25, 'Processing questions...', 'Analyzing your responses against correct answers');
-    await new Promise(resolve => setTimeout(resolve, 1000));
-
-    updateProgress(40, 'Calculating scores...', 'Computing marks for each question');
-    await new Promise(resolve => setTimeout(resolve, 800));
-
-    updateProgress(55, 'Generating results...', 'Creating your performance summary');
-    await new Promise(resolve => setTimeout(resolve, 900));
-
-    updateProgress(70, 'Saving to database...', 'Storing your results and responses');
-    await new Promise(resolve => setTimeout(resolve, 1200));
-
-    updateProgress(85, 'Creating response analysis...', 'Preparing detailed answer breakdown');
-    await new Promise(resolve => setTimeout(resolve, 700));
-
-    updateProgress(95, 'Finalizing submission...', 'Completing the submission process');
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    updateProgress(100, 'Submission completed!', 'Redirecting to your results...');
-    await new Promise(resolve => setTimeout(resolve, 300));
+  for (const phase of phases) {
+    // if server responded done, break
+    if (doneSignal.done) break;
+    updateProgress(phase.p, phase.text, phase.details, phase.log);
+    // wait small random time so animation feels natural
+    await new Promise(res => setTimeout(res, 400 + Math.random()*700));
+  }
 }
 
+/* Do POST submit via fetch. Because server expects POST without body (session), send empty body. */
+async function postSubmission() {
+  // fetch with credentials and POST
+  try {
+    const resp = await fetch(submitUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'X-Requested-With': 'XMLHttpRequest' // helps server detect AJAX if needed
+      },
+      body: new FormData() // empty form (server uses session)
+    });
+    return resp;
+  } catch (err) {
+    throw err;
+  }
+}
+
+/* Entry: handleSubmission */
 async function handleSubmission() {
-    if (submissionInProgress) {
+  if (submissionInProgress) return;
+  if (!confirm('Final confirmation: Are you absolutely sure you want to submit your exam? This cannot be undone.')) return;
+
+  submissionInProgress = true;
+
+  // UI: show progress
+  document.getElementById('actionButtons').style.display = 'none';
+  document.getElementById('submissionProgress').style.display = 'block';
+  updateProgress(2, 'Starting submission...', 'Preparing transfer', 'User confirmed submission');
+
+  // Start simulation and the real POST in parallel
+  const doneSignal = { done: false };
+  const simPromise = simulateProgressUntilDone(doneSignal);
+  const postPromise = postSubmission();
+
+  try {
+    const resp = await postPromise;
+
+    // Mark done for simulation to complete final steps quickly
+    doneSignal.done = true;
+
+    // If redirected (some Flask endpoints redirect on POST), handle location
+    if (resp.redirected) {
+      updateProgress(100, 'Submission completed!', 'Redirecting to results...', 'Server redirected');
+      // small delay so user sees 100%
+      setTimeout(()=> { window.location.href = resp.url; }, 500);
+      return;
+    }
+
+    // If JSON or HTML returned instead:
+    const contentType = resp.headers.get('content-type') || '';
+    if (resp.ok) {
+      if (contentType.includes('application/json')) {
+        const json = await resp.json();
+        // If backend returns { success:true, redirect: url } use it
+        if (json && json.success && json.redirect) {
+          updateProgress(100, 'Submission completed!', 'Redirecting to results...', 'Saved successfully');
+          setTimeout(()=> window.location.href = json.redirect, 400);
+          return;
+        } else {
+          updateProgress(100, 'Submission completed!', 'Redirecting...', 'Saved successfully');
+          setTimeout(()=> window.location.href = '{{ url_for("result", exam_id=exam_id) }}', 400);
+          return;
+        }
+      } else {
+        // Treat as HTML/text response: server might respond with redirect page; attempt to parse
+        const text = await resp.text();
+        // if server sends a meta redirect or JS redirect, just navigate to result page
+        updateProgress(100, 'Submission completed!', 'Redirecting to results...', 'Saved successfully');
+        setTimeout(()=> window.location.href = '{{ url_for("result", exam_id=exam_id) }}', 400);
         return;
+      }
+    } else {
+      // non-OK status
+      const txt = await resp.text();
+      throw new Error(`Server returned ${resp.status}: ${txt.substring(0,200)}`);
     }
 
-    // Final confirmation
-    if (!finalConfirm()) {
-        return;
-    }
+  } catch (err) {
+    console.error('Submission failed:', err);
+    // show failure state
+    updateProgress(0, 'Submission failed!', 'An error occurred. Please try again.', 'Error: ' + (err.message || err));
+    const progressBar = document.getElementById('progressBar');
+    progressBar.classList.remove('bg-success');
+    progressBar.classList.add('bg-danger');
 
-    submissionInProgress = true;
-
-    // Hide action buttons and show progress
-    document.getElementById('actionButtons').style.display = 'none';
-    document.getElementById('submissionProgress').style.display = 'block';
-
-    try {
-        // Start progress simulation
-        const progressPromise = simulateRealProgress();
-
-        // Create FormData for submission
-        const formData = new FormData();
-
-        // Submit the form via fetch to track progress
-        const submitPromise = fetch('{{ url_for("submit_exam", exam_id=exam_id) }}', {
-            method: 'POST',
-            body: formData,
-            credentials: 'same-origin'
-        });
-
-        // Wait for both progress simulation and actual submission
-        await Promise.all([progressPromise, submitPromise.then(async response => {
-            if (response.ok) {
-                // Check if response is a redirect
-                if (response.redirected) {
-                    window.location.href = response.url;
-                } else {
-                    // Handle JSON response or other cases
-                    const text = await response.text();
-                    if (text.includes('window.location') || text.includes('redirect')) {
-                        // Server sent redirect instruction
-                        window.location.href = '{{ url_for("result", exam_id=exam_id) }}';
-                    } else {
-                        // Handle other response types
-                        document.body.innerHTML = text;
-                    }
-                }
-            } else {
-                throw new Error(`Server error: ${response.status}`);
-            }
-        })]);
-
-    } catch (error) {
-        console.error('Submission error:', error);
-
-        // Show error state
-        updateProgress(0, 'Submission failed!', 'An error occurred. Please try again.');
-        document.getElementById('progressBar').classList.remove('bg-success');
-        document.getElementById('progressBar').classList.add('bg-danger');
-
-        // Re-enable buttons after error
-        setTimeout(() => {
-            submissionInProgress = false;
-            document.getElementById('actionButtons').style.display = 'block';
-            document.getElementById('submissionProgress').style.display = 'none';
-            document.getElementById('progressBar').classList.remove('bg-danger');
-            document.getElementById('progressBar').classList.add('bg-success');
-        }, 3000);
-    }
+    // re-enable UI after short timeout
+    setTimeout(()=> {
+      submissionInProgress = false;
+      document.getElementById('submissionProgress').style.display = 'none';
+      document.getElementById('actionButtons').style.display = 'block';
+      const progressBar = document.getElementById('progressBar');
+      if (progressBar) {
+        progressBar.classList.remove('bg-danger');
+        progressBar.classList.add('bg-success');
+        progressBar.style.width = '0%';
+        document.getElementById('progressPercent').textContent = '0%';
+        document.getElementById('progressText').textContent = 'Processing your submission...';
+        document.getElementById('progressDetails').textContent = 'Initializing submission process...';
+      }
+    }, 2200);
+  }
 }
 
-// Additional safety measures
-window.onload = function() {
-    // Ensure clean state on page load
-    submissionInProgress = false;
-    document.getElementById('actionButtons').style.display = 'block';
-    document.getElementById('submissionProgress').style.display = 'none';
-};
+/* go back handler */
+function goBack() {
+  if (submissionInProgress) return;
+  window.history.back();
+}
+
+/* ensure clean state on load */
+window.addEventListener('load', function(){
+  submissionInProgress = false;
+  document.getElementById('actionButtons').style.display = 'block';
+  document.getElementById('submissionProgress').style.display = 'none';
+  // set initial progress 0
+  updateProgress(0, 'Ready', 'Waiting for confirmation', '');
+});
 </script>
 {% endblock %}

@@ -3,132 +3,592 @@
 {% block title %}Results History - ExamPortal{% endblock %}
 
 {% block content %}
-<div class="container mt-5 pt-4">
-    <!-- Page Heading -->
-    <div class="row mb-4">
-        <div class="col-md-12 text-center">
-            <h2 class="text-white">
-                <i class="fas fa-history"></i> Results History
-            </h2>
-            <p class="text-white-50">Track your past exam performances and detailed responses</p>
+<style>
+:root{
+  --bg-1:#0f0f23;
+  --bg-2:#1a1a3e;
+  --accent-a:#667eea;
+  --accent-b:#764ba2;
+  --success:#10b981;
+  --muted:#cbd5e1;
+}
+
+.results-body {
+  background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, #2d2d5f 100%);
+  /* reduce bottom padding because base footer will be visible */
+  min-height: calc(100vh - 120px);
+  padding: 2.5rem 0 2.5rem;
+  position: relative;
+  overflow-x: hidden;
+  color: var(--muted);
+}
+.particles { position: fixed; inset: 0; z-index: 1; pointer-events: none; opacity: 0.35; }
+.particle { position: absolute; background: linear-gradient(45deg,var(--accent-a),var(--accent-b)); border-radius:50%; animation:float 6s ease-in-out infinite; }
+@keyframes float{ 0%,100%{transform:translateY(0)}50%{transform:translateY(-30px)} }
+
+.container-results {
+  position: relative;
+  z-index: 2;
+  max-width: 1500px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+.results-header { text-align:center; margin-bottom:1.5rem; color:#e9f0ff; }
+.results-header h2 {
+  font-size:2.2rem; font-weight:800; margin-bottom:.25rem;
+  background: linear-gradient(135deg,#fff 0%, var(--accent-a) 50%, var(--accent-b) 100%);
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.results-header p { color: rgba(233,240,255,0.7); margin:0; }
+
+.results-card {
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 18px;
+  box-shadow: 0 30px 60px rgba(0,0,0,0.45);
+  overflow: hidden;
+}
+
+/* Controls row */
+.controls-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  gap: 0.75rem;
+  padding: 1rem;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.03);
+  background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+}
+.controls-row .form-control {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.9);
+  padding: 0.6rem 0.9rem;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+.controls-row .form-control:focus {
+  outline: none;
+  border-color: var(--accent-a);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+.controls-row .form-control::placeholder { color: rgba(255,255,255,0.5); }
+
+.action-btn{
+  padding:0.6rem 0.9rem;
+  border-radius:12px;
+  font-weight:700;
+  border:none;
+  cursor:pointer;
+  display:inline-flex;
+  align-items:center;
+  gap:0.6rem;
+  position:relative;
+  overflow:hidden;
+  text-decoration:none;
+  color: white;
+  transition: all 0.3s ease;
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+.action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 25px rgba(102,126,234,0.4); }
+.action-btn:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; box-shadow: none !important; }
+.action-btn::before{ content:''; position:absolute; top:0; left:-100%; width:100%; height:100%; background:linear-gradient(90deg, transparent, rgba(255,255,255,0.10), transparent); transition:left .45s; }
+.action-btn:hover::before{ left:100%; }
+.action-btn.view-result { background: linear-gradient(135deg,var(--accent-a),var(--accent-b)); box-shadow:0 10px 30px rgba(102,126,234,0.25); }
+.action-btn.response { background: linear-gradient(135deg,var(--success), #059669); box-shadow:0 10px 30px rgba(16,185,129,0.25); }
+.action-btn.small { padding: .45rem .65rem; font-size: .9rem; border-radius: 10px; }
+
+/* Pagination specific button styles */
+.pagination-btn {
+  background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.04)) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.9) !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2) !important;
+}
+.pagination-btn:hover:not(:disabled) {
+  background: linear-gradient(135deg, var(--accent-a), var(--accent-b)) !important;
+  border-color: var(--accent-a) !important;
+  color: white !important;
+}
+.pagination-btn:disabled {
+  background: rgba(255,255,255,0.03) !important;
+  border-color: rgba(255,255,255,0.05) !important;
+  color: rgba(255,255,255,0.3) !important;
+}
+
+/* Form select styling */
+.form-select {
+  background: rgba(255,255,255,0.05) !important;
+  border: 1px solid rgba(255,255,255,0.12) !important;
+  color: rgba(255,255,255,0.9) !important;
+  padding: 0.5rem 0.75rem;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+.form-select:focus {
+  outline: none;
+  border-color: var(--accent-a);
+  box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+}
+.form-select option { background: var(--bg-2); color: white; padding: 0.5rem; }
+
+/* Table */
+.table-wrap { padding:1rem; overflow:auto; }
+.results-table { width: 100%; border-collapse: collapse; overflow: hidden; }
+.results-table thead { background: linear-gradient(90deg, rgba(102,126,234,0.12), rgba(118,75,162,0.08)); }
+.results-table thead th{ color:#fff; font-weight:700; padding:1rem 1rem; text-align:left; border-bottom: 1px solid rgba(255,255,255,0.04); position: sticky; top:0; z-index:2; }
+.results-table tbody tr { background: rgba(255,255,255,0.02); transition: transform .18s ease, box-shadow .18s ease; }
+.results-table tbody tr:hover { transform: translateY(-6px); box-shadow: 0 12px 30px rgba(0,0,0,0.45); background: linear-gradient(90deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01)); }
+.results-table td{ padding: 0.85rem 1rem; color: rgba(255,255,255,0.9); border-bottom: 1px solid rgba(255,255,255,0.03); vertical-align: middle; white-space: nowrap; word-break: break-word; font-size: 0.95rem; }
+
+/* Badges */
+.pct-badge { padding: .35rem .6rem; border-radius: 999px; font-weight:700; color: #fff; display:inline-block; }
+.pct-badge.green{ background: linear-gradient(135deg,#06b285,#059669); box-shadow:0 6px 18px rgba(6,178,133,0.12); }
+.pct-badge.info{ background: linear-gradient(135deg,#3fb0f5,#1d7ed6); }
+.pct-badge.warn{ background: linear-gradient(135deg,#f59e0b,#f97316); color:#212529; }
+.pct-badge.danger{ background: linear-gradient(135deg,#ef4444,#dc2626); }
+
+/* Card-list (mobile) */
+.card-list { display:none; padding:1rem; }
+.result-card { background: rgba(255,255,255,0.03); border-radius:12px; padding:0.9rem; margin-bottom:0.9rem; box-shadow: 0 10px 30px rgba(0,0,0,0.28); }
+.result-card .row-top { display:flex; justify-content:space-between; gap:0.6rem; align-items:center; }
+.result-card .meta { display:flex; gap:0.8rem; flex-wrap:wrap; margin-top:0.6rem; color: rgba(255,255,255,0.9); font-size:0.95rem; }
+
+/* Pagination controls */
+.pagination-row { display:flex; justify-content:space-between; align-items:center; gap:1rem; padding:0.9rem 1rem; border-top:1px solid rgba(255,255,255,0.03); background: linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02)); }
+.page-controls { display:flex; gap:0.5rem; align-items:center; flex-wrap:wrap; }
+.page-info { color: rgba(255,255,255,0.9); font-weight:700; background: rgba(255,255,255,0.05); padding: 0.5rem 1rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.1); }
+
+.page-size-controls { display: flex; gap: 0.5rem; align-items: center; background: rgba(255,255,255,0.03); padding: 0.5rem 0.75rem; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); }
+.page-size-label { color: rgba(255,255,255,0.8); font-weight: 600; font-size: 0.9rem; }
+
+/* Responsive toggles */
+@media (max-width: 992px){
+  .controls-row { grid-template-columns: 1fr 1fr; }
+  .pagination-row { flex-direction: column; gap: 0.75rem; }
+  .page-controls { order: 2; }
+}
+@media (max-width: 768px){
+  .table-wrap { display:none; }
+  .card-list { display:block; }
+  .controls-row { grid-template-columns: 1fr; gap:.6rem; }
+  .results-header h2{ font-size:1.6rem; }
+  .pagination-row { padding: 0.75rem; }
+  .page-controls { justify-content: center; width: 100%; }
+}
+
+/* Ripple effect */
+.ripple{ position:absolute; border-radius:50%; background:rgba(255,255,255,0.6); transform:scale(0); animation:ripple-animation .6s linear; pointer-events:none; }
+@keyframes ripple-animation { to { transform:scale(4); opacity:0; } }
+</style>
+
+<div class="results-body">
+  <div class="particles" aria-hidden="true">
+    <div class="particle" style="top:10%;left:8%;width:5px;height:5px;"></div>
+    <div class="particle" style="top:30%;left:70%;width:6px;height:6px;"></div>
+    <div class="particle" style="top:70%;left:30%;width:4px;height:4px;"></div>
+    <div class="particle" style="top:50%;left:85%;width:5px;height:5px;"></div>
+    <div class="particle" style="top:80%;left:15%;width:3px;height:3px;"></div>
+  </div>
+
+  <div class="container-results">
+    <div class="results-header">
+      <h2><i class="fas fa-history"></i> Results History</h2>
+      <p>Track your past exam performances and detailed responses</p>
+    </div>
+
+    <div class="mb-3 text-center">
+      <a href="{{ url_for('dashboard') }}" class="action-btn small view-result" style="background:transparent; border:1px solid rgba(255,255,255,0.12); color: #fff;">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+      </a>
+    </div>
+
+    <div class="results-card">
+      <!-- Controls -->
+      <div class="controls-row">
+        <input id="filterDate" class="form-control" placeholder="Search Date (YYYY-MM-DD or part)" />
+        <input id="filterExam" class="form-control" placeholder="Search Exam name" />
+        <input id="filterSubject" class="form-control" placeholder="Search Subject" />
+        <div style="display:flex; gap:.6rem; justify-content:flex-end; align-items:center;">
+          <button id="applyFilter" class="action-btn small view-result" title="Filter">
+            <i class="fas fa-search"></i> Apply Filter
+          </button>
+          <button id="clearFilter" class="action-btn small" style="background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.06);">
+            <i class="fas fa-times"></i> Clear
+          </button>
         </div>
-    </div>
+      </div>
 
-    <!-- Back Button on purple background -->
-    <div class="text-center mb-3">
-        <a href="{{ url_for('dashboard') }}" class="btn btn-sm" style="border:1px solid #fff; color:#fff;">
-            <i class="fas fa-arrow-left"></i> Back to Dashboard
-        </a>
-    </div>
+      <!-- Table area (desktop) -->
+      <div class="table-wrap">
+        {% if not results %}
+          <div class="text-center" style="padding:3rem;">
+            <i class="fas fa-clipboard-list" style="font-size:48px; color:rgba(255,255,255,0.12);"></i>
+            <h4 style="color:rgba(255,255,255,0.9); margin-top:1rem;">No results found.</h4>
+            <p style="color:rgba(255,255,255,0.7);">You haven't completed any exams or results are not yet recorded.</p>
+          </div>
+        {% else %}
+        <div class="table-responsive">
+          <table id="resultsTable" class="results-table" role="table" aria-label="Results history">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Exam</th>
+                <th>Subject</th>
+                <th>Correct</th>
+                <th>Incorrect</th>
+                <th>Unanswered</th>
+                <th>Score</th>
+                <th>Percentage</th>
+                <th>Grade</th>
+                <th>Time Taken</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for result in results %}
+              {% set pct = (result.percentage if result.percentage is not none else 0)|float %}
+              <tr>
+                <td>{{ result.completed_at }}</td>
+                <td>{{ result.exam_name }}</td>
+                <td>{{ result.subject }}</td>
+                <td><span style="color:#34d399;font-weight:800;">{{ result.correct_answers }}</span></td>
+                <td><span style="color:#fb7185;font-weight:800;">{{ result.incorrect_answers }}</span></td>
+                <td><span style="color:rgba(255,255,255,0.8);font-weight:800;">{{ result.unanswered_questions }}</span></td>
+                <td>{{ result.score }} / {{ result.max_score }}</td>
+                <td>
+                  {% if pct >= 80 %}
+                    <span class="pct-badge green">{{ '%.2f'|format(pct) }}%</span>
+                  {% elif pct >= 60 %}
+                    <span class="pct-badge info">{{ '%.2f'|format(pct) }}%</span>
+                  {% elif pct >= 40 %}
+                    <span class="pct-badge warn">{{ '%.2f'|format(pct) }}%</span>
+                  {% else %}
+                    <span class="pct-badge danger">{{ '%.2f'|format(pct) }}%</span>
+                  {% endif %}
+                </td>
+                <td><span style="background:linear-gradient(135deg,#667eea,#764ba2); padding:.35rem .6rem; border-radius:999px; color:#fff; font-weight:700;">{{ result.grade }}</span></td>
+                <td>{{ result.time_taken_minutes }} mins</td>
+                <td style="white-space:nowrap;">
+                  <a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="action-btn small view-result" title="View result">
+                    <i class="fas fa-eye"></i> Result
+                  </a>
+                  <a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="action-btn small response" title="View response">
+                    <i class="fas fa-clipboard-check"></i> Response
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
 
-    <!-- Card -->
-    <div class="card shadow-lg">
-        <div class="card-body">
+        <!-- Pagination controls -->
+        <div class="pagination-row" id="paginationRow">
+          <div class="page-controls">
+            <button id="firstPage" class="action-btn small pagination-btn" title="First">
+              <i class="fas fa-angle-double-left"></i> First
+            </button>
+            <button id="prevPage" class="action-btn small pagination-btn" title="Previous">
+              <i class="fas fa-angle-left"></i> Prev
+            </button>
+            <button id="nextPage" class="action-btn small pagination-btn" title="Next">
+              Next <i class="fas fa-angle-right"></i>
+            </button>
+            <button id="lastPage" class="action-btn small pagination-btn" title="Last">
+              Last <i class="fas fa-angle-double-right"></i>
+            </button>
+          </div>
 
-            {% if not results %}
-                <div class="alert alert-info text-center">
-                    <strong>No results found.</strong><br>
-                    You haven't completed any exams or results are not yet recorded.
-                </div>
-            {% endif %}
+          <div style="display:flex; gap:0.9rem; align-items:center; flex-wrap:wrap;">
+            <div class="page-info" id="pageInfo">Page 1 of 1</div>
+            <div class="page-size-controls">
+              <label for="pageSizeSelect" class="page-size-label">Rows:</label>
+              <select id="pageSizeSelect" class="form-select">
+                <option value="5">5</option>
+                <option value="10" selected>10</option>
+                <option value="25">25</option>
+                <option value="50">50</option>
+                <option value="0">All</option>
+              </select>
+            </div>
+          </div>
+        </div>
 
-            <!-- Filter Row -->
-            <div class="row mb-3">
-                <div class="col-md-3">
-                    <input type="text" id="filterDate" class="form-control" placeholder="Search Date">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" id="filterExam" class="form-control" placeholder="Search Exam">
-                </div>
-                <div class="col-md-3">
-                    <input type="text" id="filterSubject" class="form-control" placeholder="Search Subject">
-                </div>
-                <div class="col-md-3">
-                    <button id="applyFilter" class="btn btn-primary w-100">
-                        <i class="fas fa-search"></i> Apply Filter
-                    </button>
-                </div>
+        {% endif %}
+      </div>
+
+      <!-- Card-list (mobile) -->
+      <div class="card-list">
+        {% if not results %}
+        {% else %}
+          {% for result in results %}
+          {% set pct = (result.percentage if result.percentage is not none else 0)|float %}
+          <div class="result-card" data-date="{{ result.completed_at }}" data-exam="{{ result.exam_name|lower }}" data-subject="{{ result.subject|lower }}">
+            <div class="row-top">
+              <div style="font-weight:800; color:#fff;">{{ result.exam_name }}</div>
+              <div style="color:rgba(255,255,255,0.75); font-size:0.95rem;">{{ result.completed_at }}</div>
             </div>
 
-            <!-- Results Table -->
-            <div class="table-responsive">
-                <table id="resultsTable" class="table table-striped table-hover align-middle">
-                    <thead class="table-light">
-                        <tr>
-                            <th>Date</th>
-                            <th>Exam</th>
-                            <th>Subject</th>
-                            <th>Correct</th>
-                            <th>Incorrect</th>
-                            <th>Unanswered</th>
-                            <th>Score</th>
-                            <th>Percentage</th>
-                            <th>Grade</th>
-                            <th>Time Taken</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {% for result in results %}
-                        <tr>
-                            <td>{{ result.completed_at }}</td>
-                            <td>{{ result.exam_name }}</td>
-                            <td>{{ result.subject }}</td>
-                            <td><span class="text-success fw-bold">{{ result.correct_answers }}</span></td>
-                            <td><span class="text-danger fw-bold">{{ result.incorrect_answers }}</span></td>
-                            <td><span class="text-muted fw-bold">{{ result.unanswered_questions }}</span></td>
-                            <td>{{ result.score }} / {{ result.max_score }}</td>
-                            <td>
-                                {% set pct = (result.percentage if result.percentage is not none else 0)|float %}
-                                <span class="badge
-                                    {% if pct >= 80 %} bg-success
-                                    {% elif pct >= 60 %} bg-info
-                                    {% elif pct >= 40 %} bg-warning
-                                    {% else %} bg-danger {% endif %}">
-                                    {{ "%.2f"|format(pct) }}%
-                                </span>
-                            </td>
-                            <td><span class="badge bg-primary">{{ result.grade }}</span></td>
-                            <td>{{ result.time_taken_minutes }} mins</td>
-                            <td>
-                                <a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="btn btn-sm btn-outline-primary">
-                                    <i class="fas fa-eye"></i> Result
-                                </a>
-
-                                <a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="btn btn-sm btn-outline-success">
-                                    <i class="fas fa-clipboard-check"></i> Response
-                                </a>
-                            </td>
-                        </tr>
-                        {% endfor %}
-                    </tbody>
-                </table>
+            <div class="meta">
+              <div><strong>Subject:</strong> {{ result.subject }}</div>
+              <div><strong>Score:</strong> {{ result.score }} / {{ result.max_score }}</div>
+              <div><strong>Correct:</strong> <span style="color:#34d399;font-weight:800;">{{ result.correct_answers }}</span></div>
+              <div><strong>Incorrect:</strong> <span style="color:#fb7185;font-weight:800;">{{ result.incorrect_answers }}</span></div>
+              <div><strong>Unanswered:</strong> {{ result.unanswered_questions }}</div>
+              <div><strong>Time:</strong> {{ result.time_taken_minutes }} mins</div>
+              <div><strong>%</strong>
+                {% if pct >= 80 %}
+                  <span class="pct-badge green">{{ '%.2f'|format(pct) }}%</span>
+                {% elif pct >= 60 %}
+                  <span class="pct-badge info">{{ '%.2f'|format(pct) }}%</span>
+                {% elif pct >= 40 %}
+                  <span class="pct-badge warn">{{ '%.2f'|format(pct) }}%</span>
+                {% else %}
+                  <span class="pct-badge danger">{{ '%.2f'|format(pct) }}%</span>
+                {% endif %}
+              </div>
             </div>
-        </div>
+
+            <div style="margin-top:0.75rem; display:flex; gap:0.6rem;">
+              <a href="{{ url_for('result', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="action-btn small view-result"><i class="fas fa-eye"></i> Result</a>
+              <a href="{{ url_for('response_page', exam_id=result.exam_id, result_id=result.id, from_history=1) }}" class="action-btn small response"><i class="fas fa-clipboard-check"></i> Response</a>
+            </div>
+          </div>
+          {% endfor %}
+        {% endif %}
+      </div>
+
     </div>
+
+  </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-document.getElementById("applyFilter").addEventListener("click", function () {
-    let dateVal = document.getElementById("filterDate").value.toLowerCase();
-    let examVal = document.getElementById("filterExam").value.toLowerCase();
-    let subjectVal = document.getElementById("filterSubject").value.toLowerCase();
+document.addEventListener('DOMContentLoaded', function () {
+  // Particles animation
+  (function initParticles(){
+    function createDynamicParticle() {
+      const p = document.createElement('div');
+      p.className = 'particle';
+      p.style.width = Math.random() * 6 + 2 + 'px';
+      p.style.height = p.style.width;
+      p.style.left = Math.random() * 100 + '%';
+      p.style.top = Math.random() * 100 + '%';
+      p.style.animationDuration = Math.random() * 4 + 4 + 's';
+      p.style.animationDelay = Math.random() * 2 + 's';
+      document.querySelector('.particles').appendChild(p);
+      setTimeout(() => p.remove(), 10000);
+    }
+    for(let i = 0; i < 6; i++) createDynamicParticle();
+    setInterval(createDynamicParticle, 3500);
+  })();
 
-    let rows = document.querySelectorAll("#resultsTable tbody tr");
+  // DOM Elements
+  const applyBtn = document.getElementById('applyFilter');
+  const clearBtn = document.getElementById('clearFilter');
+  const dateInput = document.getElementById('filterDate');
+  const examInput = document.getElementById('filterExam');
+  const subjectInput = document.getElementById('filterSubject');
 
-    rows.forEach(row => {
-        let dateText = row.cells[0].textContent.toLowerCase();
-        let examText = row.cells[1].textContent.toLowerCase();
-        let subjectText = row.cells[2].textContent.toLowerCase();
+  // Pagination elements
+  const pageSizeSelect = document.getElementById('pageSizeSelect');
+  const pageInfo = document.getElementById('pageInfo');
+  const paginationRow = document.getElementById('paginationRow');
+  const firstPageBtn = document.getElementById('firstPage');
+  const prevPageBtn = document.getElementById('prevPage');
+  const nextPageBtn = document.getElementById('nextPage');
+  const lastPageBtn = document.getElementById('lastPage');
 
-        let matchDate = !dateVal || dateText.includes(dateVal);
-        let matchExam = !examVal || examText.includes(examVal);
-        let matchSubject = !subjectVal || subjectText.includes(subjectVal);
+  // Table & cards references
+  const table = document.getElementById('resultsTable');
+  const tableBody = table ? table.querySelector('tbody') : null;
+  const allTableRows = table ? Array.from(table.querySelectorAll('tbody tr')) : [];
+  const allCards = Array.from(document.querySelectorAll('.result-card'));
 
-        row.style.display = (matchDate && matchExam && matchSubject) ? "" : "none";
+  // Pagination state
+  let pageSize = parseInt(pageSizeSelect?.value || '10', 10);
+  let currentPage = 1;
+
+  console.log('Initialized with:', {
+    totalRows: allTableRows.length,
+    totalCards: allCards.length,
+    pageSize: pageSize
+  });
+
+  function getFilteredTableRows() {
+    return allTableRows.filter(row => !row.classList.contains('filtered-out'));
+  }
+
+  function getFilteredCards() {
+    return allCards.filter(card => !card.classList.contains('filtered-out'));
+  }
+
+  function calculatePagination() {
+    const visibleRows = getFilteredTableRows();
+    const visibleCards = getFilteredCards();
+    const totalItems = Math.max(visibleRows.length, visibleCards.length);
+
+    const effectivePageSize = pageSize === 0 ? (totalItems || 1) : pageSize;
+    const totalPages = Math.max(1, Math.ceil(totalItems / effectivePageSize));
+
+    if (currentPage > totalPages) currentPage = totalPages;
+    if (currentPage < 1) currentPage = 1;
+
+    return { visibleRows, visibleCards, totalItems, effectivePageSize, totalPages };
+  }
+
+  function renderPage() {
+    const { visibleRows, visibleCards, totalItems, effectivePageSize, totalPages } = calculatePagination();
+
+    allTableRows.forEach(row => row.style.display = 'none');
+    allCards.forEach(card => card.style.display = 'none');
+
+    if (totalItems === 0) {
+      if (pageInfo) pageInfo.textContent = 'No results';
+      if (paginationRow) paginationRow.style.display = 'none';
+      return;
+    }
+
+    if (pageSize === 0) {
+      visibleRows.forEach(row => row.style.display = '');
+      visibleCards.forEach(card => card.style.display = '');
+    } else {
+      const startIndex = (currentPage - 1) * effectivePageSize;
+      const endIndex = startIndex + effectivePageSize;
+
+      const pageRows = visibleRows.slice(startIndex, endIndex);
+      const pageCards = visibleCards.slice(startIndex, endIndex);
+
+      pageRows.forEach(row => row.style.display = '');
+      pageCards.forEach(card => card.style.display = '');
+    }
+
+    if (pageInfo) pageInfo.textContent = `Page ${currentPage} of ${totalPages} • ${totalItems} results`;
+
+    if (firstPageBtn) firstPageBtn.disabled = currentPage === 1;
+    if (prevPageBtn) prevPageBtn.disabled = currentPage === 1;
+    if (nextPageBtn) nextPageBtn.disabled = currentPage === totalPages;
+    if (lastPageBtn) lastPageBtn.disabled = currentPage === totalPages;
+
+    if (paginationRow) paginationRow.style.display = 'flex';
+  }
+
+  function applyFilters() {
+    const dateVal = (dateInput?.value || '').trim().toLowerCase();
+    const examVal = (examInput?.value || '').trim().toLowerCase();
+    const subjectVal = (subjectInput?.value || '').trim().toLowerCase();
+
+    allTableRows.forEach(row => {
+      const cells = row.querySelectorAll('td');
+      if (cells.length === 0) return;
+
+      const dateText = (cells[0]?.textContent || '').toLowerCase();
+      const examText = (cells[1]?.textContent || '').toLowerCase();
+      const subjectText = (cells[2]?.textContent || '').toLowerCase();
+
+      const matchDate = !dateVal || dateText.includes(dateVal);
+      const matchExam = !examVal || examText.includes(examVal);
+      const matchSubject = !subjectVal || subjectText.includes(subjectVal);
+
+      if (matchDate && matchExam && matchSubject) row.classList.remove('filtered-out');
+      else row.classList.add('filtered-out');
     });
+
+    allCards.forEach(card => {
+      const dateText = (card.dataset.date || '').toLowerCase();
+      const examText = (card.dataset.exam || '').toLowerCase();
+      const subjectText = (card.dataset.subject || '').toLowerCase();
+
+      const matchDate = !dateVal || dateText.includes(dateVal);
+      const matchExam = !examVal || examText.includes(examVal);
+      const matchSubject = !subjectVal || subjectText.includes(subjectVal);
+
+      if (matchDate && matchExam && matchSubject) card.classList.remove('filtered-out');
+      else card.classList.add('filtered-out');
+    });
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  function clearFilters() {
+    if (dateInput) dateInput.value = '';
+    if (examInput) examInput.value = '';
+    if (subjectInput) subjectInput.value = '';
+
+    allTableRows.forEach(row => row.classList.remove('filtered-out'));
+    allCards.forEach(card => card.classList.remove('filtered-out'));
+
+    currentPage = 1;
+    renderPage();
+  }
+
+  if (applyBtn) applyBtn.addEventListener('click', applyFilters);
+  if (clearBtn) clearBtn.addEventListener('click', clearFilters);
+
+  [dateInput, examInput, subjectInput].forEach(input => {
+    if (input) input.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter') { e.preventDefault(); applyFilters(); }
+    });
+  });
+
+  if (pageSizeSelect) {
+    pageSizeSelect.addEventListener('change', function() {
+      const newSize = parseInt(this.value, 10);
+      pageSize = isNaN(newSize) ? 10 : newSize;
+      currentPage = 1;
+      renderPage();
+    });
+  }
+
+  if (firstPageBtn) firstPageBtn.addEventListener('click', function() { currentPage = 1; renderPage(); });
+  if (prevPageBtn) prevPageBtn.addEventListener('click', function() { if (currentPage > 1) { currentPage--; renderPage(); } });
+  if (nextPageBtn) nextPageBtn.addEventListener('click', function() {
+    const { totalPages } = calculatePagination();
+    if (currentPage < totalPages) { currentPage++; renderPage(); }
+  });
+  if (lastPageBtn) lastPageBtn.addEventListener('click', function() {
+    const { totalPages } = calculatePagination();
+    currentPage = totalPages; renderPage();
+  });
+
+  function addRippleEffect() {
+    document.querySelectorAll('.action-btn').forEach(btn => {
+      btn.addEventListener('click', function(e) {
+        if (this.disabled) return;
+        const rect = this.getBoundingClientRect();
+        const size = Math.max(rect.width, rect.height);
+        const ripple = document.createElement('span');
+        ripple.className = 'ripple';
+        ripple.style.width = ripple.style.height = size + 'px';
+        ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
+        ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
+        this.appendChild(ripple);
+        setTimeout(() => ripple.remove(), 600);
+      });
+    });
+  }
+  addRippleEffect();
+
+  renderPage();
+  window.addEventListener('resize', function() { renderPage(); });
+
+  window.debugPagination = function() {
+    console.log('Current pagination state:', {
+      currentPage,
+      pageSize,
+      totalRows: allTableRows.length,
+      filteredRows: getFilteredTableRows().length,
+      totalCards: allCards.length,
+      filteredCards: getFilteredCards().length
+    });
+  };
 });
 </script>
 {% endblock %}
