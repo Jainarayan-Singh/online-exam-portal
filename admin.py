@@ -146,11 +146,13 @@ def login():
 
 @admin_bp.route("/logout")
 def logout():
+    from main import home
+    home()
     session.pop("admin_id", None)
     session.pop("admin_name", None)
     session.pop("role", None)
     flash("Logged out successfully.", "info")
-    return redirect(url_for("admin.login"))
+    return redirect(url_for("home"))
 
 # ========== Dashboard ==========
 @admin_bp.route("/dashboard")
@@ -915,4 +917,5 @@ def admin_oauth_callback():
             "<code>GOOGLE_SERVICE_TOKEN_JSON</code> environment variable in Render (paste full JSON):"
             + "<pre>" + pretty + "</pre>"
         )
+
 # --- END: Web OAuth routes for admin ---
