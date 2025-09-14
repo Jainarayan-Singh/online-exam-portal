@@ -51,7 +51,8 @@ app.secret_key = os.environ.get('SECRET_KEY')
 app.config['SESSION_PERMANENT'] = True
 app.config['PERMANENT_SESSION_LIFETIME'] = 7200  # 2 hours
 
-
+from latex_editor import latex_bp
+app.register_blueprint(latex_bp) 
 
 # Use filesystem for Render single-instance free tier. For multi-instance use Redis.
 SESSION_TYPE = os.environ.get("SESSION_TYPE", "filesystem")  # default to filesystem

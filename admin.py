@@ -14,6 +14,7 @@ import os, json
 from flask import session, redirect, url_for, request
 from markupsafe import escape
 import html
+from latex_editor import latex_bp
 
 # New imports for sanitization
 import bleach
@@ -31,7 +32,7 @@ from google_drive_service import (
 
 # ========== Blueprint ==========
 admin_bp = Blueprint("admin", __name__, url_prefix="/admin", template_folder="templates")
-
+admin_bp.register_blueprint(latex_bp)
 # ========== Config ==========
 USERS_FILE_ID     = os.environ.get("USERS_FILE_ID")
 EXAMS_FILE_ID     = os.environ.get("EXAMS_FILE_ID")
