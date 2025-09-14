@@ -1,0 +1,1638 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Advanced LaTeX Editor — Pro</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <!-- KaTeX -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"/>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-primary: #0a0e1a;
+      --bg-secondary: #0f1419;
+      --bg-tertiary: #1a1f2e;
+      --bg-card: #1e2433;
+      --bg-editor: #161b26;
+      --accent-primary: #00d2ff;
+      --accent-secondary: #3a7bd5;
+      --accent-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --text-primary: #ffffff;
+      --text-secondary: #b8c5d6;
+      --text-muted: #7c8ba1;
+      --border-color: rgba(255,255,255,0.08);
+      --hover-bg: rgba(255,255,255,0.05);
+      --success: #00ff87;
+      --warning: #ffb347;
+      --danger: #ff6b6b;
+      --radius: 12px;
+      --shadow-lg: 0 20px 60px rgba(0,0,0,0.4);
+      --shadow-md: 0 8px 25px rgba(0,0,0,0.2);
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      overflow: hidden;
+    }
+
+    .app-container {
+      display: flex;
+      height: 100vh;
+      position: relative;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      width: 280px;
+      background: var(--bg-secondary);
+      border-right: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+      transition: var(--transition);
+      z-index: 100;
+    }
+
+    .sidebar.collapsed {
+      width: 60px;
+    }
+
+    .sidebar-header {
+      padding: 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      gap: 15px;
+    }
+
+    .sidebar.collapsed .sidebar-header {
+      padding: 20px 15px;
+      justify-content: center;
+    }
+
+    .logo {
+      font-size: 24px;
+      font-weight: 800;
+      background: var(--accent-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      white-space: nowrap;
+      transition: var(--transition);
+    }
+
+    .sidebar.collapsed .logo {
+      opacity: 0;
+      width: 0;
+    }
+
+    .sidebar-toggle {
+      background: transparent;
+      border: none;
+      color: var(--text-secondary);
+      font-size: 18px;
+      cursor: pointer;
+      padding: 8px;
+      border-radius: 6px;
+      transition: var(--transition);
+    }
+
+    .sidebar-toggle:hover {
+      color: var(--text-primary);
+      background: var(--hover-bg);
+    }
+
+    .sidebar-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0;
+    }
+
+    .symbol-section {
+      margin-bottom: 25px;
+    }
+
+    .section-title {
+      padding: 0 20px 15px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .sidebar.collapsed .section-title {
+      opacity: 0;
+      height: 0;
+      padding: 0;
+      margin: 0;
+    }
+
+    .symbol-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(45px, 1fr));
+      gap: 8px;
+      padding: 0 15px;
+    }
+
+    .sidebar.collapsed .symbol-grid {
+      grid-template-columns: 1fr;
+      padding: 0 10px;
+    }
+
+    .symbol-btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 12px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      position: relative;
+      min-height: 45px;
+    }
+
+    .symbol-btn:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+      transform: translateY(-1px);
+    }
+
+    .symbol-btn:active {
+      transform: translateY(0);
+    }
+
+    .symbol-btn .tooltip {
+      position: absolute;
+      left: 100%;
+      top: 50%;
+      transform: translateY(-50%);
+      background: var(--bg-card);
+      color: var(--text-primary);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 12px;
+      font-family: 'JetBrains Mono', monospace;
+      white-space: nowrap;
+      margin-left: 10px;
+      opacity: 0;
+      pointer-events: none;
+      transition: var(--transition);
+      z-index: 1000;
+      box-shadow: var(--shadow-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .symbol-btn:hover .tooltip {
+      opacity: 1;
+    }
+
+    .sidebar.collapsed .tooltip {
+      display: block;
+    }
+
+    .sidebar:not(.collapsed) .tooltip {
+      display: none;
+    }
+
+    /* Main Content */
+    .main-content {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+    }
+
+    /* Toolbar */
+    .toolbar {
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      padding: 15px 20px;
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toolbar-separator {
+      width: 1px;
+      height: 24px;
+      background: var(--border-color);
+      margin: 0 8px;
+    }
+
+    .btn {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      padding: 8px 14px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 500;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: var(--transition);
+      text-decoration: none;
+    }
+
+    .btn:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+      border-color: var(--accent-primary);
+      transform: translateY(-1px);
+    }
+
+    .btn.primary {
+      background: var(--accent-gradient);
+      color: white;
+      border: none;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn.primary:hover {
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+      color: white;
+    }
+
+    .btn.success {
+      background: linear-gradient(135deg, #00ff87, #60efff);
+      color: #000;
+      border: none;
+    }
+
+    .btn.danger {
+      background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+      color: white;
+      border: none;
+    }
+
+    .btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+      transform: none !important;
+    }
+
+    /* Editor Area */
+    .editor-area {
+      flex: 1;
+      display: flex;
+      min-height: 0;
+    }
+
+    .editor-panel {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      border-right: 1px solid var(--border-color);
+      min-width: 0;
+    }
+
+    .editor-header {
+      background: var(--bg-tertiary);
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .editor-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .editor-stats {
+      font-size: 12px;
+      color: var(--text-muted);
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .editor-container {
+      flex: 1;
+      position: relative;
+      background: var(--bg-editor);
+    }
+
+    #latex-editor {
+      width: 100%;
+      height: 100%;
+      border: none;
+      outline: none;
+      background: var(--bg-editor);
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', 'Monaco', 'Consolas', monospace;
+      font-size: 14px;
+      line-height: 1.6;
+      padding: 20px;
+      resize: none;
+      tab-size: 2;
+    }
+
+    #latex-editor::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Preview Panel */
+    .preview-panel {
+      width: 50%;
+      display: flex;
+      flex-direction: column;
+      background: var(--bg-secondary);
+    }
+
+    .preview-panel.collapsed {
+      width: 0;
+      display: none;
+    }
+
+    .preview-header {
+      background: var(--bg-tertiary);
+      padding: 12px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .preview-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .zoom-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .zoom-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+    }
+
+    .zoom-btn:hover {
+      background: var(--hover-bg);
+      color: var(--text-primary);
+    }
+
+    .zoom-level {
+      font-size: 12px;
+      color: var(--text-muted);
+      min-width: 45px;
+      text-align: center;
+    }
+
+    .preview-container {
+      flex: 1;
+      overflow: auto;
+      background: white;
+      position: relative;
+    }
+
+    .preview-content {
+      padding: 30px;
+      min-height: 100%;
+      background: white;
+      color: #000;
+      transform-origin: top left;
+      transition: transform 0.2s ease;
+    }
+
+    .preview-error {
+      padding: 20px;
+      background: rgba(255, 107, 107, 0.1);
+      border: 1px solid var(--danger);
+      border-radius: 8px;
+      margin: 20px;
+      color: var(--danger);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 13px;
+    }
+
+    /* Status Bar */
+    .status-bar {
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      padding: 8px 20px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .status-left {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-right {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .status-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .status-indicator.success {
+      color: var(--success);
+    }
+
+    .status-indicator.error {
+      color: var(--danger);
+    }
+
+    .status-indicator.warning {
+      color: var(--warning);
+    }
+
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: currentColor;
+    }
+
+    /* Responsive */
+    @media (max-width: 1024px) {
+      .sidebar {
+        position: absolute;
+        left: -280px;
+        height: 100%;
+        z-index: 1000;
+      }
+
+      .sidebar.open {
+        left: 0;
+      }
+
+      .sidebar.collapsed {
+        left: -60px;
+      }
+
+      .sidebar.collapsed.open {
+        left: 0;
+        width: 60px;
+      }
+
+      .main-content {
+        width: 100%;
+      }
+
+      .editor-area {
+        flex-direction: column;
+      }
+
+      .editor-panel {
+        border-right: none;
+        border-bottom: 1px solid var(--border-color);
+      }
+
+      .preview-panel {
+        width: 100%;
+        height: 50%;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .toolbar {
+        padding: 10px 15px;
+        gap: 10px;
+      }
+
+      .toolbar-separator {
+        display: none;
+      }
+
+      .btn {
+        padding: 6px 10px;
+        font-size: 12px;
+      }
+
+      .sidebar-header {
+        padding: 15px;
+      }
+    }
+
+    /* Loading Animation */
+    .loading {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 20px;
+      height: 20px;
+      border: 2px solid var(--border-color);
+      border-top: 2px solid var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Animations */
+    .fade-in {
+      animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* Scrollbar Styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: var(--bg-primary);
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 4px;
+    }
+
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--text-muted);
+    }
+  </style>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Sidebar with symbol palette -->
+    <div class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="logo">LaTeX Pro</div>
+        <button class="sidebar-toggle" id="sidebar-toggle">
+          <i class="fas fa-bars"></i>
+        </button>
+      </div>
+      
+      <div class="sidebar-content">
+        <!-- Math Symbols -->
+        <div class="symbol-section">
+          <div class="section-title">Basic Math</div>
+          <div class="symbol-grid">
+            <button class="symbol-btn" data-latex="\frac{a}{b}" title="Fraction">
+              <span>½</span>
+              <div class="tooltip">\frac{a}{b}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\sqrt{x}" title="Square Root">
+              <span>√</span>
+              <div class="tooltip">\sqrt{x}</div>
+            </button>
+            <button class="symbol-btn" data-latex="x^{n}" title="Superscript">
+              <span>x<sup>n</sup></span>
+              <div class="tooltip">x^{n}</div>
+            </button>
+            <button class="symbol-btn" data-latex="x_{n}" title="Subscript">
+              <span>x<sub>n</sub></span>
+              <div class="tooltip">x_{n}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\sum_{i=1}^{n}" title="Summation">
+              <span>Σ</span>
+              <div class="tooltip">\sum_{i=1}^{n}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\prod_{i=1}^{n}" title="Product">
+              <span>∏</span>
+              <div class="tooltip">\prod_{i=1}^{n}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\int_{a}^{b}" title="Integral">
+              <span>∫</span>
+              <div class="tooltip">\int_{a}^{b}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\lim_{x \to a}" title="Limit">
+              <span>lim</span>
+              <div class="tooltip">\lim_{x \to a}</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Greek Letters -->
+        <div class="symbol-section">
+          <div class="section-title">Greek Letters</div>
+          <div class="symbol-grid">
+            <button class="symbol-btn" data-latex="\alpha" title="Alpha">
+              <span>α</span>
+              <div class="tooltip">\alpha</div>
+            </button>
+            <button class="symbol-btn" data-latex="\beta" title="Beta">
+              <span>β</span>
+              <div class="tooltip">\beta</div>
+            </button>
+            <button class="symbol-btn" data-latex="\gamma" title="Gamma">
+              <span>γ</span>
+              <div class="tooltip">\gamma</div>
+            </button>
+            <button class="symbol-btn" data-latex="\delta" title="Delta">
+              <span>δ</span>
+              <div class="tooltip">\delta</div>
+            </button>
+            <button class="symbol-btn" data-latex="\epsilon" title="Epsilon">
+              <span>ε</span>
+              <div class="tooltip">\epsilon</div>
+            </button>
+            <button class="symbol-btn" data-latex="\theta" title="Theta">
+              <span>θ</span>
+              <div class="tooltip">\theta</div>
+            </button>
+            <button class="symbol-btn" data-latex="\lambda" title="Lambda">
+              <span>λ</span>
+              <div class="tooltip">\lambda</div>
+            </button>
+            <button class="symbol-btn" data-latex="\mu" title="Mu">
+              <span>μ</span>
+              <div class="tooltip">\mu</div>
+            </button>
+            <button class="symbol-btn" data-latex="\pi" title="Pi">
+              <span>π</span>
+              <div class="tooltip">\pi</div>
+            </button>
+            <button class="symbol-btn" data-latex="\sigma" title="Sigma">
+              <span>σ</span>
+              <div class="tooltip">\sigma</div>
+            </button>
+            <button class="symbol-btn" data-latex="\phi" title="Phi">
+              <span>φ</span>
+              <div class="tooltip">\phi</div>
+            </button>
+            <button class="symbol-btn" data-latex="\omega" title="Omega">
+              <span>ω</span>
+              <div class="tooltip">\omega</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Operators -->
+        <div class="symbol-section">
+          <div class="section-title">Operators</div>
+          <div class="symbol-grid">
+            <button class="symbol-btn" data-latex="\pm" title="Plus Minus">
+              <span>±</span>
+              <div class="tooltip">\pm</div>
+            </button>
+            <button class="symbol-btn" data-latex="\mp" title="Minus Plus">
+              <span>∓</span>
+              <div class="tooltip">\mp</div>
+            </button>
+            <button class="symbol-btn" data-latex="\times" title="Times">
+              <span>×</span>
+              <div class="tooltip">\times</div>
+            </button>
+            <button class="symbol-btn" data-latex="\div" title="Division">
+              <span>÷</span>
+              <div class="tooltip">\div</div>
+            </button>
+            <button class="symbol-btn" data-latex="\neq" title="Not Equal">
+              <span>≠</span>
+              <div class="tooltip">\neq</div>
+            </button>
+            <button class="symbol-btn" data-latex="\leq" title="Less Equal">
+              <span>≤</span>
+              <div class="tooltip">\leq</div>
+            </button>
+            <button class="symbol-btn" data-latex="\geq" title="Greater Equal">
+              <span>≥</span>
+              <div class="tooltip">\geq</div>
+            </button>
+            <button class="symbol-btn" data-latex="\approx" title="Approximately">
+              <span>≈</span>
+              <div class="tooltip">\approx</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Matrices & Arrays -->
+        <div class="symbol-section">
+          <div class="section-title">Matrices</div>
+          <div class="symbol-grid">
+            <button class="symbol-btn" data-latex="\begin{pmatrix} a & b \\ c & d \end{pmatrix}" title="Parentheses Matrix">
+              <span>( )</span>
+              <div class="tooltip">pmatrix</div>
+            </button>
+            <button class="symbol-btn" data-latex="\begin{bmatrix} a & b \\ c & d \end{bmatrix}" title="Bracket Matrix">
+              <span>[ ]</span>
+              <div class="tooltip">bmatrix</div>
+            </button>
+            <button class="symbol-btn" data-latex="\begin{vmatrix} a & b \\ c & d \end{vmatrix}" title="Determinant">
+              <span>| |</span>
+              <div class="tooltip">vmatrix</div>
+            </button>
+            <button class="symbol-btn" data-latex="\begin{cases} x & \text{if } x > 0 \\ -x & \text{if } x \leq 0 \end{cases}" title="Cases">
+              <span>{</span>
+              <div class="tooltip">cases</div>
+            </button>
+          </div>
+        </div>
+
+        <!-- Chemistry -->
+        <div class="symbol-section">
+          <div class="section-title">Chemistry</div>
+          <div class="symbol-grid">
+            <button class="symbol-btn" data-latex="\ce{H2O}" title="Chemical Formula">
+              <span>H₂O</span>
+              <div class="tooltip">\ce{H2O}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\ce{Ca^2+}" title="Ion">
+              <span>Ca²⁺</span>
+              <div class="tooltip">\ce{Ca^2+}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\ce{A -> B}" title="Reaction">
+              <span>→</span>
+              <div class="tooltip">\ce{A -> B}</div>
+            </button>
+            <button class="symbol-btn" data-latex="\ce{A <=> B}" title="Equilibrium">
+              <span>⇌</span>
+              <div class="tooltip">\ce{A <=> B}</div>
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Area -->
+    <div class="main-content">
+      <!-- Toolbar -->
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <button class="btn" id="mobile-sidebar-toggle" style="display: none;">
+            <i class="fas fa-bars"></i>
+          </button>
+          <button class="btn" id="new-doc">
+            <i class="fas fa-file-plus"></i> New
+          </button>
+          <button class="btn" id="save-doc">
+            <i class="fas fa-save"></i> Save
+          </button>
+          <button class="btn" id="load-doc">
+            <i class="fas fa-folder-open"></i> Load
+          </button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="toolbar-group">
+          <button class="btn" id="undo" title="Undo (Ctrl+Z)">
+            <i class="fas fa-undo"></i>
+          </button>
+          <button class="btn" id="redo" title="Redo (Ctrl+Y)">
+            <i class="fas fa-redo"></i>
+          </button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="toolbar-group">
+          <button class="btn" id="toggle-preview">
+            <i class="fas fa-eye"></i> Preview
+          </button>
+          <button class="btn" id="fullscreen">
+            <i class="fas fa-expand"></i>
+          </button>
+        </div>
+
+        <div class="toolbar-separator"></div>
+
+        <div class="toolbar-group">
+          <button class="btn primary" id="insert-latex">
+            <i class="fas fa-check"></i> Insert LaTeX
+          </button>
+          <button class="btn" id="copy-latex">
+            <i class="fas fa-copy"></i> Copy
+          </button>
+          <button class="btn" id="download-tex">
+            <i class="fas fa-download"></i> Download
+          </button>
+        </div>
+      </div>
+
+      <!-- Editor Area -->
+      <div class="editor-area">
+        <!-- Editor Panel -->
+        <div class="editor-panel">
+          <div class="editor-header">
+            <div class="editor-title">
+              <i class="fas fa-code"></i> LaTeX Editor
+            </div>
+            <div class="editor-stats">
+              Lines: <span id="line-count">1</span> | 
+              Words: <span id="word-count">0</span> | 
+              Characters: <span id="char-count">0</span>
+            </div>
+          </div>
+          <div class="editor-container">
+            <textarea id="latex-editor" placeholder="% Welcome to Advanced LaTeX Editor!
+% Start typing your LaTeX code here...
+
+% Example: Quadratic Formula
+The quadratic formula is: $$x = \frac{-b \pm \sqrt{b^2 - 4ac}}{2a}$$
+
+% Example: Matrix
+$$A = \begin{pmatrix}
+1 & 2 & 3 \\
+4 & 5 & 6 \\
+7 & 8 & 9
+\end{pmatrix}$$
+
+% Example: Chemical Equation
+$$\ce{2H2 + O2 -> 2H2O}$$
+
+% Example: Integral
+$$\int_{-\infty}^{\infty} e^{-x^2} dx = \sqrt{\pi}$$
+
+% Add your LaTeX here..."></textarea>
+          </div>
+        </div>
+
+        <!-- Preview Panel -->
+        <div class="preview-panel" id="preview-panel">
+          <div class="preview-header">
+            <div class="preview-title">
+              <i class="fas fa-eye"></i> Live Preview
+            </div>
+            <div class="zoom-controls">
+              <button class="zoom-btn" id="zoom-out" title="Zoom Out">
+                <i class="fas fa-minus"></i>
+              </button>
+              <div class="zoom-level" id="zoom-level">100%</div>
+              <button class="zoom-btn" id="zoom-in" title="Zoom In">
+                <i class="fas fa-plus"></i>
+              </button>
+              <button class="zoom-btn" id="zoom-reset" title="Reset Zoom">
+                <i class="fas fa-expand-arrows-alt"></i>
+              </button>
+            </div>
+          </div>
+          <div class="preview-container" id="preview-container">
+            <div class="preview-content" id="preview-content">
+              <div class="loading">
+                <div class="spinner"></div>
+                Rendering LaTeX...
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Status Bar -->
+      <div class="status-bar">
+        <div class="status-left">
+          <div class="status-indicator success" id="render-status">
+            <div class="status-dot"></div>
+            <span>Ready</span>
+          </div>
+          <div class="status-indicator" id="autosave-status">
+            <div class="status-dot"></div>
+            <span>Autosave: On</span>
+          </div>
+        </div>
+        <div class="status-right">
+          <span>Powered by KaTeX & mhchem</span>
+          <span id="cursor-position">Ln 1, Col 1</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Libraries -->
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/mhchem.min.js"></script>
+
+  <script>
+(function() {
+  'use strict';
+  
+  console.log('🚀 LaTeX Editor Pro - Starting...');
+
+  // Application state
+  const state = {
+    zoomLevel: 1,
+    previewVisible: true,
+    sidebarCollapsed: false,
+    renderTimeout: null,
+    undoStack: [],
+    redoStack: [],
+    maxUndoSteps: 50,
+    autosaveEnabled: true,
+    isInitialized: false
+  };
+
+  // Wait for libraries to load
+  function waitForLibraries(callback) {
+    let attempts = 0;
+    const maxAttempts = 50;
+    
+    function check() {
+      if (window.katex && window.katex.render) {
+        console.log('✅ KaTeX loaded successfully');
+        callback();
+        return;
+      }
+      
+      attempts++;
+      if (attempts >= maxAttempts) {
+        console.error('❌ Failed to load KaTeX after', maxAttempts, 'attempts');
+        alert('Failed to load LaTeX libraries. Please refresh the page.');
+        return;
+      }
+      
+      setTimeout(check, 100);
+    }
+    
+    check();
+  }
+
+  // DOM elements
+  const elements = {
+    sidebar: document.getElementById('sidebar'),
+    sidebarToggle: document.getElementById('sidebar-toggle'),
+    mobileSidebarToggle: document.getElementById('mobile-sidebar-toggle'),
+    editor: document.getElementById('latex-editor'),
+    previewPanel: document.getElementById('preview-panel'),
+    previewContainer: document.getElementById('preview-container'),
+    previewContent: document.getElementById('preview-content'),
+    togglePreview: document.getElementById('toggle-preview'),
+    zoomIn: document.getElementById('zoom-in'),
+    zoomOut: document.getElementById('zoom-out'),
+    zoomReset: document.getElementById('zoom-reset'),
+    zoomLevel: document.getElementById('zoom-level'),
+    undoBtn: document.getElementById('undo'),
+    redoBtn: document.getElementById('redo'),
+    newDoc: document.getElementById('new-doc'),
+    saveDoc: document.getElementById('save-doc'),
+    loadDoc: document.getElementById('load-doc'),
+    insertLatex: document.getElementById('insert-latex'),
+    copyLatex: document.getElementById('copy-latex'),
+    downloadTex: document.getElementById('download-tex'),
+    fullscreen: document.getElementById('fullscreen'),
+    renderStatus: document.getElementById('render-status'),
+    autosaveStatus: document.getElementById('autosave-status'),
+    lineCount: document.getElementById('line-count'),
+    wordCount: document.getElementById('word-count'),
+    charCount: document.getElementById('char-count'),
+    cursorPos: document.getElementById('cursor-position')
+  };
+
+  // Utility functions
+  function debounce(func, delay) {
+    let timeoutId;
+    return function(...args) {
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => func.apply(this, args), delay);
+    };
+  }
+
+  function showStatus(element, type, message, duration = 3000) {
+    if (!element) return;
+    element.className = `status-indicator ${type}`;
+    const span = element.querySelector('span');
+    if (span) span.textContent = message;
+    
+    if (duration > 0) {
+      setTimeout(() => {
+        element.className = 'status-indicator';
+        if (span) span.textContent = 'Ready';
+      }, duration);
+    }
+  }
+
+  function insertAtCursor(text) {
+    const editor = elements.editor;
+    const start = editor.selectionStart;
+    const end = editor.selectionEnd;
+    const currentText = editor.value;
+    
+    // Insert text
+    const newText = currentText.substring(0, start) + text + currentText.substring(end);
+    editor.value = newText;
+    
+    // Move cursor to end of inserted text
+    const newCursorPos = start + text.length;
+    editor.selectionStart = editor.selectionEnd = newCursorPos;
+    editor.focus();
+    
+    // Update everything
+    saveToUndoStack();
+    updateStats();
+    updateCursorPosition();
+    renderPreview();
+    
+    console.log('✅ Inserted:', text);
+  }
+
+  // Undo/Redo functionality
+  function saveToUndoStack() {
+    const currentContent = elements.editor.value;
+    if (state.undoStack.length === 0 || state.undoStack[state.undoStack.length - 1] !== currentContent) {
+      state.undoStack.push(currentContent);
+      if (state.undoStack.length > state.maxUndoSteps) {
+        state.undoStack.shift();
+      }
+      state.redoStack = [];
+      updateUndoRedoButtons();
+    }
+  }
+
+  function undo() {
+    if (state.undoStack.length > 1) {
+      const current = state.undoStack.pop();
+      state.redoStack.push(current);
+      elements.editor.value = state.undoStack[state.undoStack.length - 1];
+      updateUndoRedoButtons();
+      updateStats();
+      updateCursorPosition();
+      renderPreview();
+      console.log('↶ Undo performed');
+    }
+  }
+
+  function redo() {
+    if (state.redoStack.length > 0) {
+      const content = state.redoStack.pop();
+      state.undoStack.push(content);
+      elements.editor.value = content;
+      updateUndoRedoButtons();
+      updateStats();
+      updateCursorPosition();
+      renderPreview();
+      console.log('↷ Redo performed');
+    }
+  }
+
+  function updateUndoRedoButtons() {
+    if (elements.undoBtn) elements.undoBtn.disabled = state.undoStack.length <= 1;
+    if (elements.redoBtn) elements.redoBtn.disabled = state.redoStack.length === 0;
+  }
+
+  // Statistics update
+  function updateStats() {
+    const content = elements.editor.value;
+    const lines = content.split('\n').length;
+    const words = content.trim() === '' ? 0 : content.trim().split(/\s+/).length;
+    const chars = content.length;
+
+    if (elements.lineCount) elements.lineCount.textContent = lines;
+    if (elements.wordCount) elements.wordCount.textContent = words;
+    if (elements.charCount) elements.charCount.textContent = chars;
+  }
+
+  // Cursor position tracking
+  function updateCursorPosition() {
+    const editor = elements.editor;
+    const text = editor.value;
+    const cursorPos = editor.selectionStart;
+    
+    const textBeforeCursor = text.substring(0, cursorPos);
+    const lines = textBeforeCursor.split('\n');
+    const line = lines.length;
+    const col = lines[lines.length - 1].length + 1;
+    
+    if (elements.cursorPos) {
+      elements.cursorPos.textContent = `Ln ${line}, Col ${col}`;
+    }
+  }
+
+  // LaTeX rendering
+  function renderPreview() {
+    if (!state.previewVisible || !window.katex) return;
+
+    clearTimeout(state.renderTimeout);
+    state.renderTimeout = setTimeout(() => {
+      try {
+        showStatus(elements.renderStatus, 'warning', 'Rendering...');
+        
+        const content = elements.editor.value.trim();
+        
+        if (!content) {
+          elements.previewContent.innerHTML = '<div style="padding: 40px; text-align: center; color: #666; font-style: italic;">Start typing LaTeX to see preview...</div>';
+          showStatus(elements.renderStatus, 'success', 'Ready');
+          return;
+        }
+
+        let renderedHTML = '';
+        
+        // Split content by math delimiters
+        const parts = content.split(/((?:\$\$[\s\S]*?\$\$)|(?:\$[^$\n]*?\$)|(?:\\begin\{(?:equation|align|gather|multline|split|aligned|gathered|pmatrix|bmatrix|vmatrix|Vmatrix|matrix|cases)\*?\}[\s\S]*?\\end\{(?:equation|align|gather|multline|split|aligned|gathered|pmatrix|bmatrix|vmatrix|Vmatrix|matrix|cases)\*?\}))/);
+
+        parts.forEach((part, index) => {
+          if (!part.trim()) return;
+
+          try {
+            // Display math $...$
+            if (part.startsWith('$') && part.endsWith('$')) {
+              const mathExpr = part.slice(2, -2).trim();
+              if (mathExpr) {
+                const rendered = katex.renderToString(mathExpr, {
+                  displayMode: true,
+                  throwOnError: false,
+                  trust: true,
+                  strict: false
+                });
+                renderedHTML += `<div style="text-align: center; margin: 20px 0;">${rendered}</div>`;
+              }
+            }
+            // Inline math $...$
+            else if (part.startsWith(') && part.endsWith(') && !part.startsWith('$')) {
+              const mathExpr = part.slice(1, -1).trim();
+              if (mathExpr) {
+                const rendered = katex.renderToString(mathExpr, {
+                  displayMode: false,
+                  throwOnError: false,
+                  trust: true,
+                  strict: false
+                });
+                renderedHTML += `<span>${rendered}</span>`;
+              }
+            }
+            // Environment blocks
+            else if (part.includes('\\begin{')) {
+              const rendered = katex.renderToString(part.trim(), {
+                displayMode: true,
+                throwOnError: false,
+                trust: true,
+                strict: false
+              });
+              renderedHTML += `<div style="text-align: center; margin: 20px 0;">${rendered}</div>`;
+            }
+            // Regular text
+            else {
+              // Basic text processing
+              let textContent = part
+                .replace(/\\textbf\{([^}]+)\}/g, '<strong>$1</strong>')
+                .replace(/\\textit\{([^}]+)\}/g, '<em>$1</em>')
+                .replace(/\\text\{([^}]+)\}/g, '$1')
+                .replace(/\\section\{([^}]+)\}/g, '<h2 style="color: #333; margin: 25px 0 15px 0;">$1</h2>')
+                .replace(/\\subsection\{([^}]+)\}/g, '<h3 style="color: #555; margin: 20px 0 10px 0;">$1</h3>')
+                .replace(/\\title\{([^}]+)\}/g, '<h1 style="color: #222; margin: 30px 0 20px 0; text-align: center;">$1</h1>')
+                .replace(/\\maketitle/g, '')
+                .replace(/\\newline|\\\\(?!\w)/g, '<br>')
+                .replace(/%(.*?)$/gm, '<span style="color: #666; font-style: italic;">% $1</span>') // Comments
+                .replace(/\n\s*\n/g, '</p><p style="margin: 15px 0;">')
+                .replace(/\n/g, ' ');
+
+              if (textContent.trim() && !textContent.match(/^\\(documentclass|usepackage|begin\{document\}|end\{document\})/)) {
+                renderedHTML += `<p style="margin: 15px 0; line-height: 1.6;">${textContent}</p>`;
+              }
+            }
+          } catch (err) {
+            console.warn('Render error for part:', part, err);
+            renderedHTML += `<div style="color: #d63384; background: #f8d7da; padding: 10px; border-radius: 4px; margin: 10px 0; font-family: monospace; font-size: 13px;">
+              <strong>Render Error:</strong> ${err.message}
+            </div>`;
+          }
+        });
+
+        if (!renderedHTML.trim()) {
+          renderedHTML = '<div style="padding: 40px; text-align: center; color: #666; font-style: italic;">No renderable content found. Try adding some LaTeX math like: $x = \\frac{-b \\pm \\sqrt{b^2-4ac}}{2a}$</div>';
+        }
+
+        elements.previewContent.innerHTML = renderedHTML;
+        elements.previewContent.style.transform = `scale(${state.zoomLevel})`;
+        
+        showStatus(elements.renderStatus, 'success', 'Rendered ✓', 2000);
+
+      } catch (error) {
+        console.error('Preview render error:', error);
+        elements.previewContent.innerHTML = `
+          <div style="color: #d63384; background: #f8d7da; padding: 20px; border-radius: 8px; margin: 20px; font-family: monospace;">
+            <h4 style="margin: 0 0 10px 0; color: #721c24;">Render Error</h4>
+            <p style="margin: 0;">${error.message}</p>
+            <small style="opacity: 0.8;">Check your LaTeX syntax and try again.</small>
+          </div>
+        `;
+        showStatus(elements.renderStatus, 'error', 'Render failed');
+      }
+    }, 300);
+  }
+
+  // Zoom functionality
+  function setZoom(level) {
+    state.zoomLevel = Math.max(0.25, Math.min(3, level));
+    if (elements.zoomLevel) {
+      elements.zoomLevel.textContent = `${Math.round(state.zoomLevel * 100)}%`;
+    }
+    if (elements.previewContent) {
+      elements.previewContent.style.transform = `scale(${state.zoomLevel})`;
+    }
+    console.log('🔍 Zoom set to:', state.zoomLevel);
+  }
+
+  // File operations
+  function newDocument() {
+    if (confirm('Create new document? Unsaved changes will be lost.')) {
+      elements.editor.value = `% LaTeX Document
+% Start typing your LaTeX here...
+
+The quadratic formula: $x = \\frac{-b \\pm \\sqrt{b^2 - 4ac}}{2a}$
+
+Some inline math: $E = mc^2$
+
+A matrix: $\\begin{pmatrix} a & b \\\\ c & d \\end{pmatrix}$
+
+Chemistry: $\\ce{2H2 + O2 -> 2H2O}$
+`;
+      
+      state.undoStack = [elements.editor.value];
+      state.redoStack = [];
+      updateUndoRedoButtons();
+      updateStats();
+      updateCursorPosition();
+      renderPreview();
+      elements.editor.focus();
+      console.log('📄 New document created');
+    }
+  }
+
+  function saveDocument() {
+    try {
+      const content = elements.editor.value;
+      const filename = `latex_document_${new Date().toISOString().slice(0, 19).replace(/:/g, '-')}.tex`;
+      
+      const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      showStatus(elements.autosaveStatus, 'success', 'Saved ✓', 2000);
+      console.log('💾 Document saved:', filename);
+    } catch (error) {
+      console.error('Save error:', error);
+      showStatus(elements.autosaveStatus, 'error', 'Save failed');
+    }
+  }
+
+  function loadDocument() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.tex,.txt,.latex';
+    input.style.display = 'none';
+    
+    input.onchange = function(e) {
+      const file = e.target.files[0];
+      if (!file) return;
+      
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        elements.editor.value = e.target.result;
+        state.undoStack = [elements.editor.value];
+        state.redoStack = [];
+        updateUndoRedoButtons();
+        updateStats();
+        updateCursorPosition();
+        renderPreview();
+        showStatus(elements.autosaveStatus, 'success', 'Loaded ✓', 2000);
+        console.log('📂 Document loaded:', file.name);
+      };
+      reader.readAsText(file);
+    };
+    
+    document.body.appendChild(input);
+    input.click();
+    document.body.removeChild(input);
+  }
+
+  // Autosave functionality
+  const autosave = debounce(function() {
+    if (!state.autosaveEnabled) return;
+    
+    try {
+      const content = elements.editor.value;
+      localStorage.setItem('latex_editor_autosave', content);
+      localStorage.setItem('latex_editor_timestamp', Date.now().toString());
+    } catch (error) {
+      console.warn('Autosave failed:', error);
+    }
+  }, 1000);
+
+  function loadAutosave() {
+    try {
+      const saved = localStorage.getItem('latex_editor_autosave');
+      const timestamp = localStorage.getItem('latex_editor_timestamp');
+      
+      if (saved && timestamp) {
+        const age = Date.now() - parseInt(timestamp);
+        if (age < 24 * 60 * 60 * 1000 && saved.trim()) { // Less than 24 hours old and not empty
+          if (confirm('Found autosaved content from ' + new Date(parseInt(timestamp)).toLocaleString() + '. Load it?')) {
+            elements.editor.value = saved;
+            state.undoStack = [saved];
+            updateStats();
+            updateCursorPosition();
+            renderPreview();
+            console.log('🔄 Autosave restored');
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load autosave:', error);
+    }
+  }
+
+  // Event listeners setup
+  function setupEventListeners() {
+    console.log('🔗 Setting up event listeners...');
+
+    // Sidebar toggle
+    elements.sidebarToggle?.addEventListener('click', () => {
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+      elements.sidebar.classList.toggle('collapsed', state.sidebarCollapsed);
+      
+      const icon = elements.sidebarToggle.querySelector('i');
+      if (icon) {
+        icon.className = state.sidebarCollapsed ? 'fas fa-chevron-right' : 'fas fa-bars';
+      }
+      console.log('📱 Sidebar toggled:', state.sidebarCollapsed ? 'collapsed' : 'expanded');
+    });
+
+    // Mobile sidebar toggle
+    elements.mobileSidebarToggle?.addEventListener('click', () => {
+      elements.sidebar.classList.toggle('open');
+    });
+
+    // Symbol buttons
+    document.querySelectorAll('.symbol-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const latex = btn.dataset.latex;
+        if (latex) {
+          insertAtCursor(latex);
+          showStatus(elements.renderStatus, 'success', 'Symbol inserted ✓', 1000);
+        }
+      });
+    });
+
+    // Editor events
+    const editorInputHandler = debounce(() => {
+      if (state.isInitialized) {
+        saveToUndoStack();
+        updateStats();
+        updateCursorPosition();
+        renderPreview();
+        autosave();
+      }
+    }, 200);
+
+    elements.editor.addEventListener('input', editorInputHandler);
+
+    elements.editor.addEventListener('keydown', (e) => {
+      if (e.ctrlKey || e.metaKey) {
+        switch (e.key) {
+          case 'z':
+            e.preventDefault();
+            if (e.shiftKey) {
+              redo();
+            } else {
+              undo();
+            }
+            break;
+          case 'y':
+            e.preventDefault();
+            redo();
+            break;
+          case 's':
+            e.preventDefault();
+            saveDocument();
+            break;
+          case 'Enter':
+            e.preventDefault();
+            elements.insertLatex?.click();
+            break;
+        }
+      }
+      
+      // Tab key handling
+      if (e.key === 'Tab') {
+        e.preventDefault();
+        insertAtCursor('  '); // Insert 2 spaces
+      }
+    });
+
+    elements.editor.addEventListener('keyup', updateCursorPosition);
+    elements.editor.addEventListener('click', updateCursorPosition);
+
+    // Toolbar buttons
+    elements.togglePreview?.addEventListener('click', () => {
+      state.previewVisible = !state.previewVisible;
+      elements.previewPanel.classList.toggle('collapsed', !state.previewVisible);
+      
+      const icon = elements.togglePreview.querySelector('i');
+      if (icon) {
+        icon.className = state.previewVisible ? 'fas fa-eye' : 'fas fa-eye-slash';
+      }
+      
+      const textSpan = elements.togglePreview.childNodes[1];
+      if (textSpan) {
+        textSpan.textContent = state.previewVisible ? ' Preview' : ' Show Preview';
+      }
+      
+      if (state.previewVisible) {
+        renderPreview();
+      }
+      console.log('👁️ Preview toggled:', state.previewVisible);
+    });
+
+    // Zoom controls
+    elements.zoomIn?.addEventListener('click', () => setZoom(state.zoomLevel + 0.1));
+    elements.zoomOut?.addEventListener('click', () => setZoom(state.zoomLevel - 0.1));
+    elements.zoomReset?.addEventListener('click', () => setZoom(1));
+
+    // Undo/Redo buttons
+    elements.undoBtn?.addEventListener('click', undo);
+    elements.redoBtn?.addEventListener('click', redo);
+
+    // File operations
+    elements.newDoc?.addEventListener('click', newDocument);
+    elements.saveDoc?.addEventListener('click', saveDocument);
+    elements.loadDoc?.addEventListener('click', loadDocument);
+    elements.downloadTex?.addEventListener('click', saveDocument);
+
+    // Copy LaTeX
+    elements.copyLatex?.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(elements.editor.value);
+        showStatus(elements.renderStatus, 'success', 'Copied ✓', 1500);
+        console.log('📋 LaTeX copied to clipboard');
+      } catch (error) {
+        // Fallback
+        elements.editor.select();
+        document.execCommand('copy');
+        showStatus(elements.renderStatus, 'warning', 'Copied (fallback)', 1500);
+        console.log('📋 LaTeX copied (fallback method)');
+      }
+    });
+
+    // Fullscreen toggle
+    elements.fullscreen?.addEventListener('click', () => {
+      if (!document.fullscreenElement) {
+        document.documentElement.requestFullscreen().then(() => {
+          elements.fullscreen.innerHTML = '<i class="fas fa-compress"></i>';
+        });
+      } else {
+        document.exitFullscreen().then(() => {
+          elements.fullscreen.innerHTML = '<i class="fas fa-expand"></i>';
+        });
+      }
+    });
+
+    // Insert LaTeX to parent window
+    elements.insertLatex?.addEventListener('click', () => {
+      const latex = elements.editor.value;
+      
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({
+            type: 'latex-selected',
+            latex: latex
+          }, window.location.origin);
+          
+          showStatus(elements.renderStatus, 'success', 'LaTeX sent ✓', 2000);
+          console.log('📤 LaTeX sent to parent window');
+          
+          // Ask if user wants to close
+          setTimeout(() => {
+            if (confirm('LaTeX sent successfully! Close this editor window?')) {
+              window.close();
+            }
+          }, 1000);
+        } else {
+          // Fallback: copy to clipboard
+          navigator.clipboard.writeText(latex).then(() => {
+            showStatus(elements.renderStatus, 'warning', 'Parent not found. Copied to clipboard.', 3000);
+            console.log('📋 Parent window not available, copied to clipboard');
+          });
+        }
+      } catch (error) {
+        console.error('Insert error:', error);
+        // Show latex in alert as final fallback
+        alert('Failed to send LaTeX. Copy manually:\n\n' + latex.substring(0, 500) + (latex.length > 500 ? '...' : ''));
+      }
+    });
+
+    // Responsive handling
+    function handleResize() {
+      if (window.innerWidth <= 1024) {
+        elements.mobileSidebarToggle.style.display = 'inline-flex';
+        elements.sidebar.classList.remove('open');
+      } else {
+        elements.mobileSidebarToggle.style.display = 'none';
+        elements.sidebar.classList.remove('open');
+      }
+    }
+
+    window.addEventListener('resize', debounce(handleResize, 250));
+    handleResize(); // Initial call
+
+    // Prevent accidental navigation away
+    window.addEventListener('beforeunload', (e) => {
+      if (elements.editor.value.trim() !== '') {
+        e.preventDefault();
+        e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+      }
+    });
+  }
+
+  // Initialize application
+  function init() {
+    console.log('🚀 Initializing LaTeX Editor Pro...');
+    
+    // Wait for libraries to load first
+    waitForLibraries(() => {
+      // Load autosaved content
+      loadAutosave();
+      
+      // Setup event listeners
+      setupEventListeners();
+      
+      // Initial state setup
+      updateStats();
+      updateCursorPosition();
+      updateUndoRedoButtons();
+      
+      // Setup undo stack
+      state.undoStack = [elements.editor.value];
+      
+      // Mark as initialized
+      state.isInitialized = true;
+      
+      // Focus editor
+      elements.editor.focus();
+      
+      // Initial render
+      setTimeout(() => {
+        renderPreview();
+        console.log('✅ LaTeX Editor Pro - Ready!');
+        showStatus(elements.renderStatus, 'success', 'Ready ✓');
+      }, 100);
+    });
+  }
+
+  // Start the application
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+
+})();
+</script>
+</body>
+</html>
