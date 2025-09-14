@@ -2436,7 +2436,7 @@ def logout():
         session.pop(k, None)
 
     flash('You have been logged out successfully.', 'info')
-    return redirect(url_for('login'))
+    return redirect(url_for('home'))
 
 
 # -------------------------
@@ -2517,4 +2517,5 @@ else:
         print("✅ Production Google Drive integration: ACTIVE")
     else:
         print("❌ Production Google Drive integration: FAILED")
+
         print("📋 Check environment variables and credentials")
