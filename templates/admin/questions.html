@@ -188,17 +188,134 @@
   }
   
   .batch-btn {
+    position: relative !important;
     border-radius: 10px;
     padding: 10px 20px;
     font-weight: 600;
     border: 2px solid;
-    transition: all 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden !important;
+    letter-spacing: 0.3px !important;
   }
   
-  .batch-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.1);
+  .batch-btn::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.15), transparent);
+    transition: left 0.5s ease;
   }
+
+  .batch-btn:hover::before {
+    left: 100%;
+  }
+
+  .batch-btn:active {
+    transform: translateY(-1px) scale(1.01) !important;
+  }
+
+  .batch-btn i {
+    filter: drop-shadow(0 1px 2px rgba(0,0,0,0.2));
+  }
+
+  /* Add Row Button - Green Success */
+  #add-row {
+    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3) !important;
+  }
+
+  #add-row:hover {
+    background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(16, 185, 129, 0.4) !important;
+    color: white !important;
+  }
+
+  /* Clear All Button - Red Danger */
+  #clear-rows {
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3) !important;
+  }
+
+  #clear-rows:hover {
+    background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(239, 68, 68, 0.4) !important;
+    color: white !important;
+  }
+
+  /* Add All Questions Button - Orange Action */
+  #batch-submit {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.3) !important;
+  }
+
+  #batch-submit:hover {
+    background: linear-gradient(135deg, #d97706 0%, #b45309 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 0 6px 20px rgba(245, 158, 11, 0.4) !important;
+    color: white !important;
+  }
+
+  /* Open LaTeX Editor Button - Purple/Blue Premium */
+  #open-latex-editor {
+    position: relative;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    border: none !important;
+    color: white !important;
+    font-weight: 700 !important;
+    font-size: 12px !important;
+    letter-spacing: 0.5px;
+    padding: 14px 28px !important;
+    border-radius: 12px !important;
+    box-shadow: 
+      0 4px 15px rgba(102, 126, 234, 0.3),
+      0 2px 4px rgba(0, 0, 0, 0.1),
+      inset 0 1px 0 rgba(255, 255, 255, 0.2) !important;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    overflow: hidden;
+  }
+
+  #open-latex-editor::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+    transition: left 0.5s ease;
+  }
+
+  #open-latex-editor:hover {
+    background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%) !important;
+    transform: translateY(-2px) scale(1.02) !important;
+    box-shadow: 
+      0 8px 25px rgba(102, 126, 234, 0.4),
+      0 4px 12px rgba(0, 0, 0, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.3) !important;
+  }
+
+  #open-latex-editor:hover::before {
+    left: 100%;
+  }
+
+  #open-latex-editor:active {
+    transform: translateY(-1px) scale(1.01) !important;
+  }
+
   
   .load-btn {
     background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -390,23 +507,6 @@
       justify-content: center;
     }
   }
-  #clear-rows {
-  background: linear-gradient(135deg, rgba(255, 99, 132, 0.2), rgba(255, 0, 72, 0.15));
-  border: 1px solid rgba(255, 99, 132, 0.6);
-  color: #ffffff; /* text light red */
-  box-shadow: 0 0 12px rgba(255, 77, 109, 0.6),
-              0 0 25px rgba(255, 77, 109, 0.4);
-  transition: all 0.3s ease-in-out;
-}
-
-#clear-rows:hover {
-  background: linear-gradient(135deg, rgba(255, 77, 109, 0.3), rgba(255, 0, 72, 0.25));
-  color: #fff; /* text white on hover */
-  box-shadow: 0 0 18px rgba(255, 77, 109, 0.8),
-              0 0 35px rgba(255, 77, 109, 0.6);
-  transform: translateY(-2px) scale(1.02);
-}
-
 </style>
 
 <div class="page-header">
@@ -654,6 +754,7 @@
   <h4 class="batch-header">
     <i class="fas fa-layer-group me-2" style="color: #667eea;"></i>Batch Add Questions
   </h4>
+  
   <div class="batch-description">
     <i class="fas fa-info-circle me-2"></i>
     Add multiple questions at once! Create rows below, fill in the details, then click "Add All" to save everything in one operation.
@@ -663,11 +764,14 @@
     <button id="add-row" class="btn btn-success batch-btn">
       <i class="fas fa-plus me-1"></i>Add Row
     </button>
-<button id="clear-rows" class="btn btn-outline-secondary batch-btn">
-  <i class="fas fa-broom me-1"></i>Clear All
-</button>
+    <button id="clear-rows" class="btn btn-outline-secondary batch-btn">
+      <i class="fas fa-broom me-1"></i>Clear All
+    </button>
     <button id="batch-submit" class="btn btn-primary batch-btn">
       <i class="fas fa-upload me-1"></i>Add All Questions
+    <button id="open-latex-editor" class="btn btn-primary batch-btn" aria-label="Open LaTeX editor">
+      <span class="latex-icon" aria-hidden="true">∫</span>
+      Open LaTeX Editor
     </button>
   </div>
 
@@ -704,7 +808,6 @@
       </div>
     </div>
   </div>
-
   <div id="batch-rows"></div>
 </div>
 
@@ -1226,5 +1329,65 @@
 
 })();
 </script>
+<script>
+(function(){
+  const btn = document.getElementById('open-latex-editor');
+  if(!btn) return;
 
+  btn.addEventListener('click', () => {
+    // open side-by-side popup; adjust size if needed
+    const w = Math.max(Math.round(window.innerWidth * 0.6), 900);
+    const h = Math.max(Math.round(window.innerHeight * 0.75), 600);
+    const left = Math.round(window.screenX + (window.innerWidth - w) / 2);
+    const top = Math.round(window.screenY + (window.innerHeight - h) / 2);
+    window.open('/admin/latex_editor', 'latexEditor', `width=${w},height=${h},left=${left},top=${top},resizable=yes`);
+  });
+
+  // receive message from popup
+  window.addEventListener('message', function(ev){
+    try {
+      // IMPORTANT: check origin if your site uses different host. Here we accept same-origin only
+      if (ev.origin !== window.location.origin) return;
+      const data = ev.data || {};
+      if (data.type === 'latex-selected' && typeof data.latex === 'string') {
+        const latex = data.latex;
+
+        // Try best-effort to find the textarea/input to insert into:
+        const target = document.querySelector('textarea[name="latex_content"], textarea#latex_editor, textarea[name="question_text"], textarea#question_text, textarea');
+        if (target) {
+          // insert at cursor if focused; else append at end
+          try {
+            const s = target.selectionStart || target.value.length;
+            const e = target.selectionEnd || s;
+            target.value = target.value.slice(0,s) + latex + target.value.slice(e);
+            target.focus();
+            // move caret after inserted text
+            const pos = s + latex.length;
+            target.selectionStart = target.selectionEnd = pos;
+          } catch(err) {
+            // fallback: append
+            target.value = target.value + '\n' + latex;
+          }
+          // trigger input event so any listeners update preview/hidden fields
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+          // fallback: try focused element
+          const active = document.activeElement;
+          if (active && (active.tagName === 'TEXTAREA' || (active.tagName==='INPUT' && active.type==='text'))) {
+            const s = active.selectionStart || active.value.length;
+            const e = active.selectionEnd || s;
+            active.value = active.value.slice(0,s)+latex+active.value.slice(e);
+            active.selectionStart = active.selectionEnd = s + latex.length;
+            active.dispatchEvent(new Event('input', { bubbles: true }));
+          } else {
+            alert('LaTeX received. No textarea found to paste into — paste manually:\n\n' + latex);
+          }
+        }
+      }
+    } catch(e) {
+      console.error('latex message handler error', e);
+    }
+  }, false);
+})();
+</script>
 {% endblock %}

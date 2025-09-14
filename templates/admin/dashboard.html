@@ -210,7 +210,7 @@
     background: rgba(255, 255, 255, 0.3);
     border-color: rgba(255, 255, 255, 0.5);
     color: white;
-  }
+  } 
 </style>
 
 <div class="d-flex justify-content-between align-items-center mb-5">
@@ -273,7 +273,11 @@
     </a>
     <a class="btn btn-outline-primary action-btn" href="{{ url_for('admin.upload_images_page') }}">
       <i class="fas fa-images me-2"></i> Upload Images
-    </a>
+    </a> 
+    <button id="open-latex-editor" class="btn btn-outline-primary action-btn" aria-label="Open LaTeX editor">
+      <span class="latex-icon me-2" aria-hidden="true">∫</span>
+      Open LaTeX Editor
+    </button>    
     <a class="btn btn-success action-btn" href="{{ url_for('admin.publish') }}">
       <i class="fas fa-rocket me-2"></i> Publish
     </a>
@@ -367,4 +371,66 @@
     </div>
   </div>
 </div>
+
+<script>
+(function(){
+  const btn = document.getElementById('open-latex-editor');
+  if(!btn) return;
+
+  btn.addEventListener('click', () => {
+    // open side-by-side popup; adjust size if needed
+    const w = Math.max(Math.round(window.innerWidth * 0.6), 900);
+    const h = Math.max(Math.round(window.innerHeight * 0.75), 600);
+    const left = Math.round(window.screenX + (window.innerWidth - w) / 2);
+    const top = Math.round(window.screenY + (window.innerHeight - h) / 2);
+    window.open('/admin/latex_editor', 'latexEditor', `width=${w},height=${h},left=${left},top=${top},resizable=yes`);
+  });
+
+  // receive message from popup
+  window.addEventListener('message', function(ev){
+    try {
+      // IMPORTANT: check origin if your site uses different host. Here we accept same-origin only
+      if (ev.origin !== window.location.origin) return;
+      const data = ev.data || {};
+      if (data.type === 'latex-selected' && typeof data.latex === 'string') {
+        const latex = data.latex;
+
+        // Try best-effort to find the textarea/input to insert into:
+        const target = document.querySelector('textarea[name="latex_content"], textarea#latex_editor, textarea[name="question_text"], textarea#question_text, textarea');
+        if (target) {
+          // insert at cursor if focused; else append at end
+          try {
+            const s = target.selectionStart || target.value.length;
+            const e = target.selectionEnd || s;
+            target.value = target.value.slice(0,s) + latex + target.value.slice(e);
+            target.focus();
+            // move caret after inserted text
+            const pos = s + latex.length;
+            target.selectionStart = target.selectionEnd = pos;
+          } catch(err) {
+            // fallback: append
+            target.value = target.value + '\n' + latex;
+          }
+          // trigger input event so any listeners update preview/hidden fields
+          target.dispatchEvent(new Event('input', { bubbles: true }));
+        } else {
+          // fallback: try focused element
+          const active = document.activeElement;
+          if (active && (active.tagName === 'TEXTAREA' || (active.tagName==='INPUT' && active.type==='text'))) {
+            const s = active.selectionStart || active.value.length;
+            const e = active.selectionEnd || s;
+            active.value = active.value.slice(0,s)+latex+active.value.slice(e);
+            active.selectionStart = active.selectionEnd = s + latex.length;
+            active.dispatchEvent(new Event('input', { bubbles: true }));
+          } else {
+            alert('LaTeX received. No textarea found to paste into — paste manually:\n\n' + latex);
+          }
+        }
+      }
+    } catch(e) {
+      console.error('latex message handler error', e);
+    }
+  }, false);
+})();
+</script>
 {% endblock %}
