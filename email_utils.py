@@ -19,7 +19,7 @@ EMAIL_CONFIG = {
     'API_SECRET': os.environ.get('MAILJET_API_SECRET'),
     'FROM_EMAIL': os.environ.get('FROM_EMAIL', 'noreply@examportal.com'),
     'FROM_NAME': 'ExamPortal System',
-    'RESET_PASSWORD_URL': os.environ.get('RESET_PASSWORD_URL', 'https://online-exam-desk-test.onrender.com/reset-password')
+    'RESET_PASSWORD_URL': os.environ.get('RESET_PASSWORD_URL')
 }
 
 def generate_username(full_name, existing_usernames):
