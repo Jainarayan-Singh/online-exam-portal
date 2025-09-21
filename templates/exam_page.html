@@ -355,7 +355,32 @@ html, body {
   overflow-x: hidden; 
 }
 
+/* Image loading status improvements */
+.image-loading {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px dashed rgba(59,130,246,0.3);
+  color: #495057;
+  animation: pulse 1.5s ease-in-out infinite alternate;
+}
 
+.image-error {
+  background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
+  border: 2px dashed rgba(255,193,7,0.4);
+  color: #856404;
+}
+
+@keyframes pulse {
+  from { opacity: 0.7; }
+  to { opacity: 1; }
+}
+
+/* Ensure images are contained properly */
+.question-image img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
 
 </style>
 
@@ -616,51 +641,124 @@ html, body {
           <h6 class="mb-0"><i class="fas fa-th"></i> Question Navigation</h6>
         </div>
         <div class="card-body">
-          <div class="question-palette d-flex flex-wrap justify-content-center mb-3">
-            {% for idx in range(total_questions) %}
-              {% set status = palette[idx] %}
-              <a href="{{ url_for('exam_page', exam_id=exam.id, q=idx) }}"
-                 class="palette-link {% if status == 'answered' %}answered{% elif status == 'review' %}review{% elif status == 'visited' %}visited{% else %}not-visited{% endif %} {% if idx == current_index %}border border-dark border-3{% endif %}"
-                 data-question-index="{{ idx }}" title="Question {{ idx + 1 }} - {{ questions[idx].question_type }}{% if questions[idx].has_image %} (Has Image){% endif %}">
-                 {{ idx + 1 }}
-                 {% if questions[idx].has_image %}
-                 <i class="fas fa-image position-absolute" style="font-size:8px; top:4px; right:6px;"></i>
-                 {% endif %}
-              </a>
-            {% endfor %}
-          </div>
+<!-- REPLACE the question palette section in your exam_page.html with this enhanced version -->
 
-          <div class="mt-3">
-            <h6 class="mb-2">Legend:</h6>
-            <div class="row g-2">
-              <div class="col-6">
-                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#16a34a,#059669)"></span><small>Answered (<span id="answeredCount">0</span>)</small></div>
-              </div>
-              <div class="col-6">
-                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#f59e0b,#f97316)"></span><small>Review (<span id="reviewCount">0</span>)</small></div>
-              </div>
-              <div class="col-6">
-                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#0ea5e9,#0369a1)"></span><small>Visited (<span id="visitedCount">0</span>)</small></div>
-              </div>
-              <div class="col-6">
-                <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#6c757d,#495057)"></span><small>Not Visited (<span id="notVisitedCount">0</span>)</small></div>
-              </div>
-            </div>
+<div class="question-palette d-flex flex-wrap justify-content-center mb-3">
+  {% for idx in range(total_questions) %}
+    {% set status = palette[idx] %}
+    {% set q = questions[idx] %}
+    {% set qtype = q.question_type|default('MCQ') %}
+    <a href="{{ url_for('exam_page', exam_id=exam.id, q=idx) }}"
+       class="palette-link {% if status == 'answered' %}answered{% elif status == 'review' %}review{% elif status == 'visited' %}visited{% else %}not-visited{% endif %} {% if idx == current_index %}border border-dark border-3{% endif %}"
+       data-question-index="{{ idx }}" 
+       title="Question {{ idx + 1 }} - {{ qtype }}{% if q.has_image %} (Has Image){% endif %}"
+       style="position: relative; display: inline-flex; align-items: center; justify-content: center;">
+       
+       {{ idx + 1 }}
+       
+       <!-- Image indicator -->
+       {% if q.has_image %}
+       <i class="fas fa-image position-absolute" style="font-size: 8px; top: 2px; right: 2px; color: #fff; text-shadow: 0 0 2px rgba(0,0,0,0.8);"></i>
+       {% endif %}
+       
+       <!-- Question type indicator -->
+       <div class="position-absolute" style="bottom: 1px; left: 50%; transform: translateX(-50%); font-size: 6px; line-height: 1;">
+         {% if qtype == 'MCQ' %}
+         <span style="color: #28a745; font-weight: 900;">●</span>
+         {% elif qtype == 'MSQ' %}
+         <span style="color: #007bff; font-weight: 900;">■</span>
+         {% elif qtype == 'NUMERIC' %}
+         <span style="color: #ffc107; font-weight: 900;">▲</span>
+         {% else %}
+         <span style="color: #6c757d; font-weight: 900;">?</span>
+         {% endif %}
+       </div>
+    </a>
+  {% endfor %}
+</div>
 
-            <hr>
+<!-- Enhanced Legend -->
+<div class="mt-3">
+  <h6 class="mb-2">Legend:</h6>
+  <div class="row g-2 mb-3">
+    <div class="col-6">
+      <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#16a34a,#059669)"></span><small>Answered (<span id="answeredCount">0</span>)</small></div>
+    </div>
+    <div class="col-6">
+      <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#f59e0b,#f97316)"></span><small>Review (<span id="reviewCount">0</span>)</small></div>
+    </div>
+    <div class="col-6">
+      <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#0ea5e9,#0369a1)"></span><small>Visited (<span id="visitedCount">0</span>)</small></div>
+    </div>
+    <div class="col-6">
+      <div class="legend-box"><span class="swatch" style="background:linear-gradient(90deg,#6c757d,#495057)"></span><small>Not Visited (<span id="notVisitedCount">0</span>)</small></div>
+    </div>
+  </div>
 
-            <div>
-              <h6 class="mb-2">Question Types:</h6>
-              <div class="small">
-                <div>● Single Choice (MCQ)</div>
-                <div>■ Multiple Choice (MSQ)</div>
-                <div>▲ Numerical Answer</div>
-                <div><i class="fas fa-image"></i> Has Image</div>
-              </div>
-            </div>
-          </div>
+  <div>
+    <h6 class="mb-2" style="color: var(--muted-light);">Question Types & Indicators:</h6>
+    <div class="row g-1">
+      <div class="col-6">
+        <div class="small d-flex align-items-center gap-1">
+          <span style="color: #28a745; font-weight: 900; font-size: 12px;">●</span>
+          <span>Single Choice (MCQ)</span>
         </div>
       </div>
+      <div class="col-6">
+        <div class="small d-flex align-items-center gap-1">
+          <span style="color: #007bff; font-weight: 900; font-size: 12px;">■</span>
+          <span>Multiple Choice (MSQ)</span>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="small d-flex align-items-center gap-1">
+          <span style="color: #ffc107; font-weight: 900; font-size: 12px;">▲</span>
+          <span>Numerical Answer</span>
+        </div>
+      </div>
+      <div class="col-6">
+        <div class="small d-flex align-items-center gap-1">
+          <i class="fas fa-image" style="color: #17a2b8; font-size: 10px;"></i>
+          <span>Has Image</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Enhanced palette link styling */
+.palette-link {
+  width: 42px;
+  height: 42px;
+  margin: 4px;
+  border-radius: 8px;
+  font-weight: 800;
+  position: relative;
+  color: #fff;
+  text-decoration: none;
+  overflow: visible; /* Allow indicators to show */
+}
+
+/* Responsive adjustments */
+@media (max-width: 767px) {
+  .palette-link {
+    width: 36px;
+    height: 36px;
+    font-size: 14px;
+  }
+  
+  .palette-link .fas.fa-image {
+    font-size: 6px !important;
+    top: 1px !important;
+    right: 1px !important;
+  }
+  
+  .palette-link .position-absolute span {
+    font-size: 5px !important;
+  }
+}
+</style>
 
       <div class="card mt-3">
         <div class="card-header">
@@ -866,30 +964,188 @@ function updateMetricsCounts() {
   document.getElementById('notVisitedCount').textContent = counts['not-visited'];
 }
 
-function startTimer() {
-  const stored = sessionStorage.getItem('exam_timer_{{ exam.id }}');
-  if (stored !== null) duration = parseInt(stored);
-  else { duration = {{ exam.duration }} * 60; sessionStorage.setItem('exam_timer_{{ exam.id }}', duration); }
-  timerInterval = setInterval(updateTimer, 1000);
+// REPLACE startTimer() and updateTimer() with this block
+// REPLACE the existing startTimer() function with this fixed version:
+
+function startTimer(forceFresh = false) {
+  const serverRemaining = Number({{ remaining_seconds|default(0) }}) || 0; // seconds from server
+  const examDurationMin = Number({{ exam.duration|default(0) }}) || 0;
+  const expectedMax = (examDurationMin > 0) ? examDurationMin * 60 : 0;
+
+  const legacyKey = 'exam_timer_{{ exam.id }}';
+  const endKey = 'exam_timer_end_{{ exam.id }}';
+  const attemptKey = 'exam_attempt_{{ exam.id }}'; // NEW: Track attempt number
+  const now = Date.now();
+
+  // Get current attempt number from backend
+  const currentAttempt = {{ active_attempt.attempt_number|default(1) if active_attempt else 1 }};
+
+  // migrate legacy sessionStorage -> localStorage if present (only if not forcing fresh)
+  if (!forceFresh) {
+    try {
+      const legacy = sessionStorage.getItem(legacyKey);
+      if (legacy !== null) {
+        try {
+          const p = JSON.parse(legacy);
+          if (p && p.end_ms) localStorage.setItem(endKey, String(Number(p.end_ms)));
+          else if (p && p.remaining && p.last_tick_ms) {
+            localStorage.setItem(endKey, String(Number(p.last_tick_ms) + Number(p.remaining) * 1000));
+          } else if (!isNaN(Number(legacy))) {
+            localStorage.setItem(endKey, String(now + Number(legacy) * 1000));
+          }
+        } catch (e) {
+          if (!isNaN(Number(legacy))) {
+            localStorage.setItem(endKey, String(now + Number(legacy) * 1000));
+          }
+        }
+        try { sessionStorage.removeItem(legacyKey); } catch(e){}
+      }
+    } catch(e){}
+  }
+
+  // NEW: Check if this is a different attempt number
+  let storedAttempt = null;
+  try {
+    storedAttempt = localStorage.getItem(attemptKey);
+    if (storedAttempt && Number(storedAttempt) !== currentAttempt) {
+      console.log(`New attempt detected: ${storedAttempt} -> ${currentAttempt}. Clearing old timer.`);
+      forceFresh = true; // Force fresh start for new attempt
+    }
+  } catch(e){}
+
+  // Store current attempt number
+  try {
+    localStorage.setItem(attemptKey, String(currentAttempt));
+  } catch(e){}
+
+  // read stored end (localStorage preferred) - but only if not forcing fresh start
+  function readStoredEnd() {
+    if (forceFresh) return null; // Ignore stored end for fresh starts
+    
+    try {
+      const raw = localStorage.getItem(endKey);
+      if (raw) {
+        const n = Number(raw);
+        if (!isNaN(n)) return Math.floor(n);
+        try { const p = JSON.parse(raw); if (p && p.end_ms) return Number(p.end_ms); } catch(e){}
+      }
+    } catch(e){}
+    return null;
+  }
+
+  let storedEnd = readStoredEnd();
+  
+  // For fresh starts OR if stored end is invalid or past, set from serverRemaining/examDuration
+  if (forceFresh || !storedEnd || storedEnd <= now) {
+    let initial;
+    
+    if (forceFresh) {
+      // For fresh starts, clear any existing timer data and use full exam duration
+      try { 
+        localStorage.removeItem(endKey); 
+        console.log('Cleared old timer data for fresh start');
+      } catch(e){}
+      initial = expectedMax > 0 ? expectedMax : serverRemaining;
+      console.log(`Fresh start: Using full duration of ${initial} seconds`);
+    } else {
+      // For resume, use serverRemaining but clamp to expectedMax
+      initial = serverRemaining;
+      if (expectedMax > 0 && serverRemaining > expectedMax + 30) initial = expectedMax;
+      console.log(`Resume: Using server remaining ${initial} seconds`);
+    }
+    
+    storedEnd = now + (initial * 1000);
+    try { localStorage.setItem(endKey, String(Math.floor(storedEnd))); } catch(e){}
+  } else {
+    // if server reports less remaining than stored, prefer smaller (server authoritative)
+    // but only for resume scenarios, not fresh starts
+    if (serverRemaining > 0) {
+      const serverEnd = now + (serverRemaining * 1000);
+      if (serverEnd < storedEnd) {
+        storedEnd = serverEnd;
+        try { localStorage.setItem(endKey, String(Math.floor(storedEnd))); } catch(e){}
+        console.log('Used server authoritative time');
+      }
+    }
+  }
+
+  duration = Math.max(0, Math.ceil((Number(storedEnd) - Date.now()) / 1000));
+  console.log(`Timer starting with ${duration} seconds remaining`);
+
+  if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
   updateTimer();
+
+  timerInterval = setInterval(function() {
+    let curEnd = storedEnd;
+    try {
+      const raw = localStorage.getItem(endKey);
+      if (raw) {
+        const n = Number(raw);
+        if (!isNaN(n)) curEnd = Math.floor(n);
+        else {
+          try { const p = JSON.parse(raw); if (p && p.end_ms) curEnd = Number(p.end_ms); } catch(e){}
+        }
+      }
+    } catch(e){}
+
+    duration = Math.max(0, Math.ceil((Number(curEnd) - Date.now()) / 1000));
+    updateTimer();
+
+    if (duration <= 0) {
+      clearInterval(timerInterval);
+      timerInterval = null;
+      try { 
+        localStorage.removeItem(endKey);
+        localStorage.removeItem(attemptKey);
+      } catch(e){}
+      setTimeout(function(){ alert('Time is up! Auto-submitting exam...'); autoSubmitExam(); }, 120);
+    }
+  }, 1000);
+
+  // keep tabs in sync
+  window.addEventListener('storage', function(e){
+    if (e.key === endKey) {
+      const v = e.newValue;
+      if (v) {
+        const n = Number(v);
+        if (!isNaN(n)) {
+          duration = Math.max(0, Math.ceil((n - Date.now())/1000));
+          updateTimer();
+          if (duration <= 0) {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            try { 
+              localStorage.removeItem(endKey);
+              localStorage.removeItem(attemptKey);
+            } catch(e){}
+            setTimeout(()=>autoSubmitExam(), 120);
+          }
+        }
+      }
+    }
+  });
 }
 
 function updateTimer() {
   const timerEl = document.getElementById("timer");
-  if (duration > 0) {
-    const mins = Math.floor(duration / 60);
-    const secs = duration % 60;
-    timerEl.textContent = `${mins}:${secs.toString().padStart(2,'0')}`;
-    if (duration <= 300) timerEl.parentElement.style.background = 'linear-gradient(135deg,#dc3545 0%,#c82333 100%)';
-    else if (duration <= 600) { timerEl.parentElement.style.background = 'linear-gradient(135deg,#ffc107 0%,#e0a800 100%)'; timerEl.parentElement.style.color = '#212529'; }
-    duration--;
-    sessionStorage.setItem('exam_timer_{{ exam.id }}', duration);
+  if (!timerEl) return;
+  const mins = Math.floor(duration / 60);
+  const secs = duration % 60;
+  timerEl.textContent = `${mins}:${String(secs).padStart(2,'0')}`;
+  const parent = timerEl.parentElement;
+  if (!parent) return;
+  if (duration <= 0) {
+    parent.style.background = 'linear-gradient(135deg,#dc3545 0%,#c82333 100%)';
+    parent.style.color = '#fff';
+  } else if (duration <= 600) {
+    parent.style.background = 'linear-gradient(135deg,#ffc107 0%,#e0a800 100%)';
+    parent.style.color = '#212529';
   } else {
-    clearInterval(timerInterval);
-    alert('Time is up! Auto-submitting exam...');
-    autoSubmitExam();
+    parent.style.background = '';
+    parent.style.color = '';
   }
 }
+
+
 
 function autoSubmitExam() {
   const form = document.querySelector('form');
@@ -908,7 +1164,7 @@ function autoSubmitExam() {
 function confirmSubmit() { return confirm('Are you sure you want to submit the exam? This action cannot be undone.'); }
 
 document.addEventListener('DOMContentLoaded', function() {
-  startTimer();
+  startTimer({{ 'true' if is_fresh_start else 'false' }});
   updateMetricsCounts();
   updateOptionVisuals();
   if (document.getElementById('numericDisplay')) {

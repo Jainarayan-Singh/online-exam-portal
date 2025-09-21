@@ -230,19 +230,23 @@
         </div>
       </div>
 
-      <div class="row mb-4">
-        <div class="col-md-12 text-center">
-          <button id="downloadPdfBtn" class="btn btn-success-custom btn-lg me-3">
-            <i class="fas fa-download"></i> Download as PDF
-          </button>
-          <button onclick="window.print()" class="btn btn-primary-custom btn-lg me-3">
-            <i class="fas fa-print"></i> Print Response
-          </button>
-          <button onclick="closeResponseWindow()" class="btn btn-danger-custom btn-lg">
-            <i class="fas fa-times"></i> Close
-          </button>
-        </div>
-      </div>
+<div class="row mb-4">
+  <div class="col-md-12 text-center">
+    <button id="downloadPdfBtn" class="btn btn-success-custom btn-lg me-3">
+      <i class="fas fa-file-pdf"></i> Download PDF
+    </button>
+    <a href="{{ url_for('response_txt', exam_id=exam.id) }}" 
+       class="btn btn-outline-success btn-lg me-3" target="_blank">
+      <i class="fas fa-file-text"></i> Download as Text
+    </a>
+    <button onclick="window.print()" class="btn btn-primary-custom btn-lg me-3">
+      <i class="fas fa-print"></i> Print Response
+    </button>
+    <button onclick="closeResponseWindow()" class="btn btn-danger-custom btn-lg">
+      <i class="fas fa-times"></i> Close
+    </button>
+  </div>
+</div>
 
       <div id="responseContent">
         {% if responses %}
@@ -508,59 +512,46 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 function openImageModal(src, title) {
-  document.getElementById('responseModalImage').src = src;
-  document.getElementById('imageModalTitle').textContent = title;
-  new bootstrap.Modal(document.getElementById('responseImageModal')).show();
+    const modal = document.getElementById('responseImageModal');
+    const img = document.getElementById('responseModalImage');
+    const titleEl = document.getElementById('imageModalTitle');
+    
+    if (modal && img && titleEl) {
+        img.src = src;
+        titleEl.innerHTML = '<i class="fas fa-image me-2"></i>' + title;
+        
+        if (window.bootstrap) {
+            new bootstrap.Modal(modal).show();
+        }
+    }
 }
 
 function closeResponseWindow() {
-  if (window.opener) { window.close(); } else { window.history.back(); }
+    if (window.opener) {
+        window.close();
+    } else {
+        window.history.back();
+    }
 }
 
-document.getElementById('downloadPdfBtn').onclick = async function () {
-  const downloadBtn = this;
-  const originalText = downloadBtn.innerHTML;
-  downloadBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
-  downloadBtn.disabled = true;
-  try {
-    const { jsPDF } = window.jspdf;
-    const pdf = new jsPDF('p', 'mm', 'a4');
-    const pdfWidth = pdf.internal.pageSize.getWidth();
-    const pdfHeight = pdf.internal.pageSize.getHeight();
-    let yOffset = 10;
-    const header = document.getElementById('examHeader');
-    const headerCanvas = await html2canvas(header, { scale: 2, useCORS: true });
-    const headerImgData = headerCanvas.toDataURL('image/png');
-    const headerHeight = (headerCanvas.height * pdfWidth) / headerCanvas.width;
-    pdf.addImage(headerImgData, 'PNG', 0, yOffset, pdfWidth, headerHeight);
-    yOffset += headerHeight + 5;
-    const cards = document.querySelectorAll('.question-response-card');
-    for (let i = 0; i < cards.length; i++) {
-      const canvas = await html2canvas(cards[i], { scale: 2, useCORS: true });
-      const imgData = canvas.toDataURL('image/png');
-      const cardHeight = (canvas.height * pdfWidth) / canvas.width;
-      if (yOffset + cardHeight > pdfHeight - 10) { pdf.addPage(); yOffset = 10; }
-      pdf.addImage(imgData, 'PNG', 0, yOffset, pdfWidth, cardHeight);
-      yOffset += cardHeight + 5;
-    }
-    const summary = document.getElementById('summaryStats');
-    const summaryCanvas = await html2canvas(summary, { scale: 2, useCORS: true });
-    const summaryImgData = summaryCanvas.toDataURL('image/png');
-    const summaryHeight = (summaryCanvas.height * pdfWidth) / summaryCanvas.width;
-    if (yOffset + summaryHeight > pdfHeight - 10) { pdf.addPage(); yOffset = 10; }
-    pdf.addImage(summaryImgData, 'PNG', 0, yOffset, pdfWidth, summaryHeight);
-    pdf.save('{{ exam.name|replace(" ", "_") }}_Response_Analysis_{{ session.username }}.pdf');
-  } catch (err) {
-    console.error(err);
-    alert('Error generating PDF. Please try again.');
-  } finally {
-    downloadBtn.innerHTML = originalText;
-    downloadBtn.disabled = false;
-  }
-}
+// Simple PDF download using backend route
+document.getElementById('downloadPdfBtn').onclick = function() {
+    const btn = this;
+    const originalText = btn.innerHTML;
+    
+    btn.disabled = true;
+    btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Generating PDF...';
+    
+    // Use backend route for PDF generation
+    window.open('{{ url_for("response_pdf", exam_id=exam.id) }}', '_blank');
+    
+    // Reset button after a delay
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+    }, 2000);
+};
 </script>
 {% endblock %}

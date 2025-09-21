@@ -19,7 +19,6 @@ window.MathJax = {
     <link rel="icon" type="image/x-icon" href="{{ url_for('static', filename='favicon.png') }}">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    
     <title>{% block title %}ExamPortal{% endblock %}</title>
 
     <!-- Bootstrap CSS -->
@@ -27,210 +26,234 @@ window.MathJax = {
     <!-- Font Awesome -->
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
 
-    <style>
-        html, body { height: 100%; }
-        body {
-            background: linear-gradient(135deg, #0f1724 0%, #141428 40%, #1b2440 100%);
-            min-height: 100vh;
-            font-family: 'Inter','Segoe UI',Tahoma,Verdana,sans-serif;
-            display: flex;
-            flex-direction: column;
-            margin: 0;
-            color: #e6eef8;
-        }
-        main { flex: 1; }
+<style>
+    html, body { 
+        height: 100%; 
+        margin: 0;
+        padding: 0;
+    }
+    
+    body {
+        background: linear-gradient(135deg, #0f1724 0%, #141428 40%, #1b2440 100%);
+        min-height: 100vh;
+        font-family: 'Inter','Segoe UI',Tahoma,Verdana,sans-serif;
+        display: flex;
+        flex-direction: column;
+        color: #e6eef8;
+    }
+    
+    main { 
+        flex: 1; 
+    }
 
-        /* NAVBAR (visual) */
-        .navbar {
-            background: linear-gradient(90deg, rgba(102,126,234,0.10), rgba(118,75,162,0.04));
-            backdrop-filter: blur(10px);
-            border-radius: 12px;
-            padding: 0.5rem 0.9rem;
-            margin: 1rem;
-            box-shadow: 0 12px 30px rgba(3,6,23,0.6);
-            position: relative;
-            z-index: 4000;
-            border: 1px solid rgba(255,255,255,0.03);
-        }
+    /* NAVBAR - Fixed styling */
+    .navbar {
+        background: linear-gradient(135deg, #0f0f23 0%, #1a1a3e 50%, #2d2d5f 100%);
+        backdrop-filter: blur(20px);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 0;
+        padding: 1rem 0;
+        margin: 0;
+        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+        position: relative;
+        z-index: 1000;
+    }
 
-        .navbar .container { display:flex; align-items:center; gap:1rem; }
+    .navbar::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%, rgba(118, 75, 162, 0.05) 100%);
+        z-index: -1;
+    }
 
-        /* BRAND: keep bold, clickable and stable */
-        .navbar-brand {
-            display:flex;
-            align-items:center;
-            gap:0.7rem;
-            font-weight:800;              /* bold kept */
-            color:#e6eef8;                /* base color */
-            font-size:1.05rem;
-            text-decoration:none;
-            transition: color .18s ease, text-shadow .18s ease, transform .18s ease;
-        }
-        .navbar-brand i {
-            background: linear-gradient(135deg,#667eea,#764ba2);
-            padding:8px;
-            border-radius:8px;
-            color:white;
-            box-shadow: 0 6px 20px rgba(102,126,234,0.14);
-            transition: box-shadow .18s ease, transform .18s ease;
-        }
+    .navbar .container-fluid { 
+        display: flex; 
+        align-items: center; 
+        justify-content: space-between;
+        padding: 0 2rem;
+    }
 
-        /* PROFILE / NAV LINKS */
-        .nav-link {
-            color: rgba(230,238,248,0.95);
-            font-weight:600;
-            padding:0.4rem 0.7rem;
-            border-radius:10px;
-            position:relative;
-            text-decoration:none;
-            transition: all .18s ease;
-            display:flex;
-            align-items:center;
-            gap:0.5rem;
-        }
-        .nav-link::before {
-            content:'';
-            position:absolute;
-            top:0; left:-100%;
-            width:100%; height:100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.04), transparent);
-            transition:left .45s ease; border-radius:10px;
-        }
-        .nav-link:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(102,126,234,0.12); }
-        .nav-link:hover::before { left:100%; }
+    /* BRAND - Non-clickable */
+    .navbar-brand {
+        display: flex;
+        align-items: center;
+        gap: 0.7rem;
+        font-weight: 800;
+        color: rgba(255, 255, 255, 0.95);
+        font-size: 1.3rem;
+        text-decoration: none;
+        cursor: default;
+        pointer-events: none; /* Make completely non-clickable */
+    }
 
-        /* DROPDOWN menu and items */
-        .dropdown-menu {
-            background: rgba(15,18,30,0.98);
-            border:1px solid rgba(255,255,255,0.04);
-            backdrop-filter: blur(8px);
-            border-radius:10px;
-            box-shadow:0 18px 40px rgba(2,6,23,0.7);
-            padding:0.5rem;
-        }
-        .dropdown-item {
-            color:#e6eef8 !important;
-            font-weight:600;
-            border-radius:8px;
-            padding:0.55rem 0.8rem;
-            display:flex; align-items:center; gap:0.6rem;
-            position:relative; overflow:hidden;
-            transition: background .14s ease, transform .12s ease, color .12s ease;
-            text-decoration:none;
-        }
-        .dropdown-item:hover {
-            background: rgba(255,255,255,0.05);
-            color: #fff !important;
-        }
+    .navbar-brand i {
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        padding: 10px;
+        border-radius: 12px;
+        color: white;
+        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.25);
+    }
 
-        .dropdown-item.logout { color:#ffb4b4 !important; }
-        .dropdown-item.logout:hover { color:#fff !important; background: rgba(239,68,68,0.08); }
+    /* NAVIGATION LINKS - Fixed hover issues */
+    .navbar-nav {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+    }
 
-        .user-avatar {
-            width:36px; height:36px; border-radius:8px;
-            display:inline-flex; align-items:center; justify-content:center;
-            background: linear-gradient(135deg,#667eea,#764ba2); color:white; font-weight:800;
-        }
+    .navbar-text {
+        color: rgba(255, 255, 255, 0.8) !important;
+        font-weight: 500;
+        margin: 0 1rem 0 0 !important;
+        white-space: nowrap;
+    }
 
-        /* === FIX: Hover glow for brand text and profile name (specific, strong, and non-destructive) === */
-        /* brand text */
-        .navbar-brand > span {
-            color: #e6eef8;
-            font-weight:800;                 /* ensure bold remains */
-            transition: color .18s ease, text-shadow .2s ease;
-        }
-        .navbar-brand:hover > span {
-            color: #ffffff !important;
-            text-shadow: 0 0 8px rgba(102,126,234,0.65), 0 0 14px rgba(118,75,162,0.45);
-            transform: translateY(-2px);
-        }
-        /* keep icon unaffected (no color change) but add subtle lift */
-        .navbar-brand:hover i {
-            transform: translateY(-2px);
-            box-shadow: 0 10px 30px rgba(102,126,234,0.18);
-        }
+    .nav-link {
+        color: rgba(255, 255, 255, 0.9) !important;
+        font-weight: 600;
+        padding: 0.6rem 1.2rem !important;
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        text-decoration: none;
+        border: 1px solid transparent;
+        white-space: nowrap;
+        min-height: 40px; /* Prevent size changes */
+        box-sizing: border-box;
+    }
 
-        /* profile name inside nav-link */
-        .nav-link > span {
-            color: rgba(230,238,248,0.95);
-            font-weight:600;
-            transition: color .18s ease, text-shadow .18s ease, transform .18s ease;
-        }
-        .nav-link:hover > span {
-            color: #ffffff !important;
-            text-shadow: 0 0 8px rgba(102,126,234,0.65), 0 0 14px rgba(118,75,162,0.45);
-            transform: translateY(-2px);
-            font-weight:700; /* slightly bolder on hover for emphasis */
-        }
+    /* Fixed hover state - no black text */
+    .nav-link:hover {
+        color: #ffffff !important;
+        background: rgba(255, 255, 255, 0.12) !important;
+        border-color: rgba(255, 255, 255, 0.2);
+        transform: translateY(-1px);
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.2);
+    }
 
-        /* Alerts / footer (unchanged except visual tuning) */
-        .alert { border-radius:12px; box-shadow:0 6px 18px rgba(2,6,23,0.45); }
-        .professional-footer { background: linear-gradient(135deg,#0b1220,#0f1724); color:#cfd8ef; padding:1.25rem 0; margin-top:auto; box-shadow:0 -2px 12px rgba(2,6,23,0.5); }
-        .footer-brand { font-weight:800; color:#cfe3ff; }
-        .footer-links a { color:#a9bddf; }
-        .footer-links a:hover { color:#fff; }
+    /* Prevent navbar flickering */
+    .nav-link:hover,
+    .nav-link:focus,
+    .nav-link:active {
+        outline: none;
+        text-decoration: none;
+    }
 
-body.exam-theme .question-card,
-body.exam-theme .question-container,
-body.exam-theme .question-panel {
-    background: linear-gradient(135deg, #1f2937, #111827) !important; /* dark gradient */
-    color:#e6eef8 !important;
-    box-shadow:0 6px 20px rgba(2,6,23,0.3) !important;
-}
+    /* Ensure proper spacing and prevent layout shifts */
+    .navbar-nav .nav-link + .nav-link {
+        margin-left: 0.5rem;
+    }
 
-        body.exam-theme .option,
-        body.exam-theme .choice,
-        body.exam-theme .answer-option,
-        body.exam-theme .option-label {
-            background:#fff !important;
-            color:#0b1220 !important;
-            border:1px solid rgba(11,18,32,0.06) !important;
-            border-radius:10px !important;
-            padding:0.65rem 0.9rem !important;
-        }
+    /* Alerts */
+    .alert { 
+        border-radius: 12px; 
+        box-shadow: 0 6px 18px rgba(2,6,23,0.45); 
+        margin: 1rem;
+    }
 
-        @media (max-width:768px) {
-            .navbar { margin:0.6rem; padding:0.4rem 0.6rem; }
-            .navbar-brand { font-size:0.98rem; }
+    /* Footer */
+    .professional-footer { 
+        background: linear-gradient(135deg,#0b1220,#0f1724); 
+        color: #cfd8ef; 
+        padding: 1.25rem 0; 
+        margin-top: auto; 
+        box-shadow: 0 -2px 12px rgba(2,6,23,0.5); 
+    }
+    
+    .footer-brand { 
+        font-weight: 800; 
+        color: #cfe3ff; 
+    }
+    
+    .footer-links a { 
+        color: #a9bddf; 
+        text-decoration: none;
+    }
+    
+    .footer-links a:hover { 
+        color: #fff; 
+    }
+
+    /* Exam theme overrides */
+    body.exam-theme .question-card,
+    body.exam-theme .question-container,
+    body.exam-theme .question-panel {
+        background: linear-gradient(135deg, #1f2937, #111827) !important;
+        color: #e6eef8 !important;
+        box-shadow: 0 6px 20px rgba(2,6,23,0.3) !important;
+    }
+
+    body.exam-theme .option,
+    body.exam-theme .choice,
+    body.exam-theme .answer-option,
+    body.exam-theme .option-label {
+        background: #fff !important;
+        color: #0b1220 !important;
+        border: 1px solid rgba(11,18,32,0.06) !important;
+        border-radius: 10px !important;
+        padding: 0.65rem 0.9rem !important;
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 768px) {
+        .navbar .container-fluid {
+            padding: 0 1rem;
         }
         
-    </style>
+        .navbar-brand { 
+            font-size: 1.1rem; 
+        }
+        
+        .nav-link {
+            padding: 0.5rem 0.8rem !important;
+            font-size: 0.9rem;
+        }
+    }
+</style>
 </head>
 <body>
-    {% if 'user_id' in session %}
-    <nav class="navbar navbar-expand-lg">
-        <div class="container">
-            <a class="navbar-brand">
-                <i class="fas fa-graduation-cap"></i>
-                <span>ExamPortal</span>
-            </a>
-
-            <div class="navbar-nav ms-auto align-items-center">
-                {% if request.path.startswith('/exam/')
-                      or request.path.startswith('/submit-exam')
-                      or request.path.startswith('/result')
-                      or request.path.startswith('/response') %}
-                    <a class="nav-link d-flex align-items-center">
-                        <span class="user-avatar me-2">{{ session.full_name[0]|upper }}</span>
-                        <span>{{ session.full_name }}</span>
-                    </a>
-                {% else %}
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <span class="user-avatar me-2">{{ session.full_name[0]|upper }}</span>
-                            <span>{{ session.full_name }}</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="{{ url_for('dashboard') }}"><i class="fas fa-home me-2"></i> Dashboard</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item logout" href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                        </ul>
-                    </div>
-                {% endif %}
-            </div>
+{% if 'user_id' in session and not (request.endpoint in ['exam_page', 'submit_exam', 'take_exam'] or request.path.startswith('/exam/') or request.path.startswith('/submit-exam')) %}
+<nav class="navbar navbar-expand-lg">
+    <div class="container-fluid">
+        <div class="navbar-brand">
+            <i class="fas fa-graduation-cap"></i>
+            <span>ExamPortal</span>
         </div>
-    </nav>
-    {% endif %}
+        
+        <div class="navbar-nav ms-auto">
+            {% if session.get('admin_id') %}
+                <span class="navbar-text">
+                    <i class="fas fa-user-shield me-1"></i>
+                    Welcome, {{ session.get('admin_name', 'Admin') }}
+                </span>
+                <a class="nav-link" href="{{ url_for('admin.dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-1"></i>Admin Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('admin.logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            {% elif session.get('user_id') %}
+                <span class="navbar-text">
+                    <i class="fas fa-user me-1"></i>
+                    Welcome, {{ session.get('full_name', 'User') }}
+                </span>
+                <a class="nav-link" href="{{ url_for('dashboard') }}">
+                    <i class="fas fa-tachometer-alt me-1"></i>Dashboard
+                </a>
+                <a class="nav-link" href="{{ url_for('logout') }}">
+                    <i class="fas fa-sign-out-alt me-1"></i>Logout
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</nav>
+{% endif %}
 
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
@@ -287,5 +310,62 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+{% if session.get('user_id') %}
+<script>
+(function(){
+  var PING_INTERVAL_MS = 30000;
+  function pingServer(){
+    fetch('/_ping', {method: 'POST', credentials: 'same-origin'})
+      .then(function(resp){
+        if(resp.status === 204) return;
+        if(resp.status === 401){
+          resp.json().then(function(j){
+            if(j && j.reason === 'other_device'){
+              window.location.href = '/login?reason=other_device';
+            } else {
+              window.location.href = '/login';
+            }
+          }).catch(function(){
+            window.location.href = '/login';
+          });
+        }
+      })
+      .catch(function(){});
+  }
+  setInterval(pingServer, PING_INTERVAL_MS);
+})();
+</script>
+{% endif %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Enhanced navigation logic to prevent cross-portal access
+    const signInBtn = document.querySelector('a[href*="login"]');
+    const adminLoginBtn = document.querySelector('a[href*="admin/login"]');
+    
+    if (signInBtn) {
+        signInBtn.addEventListener('click', function(e) {
+            // Check if user is currently in admin session
+            if (window.location.pathname.includes('/admin/')) {
+                e.preventDefault();
+                alert('You are currently in Admin portal. Please logout first to access User portal.');
+                return false;
+            }
+        });
+    }
+    
+    if (adminLoginBtn) {
+        adminLoginBtn.addEventListener('click', function(e) {
+            // Check if user is currently in user session  
+            if (window.location.pathname.includes('/dashboard') || 
+                window.location.pathname.includes('/exam')) {
+                e.preventDefault();
+                alert('You are currently in User portal. Please logout first to access Admin portal.');
+                return false;
+            }
+        });
+    }
+});
+</script>
+
 </body>
 </html>

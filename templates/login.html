@@ -1,3 +1,4 @@
+
 {% extends "base.html" %}
 
 {% block title %}Student Login - ExamPortal{% endblock %}
@@ -31,7 +32,7 @@
 <div class="login-wrapper">
     <div class="container">
         <div class="row justify-content-center align-items-center min-vh-100">
-            <div class="col-xl-4 col-lg-5 col-md-6 col-sm-8">
+            <div class="col-xl-10 col-lg-11 col-md-12 col-sm-14">
                 <div class="login-container">
                     <!-- Logo & Header Section -->
                     <div class="login-header">
@@ -59,6 +60,13 @@
                             </div>
                         {% endif %}
                     {% endwith %}
+{% if request.args.get('reason') == 'other_device' %}
+    <div class="flash-alert flash-warning">
+        <i class="fas fa-exclamation-triangle"></i>
+        <span>You were logged out because your account was used to login from another device. Please login again to continue.</span>
+        <button type="button" class="flash-close">&times;</button>
+    </div>
+{% endif %}
 
                     <!-- Login Form -->
                     <form method="POST" id="loginForm" class="login-form">
@@ -115,16 +123,30 @@
 
                     <!-- Action Links -->
                     <div class="action-links">
-                        <a href="{{ url_for('forgot_password') }}" class="action-link primary">
+                        <a href="{{ url_for('create_account') }}" class="action-link primary">
                             <i class="fas fa-user-plus"></i>
                             <span>Create New Account</span>
                         </a>
                         
-                        <a href="{{ url_for('admin.login') }}" class="action-link secondary">
+                        <a href="{{ url_for('admin.admin_login') }}" class="action-link secondary">
                             <i class="fas fa-user-shield"></i>
                             <span>Admin Portal</span>
                         </a>
                     </div>
+
+                    <!-- Additional Action Links - New Section -->
+<div class="additional-actions">
+    <a href="{{ url_for('reset_password_page') }}" class="additional-link reset-password">
+        <i class="fas fa-key"></i>
+        <span>Reset Password</span>
+    </a>
+    
+    <!-- NEW: Request Admin Access Link -->
+    <a href="{{ url_for('request_admin_access_page') }}" class="additional-link request-access">
+        <i class="fas fa-user-shield"></i>
+        <span>Request Admin Access</span>
+    </a>
+</div>
 
                     <!-- Help Section -->
                     <div class="help-section">
@@ -140,6 +162,12 @@
                                 <div class="help-item">
                                     <strong>Existing Student:</strong> Use your registered credentials
                                 </div>
+                                <div class="help-item">
+                                    <strong>Forgot Password:</strong> Use "Create New Account" to get credentials via email
+                                </div>
+                                <div class="help-item">
+                                    <strong>Reset Password:</strong> Use "Reset Password" to update passwq
+                                </div>                                
                                 <div class="help-item">
                                     <strong>Login Issues:</strong> Contact your administrator for support
                                 </div>
@@ -221,17 +249,6 @@ body {
     text-decoration: none;
     border-radius: 50%;
     border: 1px solid rgba(255, 255, 255, 0.2);
-    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-    transition: all 0.4s ease;
-    font-size: 1.2rem;
-    position: relative;
-}
-
-.minimal-btn:hover,
-.minimal-btn.active {
-    transform: translateY(-3px) scale(1.1);
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-    color: white;
     box-shadow: 0 15px 40px rgba(102, 126, 234, 0.4);
 }
 
@@ -374,6 +391,12 @@ body {
     background: rgba(59, 130, 246, 0.15);
     border-color: rgba(59, 130, 246, 0.3);
     color: #93c5fd;
+}
+
+.flash-warning {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fcd34d;
 }
 
 .flash-close {
@@ -536,7 +559,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 16px;
-    margin-bottom: 32px;
+    margin-bottom: 20px;
 }
 
 .action-link {
@@ -578,6 +601,65 @@ body {
     box-shadow: 0 8px 20px rgba(75, 85, 99, 0.3);
     text-decoration: none;
     color: #f3f4f6;
+}
+
+/* Additional Actions - New Section */
+.additional-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.additional-link {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    min-height: 70px;
+    position: relative;
+}
+
+.additional-link.reset-password {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+.additional-link.reset-password:hover {
+    background: rgba(245, 158, 11, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
+    text-decoration: none;
+    color: #fcd34d;
+}
+
+.additional-link.future-feature {
+    background: rgba(107, 114, 128, 0.15);
+    border-color: rgba(107, 114, 128, 0.2);
+    color: rgba(156, 163, 175, 0.7);
+    cursor: not-allowed;
+}
+
+.additional-link i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+.coming-soon {
+    position: absolute;
+    bottom: 4px;
+    font-size: 0.7rem;
+    opacity: 0.8;
+    font-style: italic;
 }
 
 /* Help Section */
@@ -709,6 +791,16 @@ body {
     .login-button {
         padding: 16px;
     }
+    
+    .additional-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .additional-link {
+        min-height: 50px;
+        padding: 10px;
+    }
 }
 
 @media (max-width: 480px) {
@@ -724,7 +816,105 @@ body {
     .welcome-text {
         font-size: 1.6rem;
     }
+    
+    .additional-link {
+        font-size: 0.8rem;
+    }
+    
+    .additional-link i {
+        font-size: 1rem;
+    }
 }
+
+.additional-actions {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+}
+
+.additional-link {
+    flex: 1;
+    min-width: 140px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 12px 8px;
+    border-radius: 10px;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+    border: 1px solid transparent;
+    min-height: 70px;
+    position: relative;
+}
+
+.additional-link.reset-password {
+    background: rgba(245, 158, 11, 0.15);
+    border-color: rgba(245, 158, 11, 0.3);
+    color: #fbbf24;
+}
+
+.additional-link.reset-password:hover {
+    background: rgba(245, 158, 11, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(245, 158, 11, 0.3);
+    text-decoration: none;
+    color: #fcd34d;
+}
+
+/* NEW: Request Admin Access styling */
+.additional-link.request-access {
+    background: rgba(102, 126, 234, 0.15);
+    border-color: rgba(102, 126, 234, 0.3);
+    color: #667eea;
+}
+
+.additional-link.request-access:hover {
+    background: rgba(102, 126, 234, 0.25);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(102, 126, 234, 0.3);
+    text-decoration: none;
+    color: #93c5fd;
+}
+
+.additional-link.future-feature {
+    background: rgba(107, 114, 128, 0.15);
+    border-color: rgba(107, 114, 128, 0.2);
+    color: rgba(156, 163, 175, 0.7);
+    cursor: not-allowed;
+}
+
+.additional-link i {
+    font-size: 1.2rem;
+    margin-bottom: 2px;
+}
+
+.coming-soon {
+    position: absolute;
+    bottom: 4px;
+    font-size: 0.7rem;
+    opacity: 0.8;
+    font-style: italic;
+}
+
+/* Mobile responsive updates */
+@media (max-width: 480px) {
+    .additional-actions {
+        flex-direction: column;
+        gap: 8px;
+    }
+    
+    .additional-link {
+        min-height: 50px;
+        padding: 10px;
+        flex: none;
+    }
+}
+
 </style>
 
 <script>
@@ -765,14 +955,16 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // Auto-dismiss flash messages after 5 seconds
+    // Auto-dismiss flash messages after 8 seconds
     setTimeout(() => {
         flashAlerts.forEach(alert => {
-            alert.style.opacity = '0';
-            alert.style.transform = 'translateY(-10px)';
-            setTimeout(() => alert.remove(), 300);
+            if (alert.parentElement) {
+                alert.style.opacity = '0';
+                alert.style.transform = 'translateY(-10px)';
+                setTimeout(() => alert.remove(), 300);
+            }
         });
-    }, 1000);
+    }, 8000);
 
     // Enhanced keyboard handling
     document.addEventListener('keypress', function(e) {
@@ -826,6 +1018,154 @@ document.addEventListener('DOMContentLoaded', function() {
         loginContainer.style.opacity = '1';
         loginContainer.style.transform = 'translateY(0)';
     }, 300);
+
+    // Additional link hover effects
+    const additionalLinks = document.querySelectorAll('.additional-link:not(.disabled)');
+    additionalLinks.forEach(link => {
+        link.addEventListener('mouseenter', function() {
+            this.style.transform = 'translateY(-3px) scale(1.02)';
+        });
+
+        link.addEventListener('mouseleave', function() {
+            if (!this.classList.contains('disabled')) {
+                this.style.transform = 'translateY(0) scale(1)';
+            }
+        });
+    });
+
+    // Smooth scrolling for any anchor links
+    const anchorLinks = document.querySelectorAll('a[href^="#"]');
+    anchorLinks.forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            const targetId = this.getAttribute('href');
+            const targetElement = document.querySelector(targetId);
+            if (targetElement) {
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        });
+    });
+
+    // Form validation feedback
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+
+    function validateInput(input, errorMessage) {
+        const wrapper = input.parentElement;
+        if (input.value.trim() === '') {
+            wrapper.classList.add('error');
+            return false;
+        } else {
+            wrapper.classList.remove('error');
+            return true;
+        }
+    }
+
+    // Real-time validation
+    usernameInput.addEventListener('blur', function() {
+        validateInput(this, 'Username or email is required');
+    });
+
+    passwordInput.addEventListener('blur', function() {
+        validateInput(this, 'Password is required');
+    });
+
+    // Remove error states on input
+    [usernameInput, passwordInput].forEach(input => {
+        input.addEventListener('input', function() {
+            this.parentElement.classList.remove('error');
+        });
+    });
+
+    // Enhanced form submission with validation
+    form.addEventListener('submit', function(e) {
+        let isValid = true;
+        
+        if (!validateInput(usernameInput, 'Username or email is required')) {
+            isValid = false;
+        }
+        
+        if (!validateInput(passwordInput, 'Password is required')) {
+            isValid = false;
+        }
+        
+        if (!isValid) {
+            e.preventDefault();
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('loading');
+            
+            // Focus first invalid field
+            const firstError = form.querySelector('.error input');
+            if (firstError) {
+                firstError.focus();
+            }
+        }
+    });
+
+    // Disable form resubmission on browser back
+    window.addEventListener('pageshow', function(event) {
+        if (event.persisted) {
+            loginBtn.disabled = false;
+            loginBtn.classList.remove('loading');
+        }
+    });
+
+    // Handle connection errors gracefully
+    window.addEventListener('offline', function() {
+        const offlineAlert = document.createElement('div');
+        offlineAlert.className = 'flash-alert flash-error';
+        offlineAlert.innerHTML = `
+            <i class="fas fa-wifi"></i>
+            <span>Connection lost. Please check your internet connection.</span>
+        `;
+        
+        const flashContainer = document.querySelector('.flash-messages') || 
+                             document.querySelector('.login-form');
+        flashContainer.insertBefore(offlineAlert, flashContainer.firstChild);
+        
+        setTimeout(() => {
+            if (offlineAlert.parentElement) {
+                offlineAlert.remove();
+            }
+        }, 5000);
+    });
+
+    window.addEventListener('online', function() {
+        const onlineAlert = document.createElement('div');
+        onlineAlert.className = 'flash-alert flash-success';
+        onlineAlert.innerHTML = `
+            <i class="fas fa-wifi"></i>
+            <span>Connection restored.</span>
+        `;
+        
+        const flashContainer = document.querySelector('.flash-messages') || 
+                             document.querySelector('.login-form');
+        flashContainer.insertBefore(onlineAlert, flashContainer.firstChild);
+        
+        setTimeout(() => {
+            if (onlineAlert.parentElement) {
+                onlineAlert.remove();
+            }
+        }, 3000);
+    });
+});
+
+// Prevent multiple form submissions
+let formSubmitted = false;
+document.getElementById('loginForm').addEventListener('submit', function(e) {
+    if (formSubmitted) {
+        e.preventDefault();
+        return false;
+    }
+    formSubmitted = true;
+});
+
+// Reset form submission flag on page load
+window.addEventListener('load', function() {
+    formSubmitted = false;
 });
 </script>
+
 {% endblock %}

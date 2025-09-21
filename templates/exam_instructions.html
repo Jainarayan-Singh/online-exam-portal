@@ -4,6 +4,7 @@
 
 {% block content %}
 <style>
+    /* (CSS unchanged - copied from your file to preserve layout exactly) */
     :root{ --bg-1:#0f0f23; --bg-2:#1a1a3e; --accent-a:#667eea; --accent-b:#764ba2; --success:#10b981; }
     .dashboard-body{ background: linear-gradient(135deg, var(--bg-1) 0%, var(--bg-2) 50%, #2d2d5f 100%); min-height:100vh; position:relative; overflow-x:hidden; padding-top:2rem; color:#eaf0ff; }
     .particles{ position:fixed; top:0; left:0; width:100%; height:100%; overflow:hidden; z-index:1; pointer-events:none; }
@@ -58,116 +59,23 @@
     .marking-scheme{ display:flex; gap:1rem; flex-wrap:wrap; margin-bottom:1rem; }
     .mark-box{ background:linear-gradient(135deg, rgba(102,126,234,0.06), rgba(118,75,162,0.03)); padding:0.8rem; border-radius:10px; min-width:160px; }
 
-/* ===== Neon Glowing Loading for Exam Instructions ===== */
-#preloadingAlert {
-  background: linear-gradient(180deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03));
-  border: 1px solid rgba(34,197,94,0.12);
-  border-radius: 14px;
-  padding: 18px;
-  box-shadow: 0 10px 30px rgba(34,197,94,0.08);
-}
+    /* (Rest of glowing/loading and color indicator CSS unchanged) */
+    #preloadingAlert { background: linear-gradient(180deg, rgba(34,197,94,0.08), rgba(34,197,94,0.03)); border: 1px solid rgba(34,197,94,0.12); border-radius: 14px; padding: 18px; box-shadow: 0 10px 30px rgba(34,197,94,0.08); }
+    #loadingTitle { color: #bbf7d0 !important; font-weight: 700; text-shadow: 0 0 8px rgba(34,197,94,0.9), 0 0 16px rgba(34,197,94,0.6), 0 0 22px rgba(34,197,94,0.5); }
+    #loadingSubtitle { color: #d1fae5 !important; font-weight: 500; text-shadow: 0 0 6px rgba(16,185,129,0.8), 0 0 14px rgba(16,185,129,0.5); }
+    #loadingDetails { color: #86efac !important; font-weight: 500; }
+    #preloadProgress.bg-success { background: linear-gradient(90deg, #22c55e, #2dd4bf 40%, #16a34a); background-size: 200% 100%; animation: pulsePreloadBar 3s linear infinite; box-shadow: 0 8px 40px rgba(34,197,94,0.18), inset 0 0 10px rgba(255,255,255,0.04); }
+    @keyframes pulsePreloadBar { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
+    #loadingPercentage { color: #bbf7d0 !important; font-weight: 700; text-shadow: 0 0 6px rgba(34,197,94,0.9), 0 0 12px rgba(34,197,94,0.6); }
 
-/* Title glowing */
-#loadingTitle {
-  color: #bbf7d0 !important;
-  font-weight: 700;
-  text-shadow: 0 0 8px rgba(34,197,94,0.9),
-               0 0 16px rgba(34,197,94,0.6),
-               0 0 22px rgba(34,197,94,0.5);
-}
+    .color-indicator-section { display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem; padding: 1rem; background: rgba(255,255,255,0.02); border-radius: 12px; border: 1px solid rgba(255,255,255,0.05); }
+    .color-indicator { display: flex; gap: 0.5rem; align-items: center; padding: 0.5rem 0.8rem; background: rgba(255,255,255,0.03); border-radius: 8px; border: 1px solid rgba(255,255,255,0.08); transition: all 0.3s ease; }
+    .color-indicator:hover { background: rgba(16,185,129,0.08); border-color: rgba(16,185,129,0.2); box-shadow: 0 0 15px rgba(16,185,129,0.15); }
+    .color-box { width: 36px; height: 20px; border-radius: 6px; display: inline-block; box-shadow: 0 2px 8px rgba(0,0,0,0.2); transition: all 0.3s ease; }
 
-/* Subtitle glowing */
-#loadingSubtitle {
-  color: #d1fae5 !important;
-  font-weight: 500;
-  text-shadow: 0 0 6px rgba(16,185,129,0.8),
-               0 0 14px rgba(16,185,129,0.5);
-}
-
-/* Details */
-#loadingDetails {
-  color: #86efac !important;
-  font-weight: 500;
-}
-
-/* Animated glowing green progress bar */
-#preloadProgress.bg-success {
-  background: linear-gradient(90deg, #22c55e, #2dd4bf 40%, #16a34a);
-  background-size: 200% 100%;
-  animation: pulsePreloadBar 3s linear infinite;
-  box-shadow: 0 8px 40px rgba(34,197,94,0.18),
-              inset 0 0 10px rgba(255,255,255,0.04);
-}
-
-@keyframes pulsePreloadBar {
-  0%   { background-position: 0% 50%; }
-  50%  { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
-/* Percentage glowing */
-#loadingPercentage {
-  color: #bbf7d0 !important;
-  font-weight: 700;
-  text-shadow: 0 0 6px rgba(34,197,94,0.9),
-               0 0 12px rgba(34,197,94,0.6);
-}
-
-
-    /* ENHANCED: Color indicators with green glow effect */
-    .color-indicator-section { 
-        display: flex; 
-        gap: 1rem; 
-        flex-wrap: wrap; 
-        align-items: center; 
-        margin-bottom: 1rem; 
-        padding: 1rem;
-        background: rgba(255,255,255,0.02);
-        border-radius: 12px;
-        border: 1px solid rgba(255,255,255,0.05);
-    }
-    .color-indicator { 
-        display: flex; 
-        gap: 0.5rem; 
-        align-items: center; 
-        padding: 0.5rem 0.8rem;
-        background: rgba(255,255,255,0.03);
-        border-radius: 8px;
-        border: 1px solid rgba(255,255,255,0.08);
-        transition: all 0.3s ease;
-    }
-    .color-indicator:hover {
-        background: rgba(16,185,129,0.08);
-        border-color: rgba(16,185,129,0.2);
-        box-shadow: 0 0 15px rgba(16,185,129,0.15);
-    }
-    .color-box { 
-        width: 36px; 
-        height: 20px; 
-        border-radius: 6px; 
-        display: inline-block; 
-        box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-        transition: all 0.3s ease;
-    }
-    .color-indicator:hover .color-box {
-        box-shadow: 0 0 12px rgba(16,185,129,0.4);
-        transform: scale(1.05);
-    }
-
-    /* Enhanced loading state visibility */
-    .loading-active .color-indicator-section {
-        background: rgba(16,185,129,0.05);
-        border-color: rgba(16,185,129,0.12);
-        box-shadow: 0 0 20px rgba(16,185,129,0.08);
-    }
-    .loading-active .color-indicator {
-        background: rgba(16,185,129,0.04);
-        border-color: rgba(16,185,129,0.15);
-        color: rgba(255,255,255,0.95);
-    }
-    .loading-active .color-box {
-        box-shadow: 0 0 8px rgba(16,185,129,0.3);
-    }
+    .loading-active .color-indicator-section { background: rgba(16,185,129,0.05); border-color: rgba(16,185,129,0.12); box-shadow: 0 0 20px rgba(16,185,129,0.08); }
+    .loading-active .color-indicator { background: rgba(16,185,129,0.04); border-color: rgba(16,185,129,0.15); color: rgba(255,255,255,0.95); }
+    .loading-active .color-box { box-shadow: 0 0 8px rgba(16,185,129,0.3); }
 
     @media(max-width:768px){ .container-wrap{padding:0 1rem;} .welcome-section h2{font-size:1.6rem;} }
 </style>
@@ -274,10 +182,41 @@
                     </div>
                 </div>
 
-                <div style="margin-top:0.8rem; display:flex; gap:0.6rem; align-items:center;">
-                    <button id="startExamBtn" class="action-btn start-exam"><i class="fas fa-play"></i> Start Exam Now</button>
-                    <a href="{{ url_for('dashboard') }}" class="action-btn view-result"><i class="fas fa-arrow-left"></i> Back to Dashboard</a>
-                </div>
+<div style="margin-top:0.8rem; display:flex; gap:0.6rem; align-items:center;">
+    {% if active_attempt %}
+        <a id="resumeBtn" href="{{ url_for('exam_page', exam_id=exam.id) }}" class="action-btn start-exam">
+            <i class="fas fa-redo"></i> Resume Exam
+        </a>
+    {% else %}
+        {% if can_start %}
+            <button id="startExamBtn" class="action-btn start-exam" type="button">
+                <i class="fas fa-play"></i> Start Exam Now
+            </button>
+        {% else %}
+            <div class="action-btn disabled" title="Attempts exhausted">
+                <i class="fas fa-ban"></i> Attempts Exhausted
+            </div>
+        {% endif %}
+    {% endif %}
+
+    <a href="{{ url_for('dashboard') }}" class="action-btn view-result">
+        <i class="fas fa-arrow-left"></i> Back to Dashboard
+    </a>
+</div>
+
+{% if attempts_left is not none and attempts_left >= 0 %}
+    <div style="margin-top:0.4rem; color:rgba(255,255,255,0.85);">
+        Attempts left: <strong>{{ attempts_left }}</strong> / {{ max_attempts }}
+    </div>
+{% elif max_attempts == 0 %}
+    <div style="margin-top:0.4rem; color:rgba(255,255,255,0.85);">
+        Attempts: <strong>Unlimited</strong>
+    </div>
+{% endif %}
+{% if attempts_message %}
+    <div style="margin-top:0.4rem; color:#ffb4b4;">{{ attempts_message }}</div>
+{% endif %}
+
 
                 <!-- Preloading UI -->
                 <div class="modern-card" id="preloadingAlert" style="display:none; margin-top:1rem; padding:0.8rem;">
@@ -305,365 +244,367 @@
 </div>
 
 <script>
-(function () {
-    // Enhanced fullscreen and security functions
-    function requestFullscreen(element) {
-        if (element.requestFullscreen) {
-            element.requestFullscreen();
-        } else if (element.mozRequestFullScreen) {
-            element.mozRequestFullScreen();
-        } else if (element.webkitRequestFullscreen) {
-            element.webkitRequestFullscreen();
-        } else if (element.msRequestFullscreen) {
-            element.msRequestFullscreen();
+document.addEventListener('DOMContentLoaded', function () {
+    // Elements
+    const startBtn = document.getElementById('startExamBtn');
+    const resumeBtn = document.getElementById('resumeBtn');
+    const preloadingAlert = document.getElementById('preloadingAlert');
+    const successAlert = document.getElementById('successAlert');
+    const errorAlert = document.getElementById('errorAlert');
+    const progressBar = document.getElementById('preloadProgress');
+    const loadingTitle = document.getElementById('loadingTitle');
+    const loadingSubtitle = document.getElementById('loadingSubtitle');
+    const loadingDetails = document.getElementById('loadingDetails');
+    const loadingPercentage = document.getElementById('loadingPercentage');
+    const colorIndicatorSection = document.getElementById('colorIndicatorSection');
+
+    // Config
+    const examId = {{ exam.id|tojson }};
+    const POLL_INTERVAL = 30000;
+
+    // Safety debounce
+    let startInProgress = false;
+
+    // Helper: show error
+    function showError(message) {
+        if (preloadingAlert) preloadingAlert.style.display = 'none';
+        if (errorAlert) {
+            errorAlert.style.display = 'block';
+            errorAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message;
         }
-    }
-
-    function exitFullscreen() {
-        if (document.exitFullscreen) {
-            document.exitFullscreen();
-        } else if (document.mozCancelFullScreen) {
-            document.mozCancelFullScreen();
-        } else if (document.webkitExitFullscreen) {
-            document.webkitExitFullscreen();
-        } else if (document.msExitFullscreen) {
-            document.msExitFullscreen();
-        }
-    }
-
-    function isFullscreen() {
-        return !!(document.fullscreenElement || document.mozFullScreenElement || 
-                  document.webkitFullscreenElement || document.msFullscreenElement);
-    }
-
-    function initParticles() {
-        function createDynamicParticle() {
-            const particle = document.createElement('div');
-            particle.className = 'particle';
-            particle.style.width = Math.random() * 6 + 2 + 'px';
-            particle.style.height = particle.style.width;
-            particle.style.left = Math.random() * 100 + '%';
-            particle.style.top = Math.random() * 100 + '%';
-            particle.style.animationDuration = Math.random() * 4 + 4 + 's';
-            particle.style.animationDelay = Math.random() * 2 + 's';
-            document.querySelector('.particles').appendChild(particle);
-            setTimeout(() => {
-                particle.remove();
-            }, 10000);
-        }
-        setInterval(createDynamicParticle, 3000);
-    }
-
-    document.addEventListener('DOMContentLoaded', function () {
-        initParticles();
-
-        // ripple CSS injection
-        const rippleCSS = `
-        .ripple{
-            position:absolute;
-            border-radius:50%;
-            background:rgba(255,255,255,0.6);
-            transform:scale(0);
-            animation:ripple-animation 0.6s linear;
-            pointer-events:none;
-            z-index:5;
-        }
-        @keyframes ripple-animation { to { transform:scale(4); opacity:0; } }
-        `;
-        const styleEl = document.createElement('style');
-        styleEl.textContent = rippleCSS;
-        document.head.appendChild(styleEl);
-
-        // add ripple to action buttons
-        document.querySelectorAll('.action-btn').forEach(btn => {
-            btn.addEventListener('click', function (e) {
-                if (this.classList.contains('disabled')) return;
-                const rect = this.getBoundingClientRect();
-                const size = Math.max(rect.width, rect.height);
-                const ripple = document.createElement('span');
-                ripple.className = 'ripple';
-                ripple.style.width = ripple.style.height = size + 'px';
-                ripple.style.left = (e.clientX - rect.left - size / 2) + 'px';
-                ripple.style.top = (e.clientY - rect.top - size / 2) + 'px';
-                this.appendChild(ripple);
-                setTimeout(() => ripple.remove(), 600);
-            });
-        });
-
-        // Elements
-        const startBtn = document.getElementById('startExamBtn');
-        const preloadingAlert = document.getElementById('preloadingAlert');
-        const successAlert = document.getElementById('successAlert');
-        const errorAlert = document.getElementById('errorAlert');
-        const progressBar = document.getElementById('preloadProgress');
-        const loadingTitle = document.getElementById('loadingTitle');
-        const loadingSubtitle = document.getElementById('loadingSubtitle');
-        const loadingDetails = document.getElementById('loadingDetails');
-        const loadingPercentage = document.getElementById('loadingPercentage');
-        const colorIndicatorSection = document.getElementById('colorIndicatorSection');
-
         if (startBtn) {
-            startBtn.addEventListener('click', function (e) {
-                e.preventDefault();
-                
-                // Add loading state to color indicators
-                if (colorIndicatorSection) {
-                    colorIndicatorSection.parentElement.classList.add('loading-active');
-                }
-                
-                // show loader
-                if (successAlert) successAlert.style.display = 'none';
-                if (errorAlert) errorAlert.style.display = 'none';
-                if (preloadingAlert) preloadingAlert.style.display = 'block';
-                startBtn.disabled = true;
-                startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Loading...';
-                startActualPreloading();
-            });
+            startBtn.disabled = false;
+            startBtn.classList.remove('disabled');
+            startBtn.innerHTML = startBtn.dataset.origHtml || '<i class="fas fa-play"></i> Start Exam Now';
+        }
+        if (colorIndicatorSection && colorIndicatorSection.parentElement) colorIndicatorSection.parentElement.classList.remove('loading-active');
+    }
+
+    // Helper: small UI update before network calls
+    function startUiPrepare() {
+        if (colorIndicatorSection && colorIndicatorSection.parentElement) colorIndicatorSection.parentElement.classList.add('loading-active');
+        if (successAlert) successAlert.style.display = 'none';
+        if (errorAlert) { errorAlert.style.display = 'none'; errorAlert.innerHTML = ''; }
+        if (preloadingAlert) preloadingAlert.style.display = 'block';
+        if (startBtn) {
+            startBtn.disabled = true;
+            startBtn.classList.add('disabled');
+            startBtn.dataset.origHtml = startBtn.innerHTML;
+            startBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Starting...';
+        }
+        if (progressBar) progressBar.style.width = '10%';
+        if (loadingPercentage) loadingPercentage.textContent = '10%';
+        if (loadingTitle) loadingTitle.textContent = 'Connecting to Server...';
+        if (loadingDetails) loadingDetails.textContent = 'Initializing exam session';
+    }
+
+    // Build features for popup (maximize-ish)
+    function buildFeatures() {
+        const screenWidth = screen.availWidth || window.screen.width;
+        const screenHeight = screen.availHeight || window.screen.height;
+        const features = [
+            'width=' + screenWidth,
+            'height=' + screenHeight,
+            'top=0', 'left=0',
+            'resizable=no', 'scrollbars=yes',
+            'menubar=no', 'toolbar=no', 'location=no', 'status=no',
+            'directories=no', 'copyhistory=no', 'fullscreen=yes'
+        ].join(',');
+        return {screenWidth, screenHeight, features};
+    }
+
+    // Update UI toggles (Start / Resume / Exhausted)
+function renderAttemptUI(info) {
+    try {
+        const attemptsLeft = Number(info.attempts_left);
+        const maxAttempts = Number(info.max_attempts);
+        const activeAttempt = !!info.active_attempt_exists;
+
+        console.log('renderAttemptUI:', {attemptsLeft, maxAttempts, activeAttempt, info}); // Debug log
+
+        // If unlimited attempts (max_attempts = 0) or attempts available
+        if (maxAttempts === 0 || attemptsLeft > 0 || attemptsLeft === -1) {
+            // remove any exhausted message
+            const existing = document.getElementById('attemptsExhaustedMsg');
+            if (existing) existing.remove();
+
+            // Show appropriate button
+            if (activeAttempt) {
+                if (resumeBtn) resumeBtn.style.display = 'inline-flex';
+                if (startBtn) startBtn.style.display = 'none';
+            } else {
+                if (startBtn) startBtn.style.display = 'inline-flex';
+                if (resumeBtn) resumeBtn.style.display = 'none';
+            }
+            return;
         }
 
-        function startActualPreloading() {
-            if (loadingTitle) loadingTitle.textContent = 'Connecting to Server...';
-            if (loadingSubtitle) loadingSubtitle.textContent = 'Establishing secure connection';
-            if (loadingDetails) loadingDetails.textContent = 'Initializing exam session';
-            if (progressBar) progressBar.style.width = '10%';
-            if (loadingPercentage) loadingPercentage.textContent = '10%';
+        // Only show exhausted if maxAttempts > 0 AND attemptsLeft <= 0
+        if (maxAttempts > 0 && attemptsLeft <= 0) {
+            // remove start/resume buttons
+            if (startBtn) startBtn.style.display = 'none';
+            if (resumeBtn) resumeBtn.style.display = 'none';
 
+            // show exhausted message
+            let existing = document.getElementById('attemptsExhaustedMsg');
+            if (!existing) {
+                const container = (startBtn || resumeBtn)?.parentElement;
+                if (container) {
+                    const el = document.createElement('div');
+                    el.id = 'attemptsExhaustedMsg';
+                    el.className = 'action-btn disabled';
+                    el.style.cursor = 'default';
+                    el.style.display = 'inline-flex';
+                    el.style.alignItems = 'center';
+                    el.style.gap = '0.6rem';
+                    el.innerHTML = '<i class="fas fa-lock"></i> Attempts exhausted – contact administration';
+                    container.insertBefore(el, container.firstChild);
+                }
+            }
+        }
+
+    } catch (e) {
+        console.warn('renderAttemptUI error', e);
+    }
+}
+
+    // API call to fetch current attempt status for this user+exam
+    async function fetchAttemptStatus() {
+        try {
+            const r = await fetch(`/api/exam-attempts-status/${examId}`, { cache: 'no-store' });
+            if (!r.ok) {
+                console.warn('attempt status fetch failed', r.status);
+                return null;
+            }
+            const data = await r.json();
+            return data;
+        } catch (e) {
+            console.warn('fetchAttemptStatus error', e);
+            return null;
+        }
+    }
+
+    // NEW: Preloading function from old file
+    async function startActualPreloading() {
+        if (loadingTitle) loadingTitle.textContent = 'Connecting to Server...';
+        if (loadingSubtitle) loadingSubtitle.textContent = 'Establishing secure connection';
+        if (loadingDetails) loadingDetails.textContent = 'Initializing exam session';
+        if (progressBar) progressBar.style.width = '10%';
+        if (loadingPercentage) loadingPercentage.textContent = '10%';
+
+        try {
             // Fetch preload endpoint
-            fetch(`/preload-exam/{{ exam.id }}`, { method: 'GET', headers: { 'Content-Type': 'application/json' } })
-                .then(response => {
-                    if (loadingTitle) loadingTitle.textContent = 'Loading Exam Data...';
-                    if (loadingSubtitle) loadingSubtitle.textContent = 'Downloading questions and resources';
-                    if (loadingDetails) loadingDetails.textContent = 'Processing exam configuration';
-                    if (progressBar) progressBar.style.width = '50%';
-                    if (loadingPercentage) loadingPercentage.textContent = '50%';
-                    return response.json();
-                })
-                .then(data => {
-                    if (loadingTitle) loadingTitle.textContent = 'Processing Questions...';
-                    if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing exam interface';
-                    if (loadingDetails) loadingDetails.textContent = 'Loading images and media content';
-                    if (progressBar) progressBar.style.width = '80%';
-                    if (loadingPercentage) loadingPercentage.textContent = '80%';
+            const response = await fetch(`/preload-exam/${examId}`, { 
+                method: 'GET', 
+                headers: { 'Content-Type': 'application/json' },
+                cache: 'no-store'
+            });
 
-                    if (data && data.success) {
-                        if (loadingTitle) loadingTitle.textContent = 'Finalizing Setup...';
-                        if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing secure exam environment';
-                        if (loadingDetails) loadingDetails.textContent = 'Setting up question navigation';
-                        if (progressBar) progressBar.style.width = '95%';
-                        if (loadingPercentage) loadingPercentage.textContent = '95%';
+            if (loadingTitle) loadingTitle.textContent = 'Loading Exam Data...';
+            if (loadingSubtitle) loadingSubtitle.textContent = 'Downloading questions and resources';
+            if (loadingDetails) loadingDetails.textContent = 'Processing exam configuration';
+            if (progressBar) progressBar.style.width = '50%';
+            if (loadingPercentage) loadingPercentage.textContent = '50%';
 
-                        setTimeout(() => {
-                            if (progressBar) progressBar.style.width = '100%';
-                            if (loadingPercentage) loadingPercentage.textContent = '100%';
-                            if (loadingTitle) loadingTitle.textContent = 'Exam Ready!';
-                            if (loadingSubtitle) loadingSubtitle.textContent = 'Opening secure exam window...';
-                            if (loadingDetails) loadingDetails.textContent = 'Launching exam interface';
+            const data = await response.json();
 
-                            setTimeout(() => {
-                                if (preloadingAlert) preloadingAlert.style.display = 'none';
-                                if (successAlert) successAlert.style.display = 'block';
-                                openSecureExamWindow();
-                            }, 1000);
-                        }, 800);
-                    } else {
-                        showError((data && data.message) || 'Failed to load exam data');
-                    }
-                })
-                .catch(err => {
-                    console.error('Preload error:', err);
-                    showError('Network error occurred. Please check your connection and try again.');
-                });
-        }
+            if (loadingTitle) loadingTitle.textContent = 'Processing Questions...';
+            if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing exam interface';
+            if (loadingDetails) loadingDetails.textContent = 'Loading images and media content';
+            if (progressBar) progressBar.style.width = '80%';
+            if (loadingPercentage) loadingPercentage.textContent = '80%';
 
-        function openSecureExamWindow() {
-            try {
-                // First, try to enter fullscreen mode on current document
-                requestFullscreen(document.documentElement);
+            if (data && data.success) {
+                if (loadingTitle) loadingTitle.textContent = 'Finalizing Setup...';
+                if (loadingSubtitle) loadingSubtitle.textContent = 'Preparing secure exam environment';
+                if (loadingDetails) loadingDetails.textContent = 'Setting up question navigation';
+                if (progressBar) progressBar.style.width = '95%';
+                if (loadingPercentage) loadingPercentage.textContent = '95%';
+
+                await new Promise(resolve => setTimeout(resolve, 800));
+
+                if (progressBar) progressBar.style.width = '100%';
+                if (loadingPercentage) loadingPercentage.textContent = '100%';
+                if (loadingTitle) loadingTitle.textContent = 'Exam Ready!';
+                if (loadingSubtitle) loadingSubtitle.textContent = 'Opening secure exam window...';
+                if (loadingDetails) loadingDetails.textContent = 'Launching exam interface';
+
+                await new Promise(resolve => setTimeout(resolve, 1000));
                 
-                setTimeout(() => {
-                    const screenWidth = screen.availWidth || window.screen.width;
-                    const screenHeight = screen.availHeight || window.screen.height;
-                    
-                    // Ultra-secure window features - removing all browser controls
-                    const features = [
-                        'width=' + screenWidth,
-                        'height=' + screenHeight,
-                        'top=0', 'left=0',
-                        'resizable=no', 'scrollbars=yes',
-                        'menubar=no', 'toolbar=no', 'location=no', 'status=no',
-                        'directories=no', 'copyhistory=no', 'fullscreen=yes',
-                        'titlebar=no', 'minimizable=no', 'maximizable=no', 'closable=no'
-                    ].join(',');
-                    
-                    const examWindow = window.open('{{ url_for("exam_page", exam_id=exam.id) }}?new_attempt=1&secure=1', '_blank', features);
+                if (preloadingAlert) preloadingAlert.style.display = 'none';
+                if (successAlert) successAlert.style.display = 'block';
+                
+                // Now open the secure exam window
+                return true; // Success
+            } else {
+                throw new Error((data && data.message) || 'Failed to load exam data');
+            }
+        } catch (err) {
+            console.error('Preload error:', err);
+            throw err;
+        }
+    }
 
-                    if (examWindow) {
-                        examWindow.focus();
-                        
-                        // Advanced security measures
-                        try { 
-                            examWindow.moveTo(0, 0); 
-                            examWindow.resizeTo(screenWidth, screenHeight); 
-                            
-                            // Disable browser controls in the exam window
-                            examWindow.addEventListener('load', function() {
-                                // Try to enter fullscreen in the exam window too
-                                if (examWindow.document && examWindow.document.documentElement) {
-                                    requestFullscreen(examWindow.document.documentElement);
-                                }
-                                
-                                // Disable right-click, F12, Ctrl+Shift+I, etc.
-                                examWindow.document.addEventListener('contextmenu', function(e) {
-                                    e.preventDefault();
-                                    return false;
-                                });
-                                
-                                examWindow.document.addEventListener('keydown', function(e) {
-                                    // Disable F12, Ctrl+Shift+I, Ctrl+U, etc.
-                                    if (e.keyCode === 123 || // F12
-                                        (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
-                                        (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
-                                        (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
-                                        (e.ctrlKey && e.keyCode === 83) || // Ctrl+S
-                                        (e.keyCode === 116) || // F5 refresh
-                                        (e.ctrlKey && e.keyCode === 82) || // Ctrl+R
-                                        (e.altKey && e.keyCode === 115) || // Alt+F4
-                                        (                                        e.altKey && e.keyCode === 9)) { // Alt+Tab
-                                        e.preventDefault();
-                                        return false;
-                                    }
-                                });
-                                
-                                // Prevent window minimize/maximize
-                                examWindow.addEventListener('blur', function() {
-                                    setTimeout(() => {
-                                        examWindow.focus();
-                                    }, 100);
-                                });
-                                
-                                // Monitor fullscreen changes
-                                examWindow.document.addEventListener('fullscreenchange', function() {
-                                    if (!isFullscreen()) {
-                                        // Force back to fullscreen if user exits
-                                        setTimeout(() => {
-                                            requestFullscreen(examWindow.document.documentElement);
-                                        }, 100);
-                                    }
-                                });
-                            });
-                            
-                        } catch (e) { 
-                            console.warn('Advanced security features may not be fully supported:', e);
-                        }
+    // Primary unified start handler with preloading
+    async function unifiedStartHandler(event) {
+        event && event.preventDefault();
+        if (startInProgress) return;
+        startInProgress = true;
 
-                        // Monitor exam window
-                        const checker = setInterval(() => {
-                            if (examWindow.closed) {
-                                clearInterval(checker);
-                                
-                                // Exit fullscreen when exam window closes
-                                if (isFullscreen()) {
-                                    exitFullscreen();
-                                }
-                                
-                                // Remove loading state
-                                if (colorIndicatorSection) {
-                                    colorIndicatorSection.parentElement.classList.remove('loading-active');
-                                }
-                                
-                                if (startBtn) {
-                                    startBtn.disabled = false;
-                                    startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now';
-                                }
-                                if (successAlert) successAlert.style.display = 'none';
-                            } else {
-                                // Continuously ensure exam window stays focused and fullscreen
-                                try {
-                                    if (examWindow.document && !document.hasFocus()) {
-                                        examWindow.focus();
-                                    }
-                                } catch (e) {
-                                    // Cross-origin restrictions may apply
-                                }
-                            }
-                        }, 1000);
+        // Prepare UI
+        startUiPrepare();
 
-                        // Advanced: Try to disable taskbar and other windows access
-                        try {
-                            // Hide taskbar (Windows specific - may not work in all browsers)
-                            if (navigator.platform.indexOf('Win') > -1) {
-                                examWindow.resizeTo(screen.width, screen.height + 40);
-                            }
-                        } catch (e) {
-                            console.warn('Platform-specific optimizations not available');
-                        }
+        try {
+            // STEP 1: First, run the preloading process (this shows the green glowing loader)
+            await startActualPreloading();
+            
+            // STEP 2: After preloading is complete, proceed with starting the exam
+            const resp = await fetch(`/start-exam/${examId}`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ client_ts: Date.now() })
+            });
 
-                        setTimeout(() => { 
-                            if (successAlert) successAlert.style.display = 'none';
-                            if (colorIndicatorSection) {
-                                colorIndicatorSection.parentElement.classList.remove('loading-active');
-                            }
-                        }, 3000);
-                        
-                    } else {
-                        showError('Popup blocked! Please allow popups for this site and try again.');
-                    }
-                }, 500); // Delay to ensure fullscreen is activated first
-
+            let data;
+            try {
+                data = await resp.json();
             } catch (err) {
-                console.error('Error opening exam window:', err);
-                showError('Error opening exam window. Please try again.');
+                const text = await resp.text().catch(()=>null);
+                throw new Error(text || 'Server error');
             }
-        }
 
-        function showError(message) {
-            if (preloadingAlert) preloadingAlert.style.display = 'none';
-            if (errorAlert) { 
-                errorAlert.style.display = 'block'; 
-                errorAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> ' + message; 
+            // If not success => show error
+            if (!resp.ok || !data || !data.success) {
+                const msg = (data && data.message) ? data.message : 'Failed to start exam. Please try again.';
+                showError(msg);
+                startInProgress = false;
+                return;
             }
-            if (startBtn) { 
-                startBtn.disabled = false; 
-                startBtn.innerHTML = '<i class="fas fa-play"></i> Start Exam Now'; 
-            }
-            if (colorIndicatorSection) {
-                colorIndicatorSection.parentElement.classList.remove('loading-active');
-            }
-        }
 
-        // Additional security: Monitor tab/window switching
-        document.addEventListener('visibilitychange', function() {
-            if (document.hidden && preloadingAlert && preloadingAlert.style.display === 'block') {
-                // Warn user if they try to switch tabs during loading
-                console.warn('Please stay on this page while the exam is loading');
+            // STEP 3: Success! Now create and open the exam window (AFTER everything is ready)
+            const { features } = buildFeatures();
+            let examWindow = null;
+            try {
+                examWindow = window.open('about:blank', '_blank', features);
+                if (examWindow) examWindow.focus();
+            } catch (e) {
+                examWindow = null;
             }
-        });
 
-        // Prevent common cheating shortcuts on this page too
-        document.addEventListener('keydown', function(e) {
-            if (preloadingAlert && preloadingAlert.style.display === 'block') {
-                // During loading, prevent various shortcuts
-                if (e.keyCode === 123 || // F12
-                    (e.ctrlKey && e.shiftKey && e.keyCode === 73) || // Ctrl+Shift+I
-                    (e.ctrlKey && e.shiftKey && e.keyCode === 74) || // Ctrl+Shift+J
-                    (e.ctrlKey && e.keyCode === 85) || // Ctrl+U
-                    (e.altKey && e.keyCode === 9)) { // Alt+Tab
-                    e.preventDefault();
-                    return false;
+            // Navigate the exam window to the exam page
+            const redirectUrl = data.redirect_url || (`/exam/${examId}`);
+            if (examWindow) {
+                try {
+                    examWindow.location.href = redirectUrl + (redirectUrl.indexOf('?') === -1 ? '?secure=1&from_instructions=1' : '&secure=1&from_instructions=1');
+                } catch (e) {
+                    try { examWindow.location.replace(redirectUrl); } catch (e2) {}
                 }
+            } else {
+                // popup null => blocked; open current tab as fallback
+                if (errorAlert) {
+                    errorAlert.style.display = 'block';
+                    errorAlert.innerHTML = '<i class="fas fa-exclamation-triangle"></i> Popup blocked — opening in current tab.';
+                }
+                window.location.href = redirectUrl;
             }
-        });
 
-        // Prevent right-click during loading
-        document.addEventListener('contextmenu', function(e) {
-            if (preloadingAlert && preloadingAlert.style.display === 'block') {
-                e.preventDefault();
-                return false;
+            // Show final success state
+            setTimeout(() => {
+                if (preloadingAlert) preloadingAlert.style.display = 'none';
+                if (successAlert) successAlert.style.display = 'block';
+            }, 400);
+
+            // Immediately refresh attempt counts so the instructions page shows correct Start/Resume/Exhausted
+            setTimeout(async () => {
+                await refreshAttemptStatusAndRender();
+            }, 700);
+
+        } catch (err) {
+            console.error('Start-exam error:', err);
+            
+            // Show error with retry option
+            const errorMessage = err.message || 'Network or server error starting exam. Please try again.';
+            showError(errorMessage + ' <button onclick="location.reload()" style="margin-left:10px;padding:4px 8px;background:#059669;color:white;border:none;border-radius:4px;cursor:pointer;">Retry</button>');
+        } finally {
+            startInProgress = false;
+            if (colorIndicatorSection && colorIndicatorSection.parentElement) colorIndicatorSection.parentElement.classList.remove('loading-active');
+        }
+    }
+
+    // Resume button: open exam_page in new window (do not create a new attempt)
+    function resumeHandler(e) {
+        e.preventDefault();
+        const { features } = buildFeatures();
+        // open popup immediately to avoid blocker
+        let w = null;
+        try {
+            w = window.open('about:blank', '_blank', features);
+            if (w) w.focus();
+        } catch (e) {
+            w = null;
+        }
+        const resumeUrl = resumeBtn ? resumeBtn.href : (`/exam/${examId}`);
+        if (w) {
+            try { w.location.href = resumeUrl + (resumeUrl.indexOf('?') === -1 ? '?secure=1&resume=1' : '&secure=1&resume=1'); }
+            catch (e) { try { w.location.replace(resumeUrl); } catch (e2) {} }
+        } else {
+            alert('Popup blocked. Opening in current tab.');
+            window.location.href = resumeUrl;
+        }
+    }
+
+    // Refresh attempt status and update UI
+    let pollHandle = null;
+    async function refreshAttemptStatusAndRender() {
+        try {
+            const info = await fetchAttemptStatus();
+            if (info) {
+                renderAttemptUI(info);
             }
-        });
+        } catch (e) {
+            console.warn('refreshAttemptStatusAndRender error', e);
+        }
+    }
+
+    // Start periodic poll (only when page visible) - with backoff on errors
+    let pollErrors = 0;
+    function startPolling() {
+        if (pollHandle) clearInterval(pollHandle);
+        const pollInterval = Math.min(POLL_INTERVAL * Math.pow(1.5, pollErrors), 120000); // Max 2 minutes
+        pollHandle = setInterval(async () => {
+            try {
+                await refreshAttemptStatusAndRender();
+                pollErrors = 0; // Reset on success
+            } catch (e) {
+                pollErrors = Math.min(pollErrors + 1, 5); // Cap at 5 errors
+                console.warn('Poll error:', e);
+            }
+        }, pollInterval);
+    }
+    function stopPolling() {
+        if (pollHandle) clearInterval(pollHandle);
+        pollHandle = null;
+    }
+
+    // Attach handlers
+    if (startBtn) {
+        startBtn.addEventListener('click', unifiedStartHandler);
+    }
+    if (resumeBtn) {
+        resumeBtn.addEventListener('click', resumeHandler);
+    }
+
+    // Visibility handling: refresh when user returns to tab
+    document.addEventListener('visibilitychange', function() {
+        if (!document.hidden) {
+            refreshAttemptStatusAndRender();
+            startPolling();
+        } else {
+            stopPolling();
+        }
     });
 
-    // Enhanced beforeunload prevention
+    // Beforeunload protection stays: preserve your existing message if preloading is active
     window.addEventListener('beforeunload', function (e) {
         const pre = document.getElementById('preloadingAlert');
         if (pre && pre.style.display === 'block') {
@@ -673,32 +614,16 @@
         }
     });
 
-    // Additional security: Disable print screen and other capture methods
-    document.addEventListener('keyup', function(e) {
-        if (e.keyCode === 44) { // Print Screen
-            alert('Screenshots are not allowed during exam preparation.');
-        }
-    });
+    // Initial fetch to set UI, then start polling
+    (async function init() {
+        await refreshAttemptStatusAndRender();
+        startPolling();
+    })();
 
-    // Monitor for developer tools opening
-    let devtools = {open: false, orientation: null};
-    let threshold = 160;
-    const checkDevTools = () => {
-        if (window.outerHeight - window.innerHeight > threshold || 
-            window.outerWidth - window.innerWidth > threshold) {
-            if (!devtools.open) {
-                devtools.open = true;
-                console.clear();
-                alert('Developer tools detected. Please close them before starting the exam.');
-            }
-        } else {
-            devtools.open = false;
-        }
-    };
-    
-    setInterval(checkDevTools, 500);
-
-})();
+});
 </script>
+
+
+
 
 {% endblock %}
