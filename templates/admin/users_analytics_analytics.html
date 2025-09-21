@@ -1,0 +1,646 @@
+<!-- File: templates/admin/users_analytics_analytics.html -->
+<!-- FIX: Remove DOCTYPE and html/head/body tags to prevent container fluctuations -->
+<style>
+/* FIX: Analytics content styles that work within tab container */
+.analytics-content {
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 2rem !important;
+    background: transparent !important;
+    color: #222 !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* Analytics Filters */
+.analytics-filters {
+    background: linear-gradient(135deg, #f8fafc 0%, #eef2ff 100%);
+    padding: 1.25rem;
+    border-radius: 12px;
+    margin-bottom: 1.75rem;
+    color: #222;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+}
+
+.filter-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+/* Summary Cards */
+.summary-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.summary-card {
+    padding: 1rem;
+    border-radius: 10px;
+    color: #fff;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    text-align: center;
+    box-shadow: 0 6px 18px rgba(0,0,0,0.2);
+}
+
+.summary-number {
+    font-size: 2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.summary-label {
+    font-size: 0.9rem;
+    opacity: 0.9;
+    margin-top: 0.5rem;
+}
+
+/* Charts grid */
+.analytics-dashboard {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-card {
+    padding: 1rem;
+    border-radius: 10px;
+    background: #fff;
+    color: #222;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    min-height: 260px;
+    display: flex;
+    flex-direction: column;
+}
+
+.chart-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+}
+
+.chart-title {
+    font-weight: 700;
+    margin: 0;
+}
+
+.chart-container {
+    flex: 1;
+    position: relative;
+    min-height: 180px;
+}
+
+/* Performance tables */
+.performance-table {
+    background: #fff;
+    border-radius: 10px;
+    padding: 0;
+    overflow: hidden;
+    color: #222;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+    margin-bottom: 1rem;
+}
+
+.table-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    padding: 0.75rem 1rem;
+}
+
+.performance-table table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.performance-table th,
+.performance-table td {
+    padding: 0.75rem 1rem;
+    text-align: center;
+    border-bottom: 1px solid #eef2f6;
+    font-size: 0.95rem;
+}
+
+.rank-badge {
+    padding: 0.25rem 0.6rem;
+    border-radius: 12px;
+    font-weight: 700;
+    display: inline-block;
+}
+
+.rank-badge.top3 {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: #fff;
+}
+
+.score-bar {
+    width: 100%;
+    height: 18px;
+    background: #eef2f6;
+    border-radius: 999px;
+    position: relative;
+    overflow: hidden;
+}
+
+.score-fill {
+    height: 100%;
+    border-radius: 999px;
+    transition: width 0.8s ease;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.score-text {
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.75rem;
+}
+
+/* No results / error */
+.no-data {
+    padding: 1rem;
+    text-align: center;
+    color: #666;
+    font-style: italic;
+    background: #fff;
+    border-radius: 8px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="analytics-content">
+    <!-- Filters -->
+    <div class="analytics-filters">
+        <div class="d-flex justify-content-between align-items-center mb-2">
+            <h5 class="m-0"><i class="fas fa-sliders-h me-2"></i>Analytics Filters</h5>
+            <div class="text-muted small">Use filters to focus the analytics</div>
+        </div>
+
+        <div class="filter-grid">
+            <div>
+                <label class="form-label mb-1">Time Period</label>
+                <select id="timePeriodFilter" class="form-select">
+                    <option value="all">All Time</option>
+                    <option value="today">Today</option>
+                    <option value="week">This Week</option>
+                    <option value="month">This Month</option>
+                    <option value="quarter">This Quarter</option>
+                    <option value="year">This Year</option>
+                    <option value="custom">Custom Range</option>
+                </select>
+            </div>
+
+            <div id="customDateRange" style="display:none;">
+                <label class="form-label mb-1">Date Range</label>
+                <div class="d-flex gap-2">
+                    <input id="startDate" type="date" class="form-control" />
+                    <input id="endDate" type="date" class="form-control" />
+                </div>
+            </div>
+
+            <div>
+                <label class="form-label mb-1">Exam</label>
+                <select id="examFilter" class="form-select">
+                    <option value="">All Exams</option>
+                    {% for exam in exams %}
+                        <option value="{{ exam.id }}">{{ exam.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="d-flex align-items-center">
+                <button class="btn btn-primary w-100" onclick="updateAnalytics()">
+                    <i class="fas fa-chart-bar me-2"></i> Update Analytics
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary -->
+    <div class="summary-grid">
+        <div class="summary-card">
+            <div class="summary-number" id="avgScore"><i class="fas fa-spinner fa-spin"></i></div>
+            <div class="summary-label">Average Score</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-number" id="totalAttempts"><i class="fas fa-spinner fa-spin"></i></div>
+            <div class="summary-label">Total Attempts</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-number" id="passRate"><i class="fas fa-spinner fa-spin"></i></div>
+            <div class="summary-label">Pass Rate</div>
+        </div>
+        <div class="summary-card">
+            <div class="summary-number" id="activeUsers"><i class="fas fa-spinner fa-spin"></i></div>
+            <div class="summary-label">Active Users</div>
+        </div>
+    </div>
+
+    <!-- Charts -->
+    <div class="analytics-dashboard">
+        <div class="chart-card">
+            <div class="chart-header">
+                <h6 class="chart-title"><i class="fas fa-chart-pie me-2"></i> Score Distribution</h6>
+            </div>
+            <div class="chart-container">
+                <canvas id="scoreDistributionChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h6 class="chart-title"><i class="fas fa-chart-line me-2"></i> Performance Trends</h6>
+            </div>
+            <div class="chart-container">
+                <canvas id="performanceTrendsChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h6 class="chart-title"><i class="fas fa-bar-chart me-2"></i> Exam Performance</h6>
+            </div>
+            <div class="chart-container">
+                <canvas id="examPerformanceChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <div class="chart-header">
+                <h6 class="chart-title"><i class="fas fa-chart-area me-2"></i> User Activity</h6>
+            </div>
+            <div class="chart-container">
+                <canvas id="userActivityChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tables -->
+    <div class="row">
+        <div class="col-lg-6">
+            <div class="performance-table">
+                <div class="table-header"><strong>Top Performers</strong></div>
+                <table class="table mb-0">
+                    <thead>
+                        <tr><th>Rank</th><th>User</th><th>Average Score</th><th>Attempts</th></tr>
+                    </thead>
+                    <tbody id="topPerformersTable">
+                        <tr><td colspan="4" class="text-center py-3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <div class="performance-table">
+                <div class="table-header"><strong>Exam Statistics</strong></div>
+                <table class="table mb-0">
+                    <thead>
+                        <tr><th>Exam</th><th>Attempts</th><th>Avg Score</th><th>Pass Rate</th></tr>
+                    </thead>
+                    <tbody id="examStatsTable">
+                        <tr><td colspan="4" class="text-center py-3">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="performance-table">
+        <div class="table-header"><strong>Recent Activity</strong></div>
+        <table class="table mb-0">
+            <thead>
+                <tr><th>Time</th><th>User</th><th>Exam</th><th>Score</th><th>Performance</th></tr>
+            </thead>
+            <tbody id="recentActivityTable">
+                <tr><td colspan="5" class="text-center py-3">Loading...</td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+// Include Chart.js for charts functionality
+if (!window.Chart) {
+    const script = document.createElement('script');
+    script.src = 'https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js';
+    document.head.appendChild(script);
+}
+
+// Global charts store
+let charts = {};
+
+// Set default dates and wire UI
+document.addEventListener('DOMContentLoaded', () => {
+    const today = new Date().toISOString().split('T')[0];
+    const endInput = document.getElementById('endDate');
+    const startInput = document.getElementById('startDate');
+    if (endInput) endInput.value = today;
+    if (startInput) {
+        const oneMonthAgo = new Date();
+        oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+        startInput.value = oneMonthAgo.toISOString().split('T')[0];
+    }
+
+    const tp = document.getElementById('timePeriodFilter');
+    if (tp) {
+        tp.addEventListener('change', (e) => {
+            const custom = document.getElementById('customDateRange');
+            if (custom) {
+                custom.style.display = (e.target.value === 'custom') ? 'block' : 'none';
+            }
+        });
+    }
+
+    // Initial load with delay to ensure Chart.js is loaded
+    setTimeout(() => {
+        updateAnalytics();
+    }, 100);
+});
+
+function updateAnalytics() {
+    const filters = {
+        timePeriod: document.getElementById('timePeriodFilter')?.value || 'all',
+        exam: document.getElementById('examFilter')?.value || '',
+        startDate: document.getElementById('startDate')?.value || '',
+        endDate: document.getElementById('endDate')?.value || ''
+    };
+
+    showLoadingState();
+
+    const params = new URLSearchParams(filters);
+    fetch(`/admin/api/users-analytics/data?${params}`, { credentials: 'same-origin' })
+        .then(resp => {
+            if (!resp.ok) throw new Error('Network response not ok');
+            return resp.json();
+        })
+        .then(data => {
+            updateSummaryStats(data.summary || {});
+            updateCharts(data.charts || {});
+            updateTables(data.tables || {});
+        })
+        .catch(err => {
+            console.error('Analytics load error', err);
+            showErrorState();
+        });
+}
+
+function showLoadingState() {
+    const elements = ['avgScore', 'totalAttempts', 'passRate', 'activeUsers'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+    });
+
+    ['topPerformersTable', 'examStatsTable', 'recentActivityTable'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const colspan = id === 'recentActivityTable' ? 5 : 4;
+            el.innerHTML = `<tr><td colspan="${colspan}" class="text-center py-3"><i class="fas fa-spinner fa-spin"></i> Loading...</td></tr>`;
+        }
+    });
+}
+
+function showErrorState() {
+    const elements = ['avgScore', 'totalAttempts', 'passRate', 'activeUsers'];
+    elements.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = 'Error';
+    });
+
+    ['topPerformersTable', 'examStatsTable', 'recentActivityTable'].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            const colspan = id === 'recentActivityTable' ? 5 : 4;
+            el.innerHTML = `<tr><td colspan="${colspan}" class="text-center py-3">Failed to load.</td></tr>`;
+        }
+    });
+}
+
+function updateSummaryStats(summary = {}) {
+    const avg = (summary.avgScore !== undefined) ? Number(summary.avgScore).toFixed(1) : '0.0';
+    const passRate = (summary.passRate !== undefined) ? `${Number(summary.passRate).toFixed(1)}%` : '0.0%';
+
+    const updates = {
+        avgScore: avg,
+        totalAttempts: summary.totalAttempts || 0,
+        passRate: passRate,
+        activeUsers: summary.activeUsers || 0
+    };
+
+    Object.entries(updates).forEach(([id, value]) => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = value;
+    });
+}
+
+function safeDestroyChart(key) {
+    if (charts[key]) {
+        try {
+            charts[key].destroy();
+        } catch (e) {
+            console.error('Error destroying chart:', e);
+        }
+        charts[key] = null;
+    }
+}
+
+function updateCharts(chartsData = {}) {
+    // Wait for Chart.js to be available
+    if (!window.Chart) {
+        setTimeout(() => updateCharts(chartsData), 100);
+        return;
+    }
+
+    // Score Distribution (doughnut)
+    safeDestroyChart('scoreDistribution');
+    const sdCanvas = document.getElementById('scoreDistributionChart');
+    if (sdCanvas) {
+        const sdCtx = sdCanvas.getContext('2d');
+        const sdData = chartsData.scoreDistribution || [0, 0, 0, 0];
+        charts.scoreDistribution = new Chart(sdCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Excellent (90-100%)', 'Good (75-89%)', 'Average (60-74%)', 'Poor (0-59%)'],
+                datasets: [{ data: sdData }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'bottom' } }
+            }
+        });
+    }
+
+    // Performance Trends (line)
+    safeDestroyChart('performanceTrends');
+    const ptCanvas = document.getElementById('performanceTrendsChart');
+    if (ptCanvas) {
+        const ptCtx = ptCanvas.getContext('2d');
+        const pt = chartsData.performanceTrends || { labels: [], data: [] };
+        charts.performanceTrends = new Chart(ptCtx, {
+            type: 'line',
+            data: {
+                labels: pt.labels || [],
+                datasets: [{
+                    label: 'Average Score',
+                    data: pt.data || [],
+                    borderColor: '#667eea',
+                    backgroundColor: 'rgba(102,126,234,0.12)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+    }
+
+    // Exam Performance (bar)
+    safeDestroyChart('examPerformance');
+    const epCanvas = document.getElementById('examPerformanceChart');
+    if (epCanvas) {
+        const epCtx = epCanvas.getContext('2d');
+        const ep = chartsData.examPerformance || { labels: [], data: [] };
+        charts.examPerformance = new Chart(epCtx, {
+            type: 'bar',
+            data: {
+                labels: ep.labels || [],
+                datasets: [{
+                    label: 'Average Score',
+                    data: ep.data || [],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true, max: 100 } }
+            }
+        });
+    }
+
+    // User Activity (area/line)
+    safeDestroyChart('userActivity');
+    const uaCanvas = document.getElementById('userActivityChart');
+    if (uaCanvas) {
+        const uaCtx = uaCanvas.getContext('2d');
+        const ua = chartsData.userActivity || { labels: [], data: [] };
+        charts.userActivity = new Chart(uaCtx, {
+            type: 'line',
+            data: {
+                labels: ua.labels || [],
+                datasets: [{
+                    label: 'Attempts',
+                    data: ua.data || [],
+                    borderColor: '#f093fb',
+                    backgroundColor: 'rgba(240,147,251,0.16)',
+                    fill: true,
+                    tension: 0.35
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+}
+
+function updateTables(tables = {}) {
+    // Top performers
+    const tp = tables.topPerformers || [];
+    const topTable = document.getElementById('topPerformersTable');
+    if (topTable) {
+        if (tp.length === 0) {
+            topTable.innerHTML = '<tr><td colspan="4" class="text-center py-3">No data</td></tr>';
+        } else {
+            topTable.innerHTML = tp.map((u, i) => {
+                const pct = Number(u.avgScore || 0);
+                return `<tr>
+                    <td><span class="rank-badge ${i < 3 ? 'top3' : ''}">#${i + 1}</span></td>
+                    <td><strong>${escapeHtml(u.username || '')}</strong><br><small class="text-muted">${escapeHtml(u.full_name || '')}</small></td>
+                    <td style="min-width:180px">
+                        <div class="score-bar"><div class="score-fill" style="width:${pct}%"></div><div class="score-text">${pct.toFixed(1)}%</div></div>
+                    </td>
+                    <td>${u.attempts || 0}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
+    // Exam stats
+    const es = tables.examStats || [];
+    const examTable = document.getElementById('examStatsTable');
+    if (examTable) {
+        if (es.length === 0) {
+            examTable.innerHTML = '<tr><td colspan="4" class="text-center py-3">No data</td></tr>';
+        } else {
+            examTable.innerHTML = es.map(ex => {
+                const avg = Number(ex.avgScore || 0);
+                return `<tr>
+                    <td><strong>${escapeHtml(ex.name || '')}</strong><br><small class="text-muted">${escapeHtml(ex.subject || '')}</small></td>
+                    <td>${ex.attempts || 0}</td>
+                    <td><div class="score-bar"><div class="score-fill" style="width:${avg}%"></div><div class="score-text">${avg.toFixed(1)}%</div></div></td>
+                    <td>${(ex.passRate !== undefined) ? Number(ex.passRate).toFixed(1) + '%' : 'N/A'}</td>
+                </tr>`;
+            }).join('');
+        }
+    }
+
+    // Recent activity
+    const ra = tables.recentActivity || [];
+    const activityTable = document.getElementById('recentActivityTable');
+    if (activityTable) {
+        if (ra.length === 0) {
+            activityTable.innerHTML = '<tr><td colspan="5" class="text-center py-3">No recent activity</td></tr>';
+        } else {
+            activityTable.innerHTML = ra.map(a => {
+                const time = a.created_at ? new Date(a.created_at).toLocaleString() : '';
+                const pct = Number(a.percentage || 0);
+                return `<tr>
+                    <td><small>${escapeHtml(time)}</small></td>
+                    <td><strong>${escapeHtml(a.username || '')}</strong><br><small class="text-muted">${escapeHtml(a.full_name || '')}</small></td>
+                    <td><strong>${escapeHtml(a.exam_name || '')}</strong></td>
+                    <td><strong>${escapeHtml(String(a.score || ''))}/${escapeHtml(String(a.max_score || ''))}</strong></td>
+                    <td style="min-width:160px"><div class="score-bar"><div class="score-fill" style="width:${pct}%"></div><div class="score-text">${pct.toFixed(1)}%</div></div></td>
+                </tr>`;
+            }).join('');
+        }
+    }
+}
+
+// Helper to avoid XSS injection
+function escapeHtml(s) {
+    if (!s && s !== 0) return '';
+    return String(s).replace(/[&<>"'`=\/]/g, function (c) {
+        return {
+            '&': '&amp;',
+            '<': '&lt;',
+            '>': '&gt;',
+            '"': '&quot;',
+            "'": '&#39;',
+            '`': '&#96;',
+            '=': '&#61;',
+            '/': '&#x2F;'
+        }[c];
+    });
+}
+</script>

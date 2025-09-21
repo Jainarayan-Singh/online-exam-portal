@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Result Details - Admin Portal</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height:100vh; padding:2rem 0; margin:0; }
+        .result-container { background:white; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:hidden; max-width:900px; margin:0 auto; position:relative; }
+        .result-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:2rem; text-align:center; border-top-left-radius:15px; border-top-right-radius:15px; }
+        .result-title { font-size:2rem; font-weight:700; margin:0; text-shadow:0 2px 4px rgba(0,0,0,0.1); }
+        .result-subtitle { opacity:.9; margin:.5rem 0 0 0; }
+        .result-body { padding:2rem; }
+        .info-card { background:#f8f9fa; border-radius:12px; padding:1.5rem; margin-bottom:1.5rem; border-left:4px solid #667eea; }
+        .info-row { display:flex; justify-content:space-between; align-items:center; margin-bottom:.75rem; padding-bottom:.75rem; border-bottom:1px solid #dee2e6; }
+        .info-row:last-child { margin-bottom:0; padding-bottom:0; border-bottom:none; }
+        .info-label { font-weight:600; color:#495057; }
+        .info-value { color:#333; font-weight:500; }
+        .score-display { text-align:center; background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); border-radius:12px; padding:2rem; margin:1.5rem 0; }
+        .score-number { font-size:3rem; font-weight:700; color:#667eea; margin:0; }
+        .score-percentage { font-size:1.5rem; color:#6c757d; margin:.5rem 0; }
+        .grade-badge { display:inline-block; padding:.75rem 1.5rem; border-radius:25px; font-size:1.2rem; font-weight:700; color:white; background:linear-gradient(135deg,#28a745 0%,#20c997 100%); margin-top:1rem; }
+        .grade-badge.poor { background:linear-gradient(135deg,#dc3545 0%,#e83e8c 100%); }
+        .grade-badge.average { background:linear-gradient(135deg,#ffc107 0%,#fd7e14 100%); }
+        .error-state { text-align:center; padding:3rem; color:#dc3545; }
+        .error-icon { font-size:4rem; margin-bottom:1rem; opacity:.7; }
+
+        /* Floating toolbar (top-right) */
+        .floating-toolbar {
+          position: fixed;
+          top: 18px;
+          right: 18px;
+          z-index: 1100;
+          display: flex;
+          gap: 8px;
+          align-items: center;
+          background: rgba(255,255,255,0.95);
+          padding: 6px;
+          border-radius: 10px;
+          box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+          border: 1px solid rgba(0,0,0,0.06);
+          backdrop-filter: blur(4px);
+        }
+        .toolbar-btn { display:inline-flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; border:none; background:#fff; cursor:pointer; font-weight:600; color:#333; }
+        .toolbar-btn .fa { font-size:16px; }
+        .toolbar-btn.primary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:#fff; }
+        .toolbar-btn.secondary { background:#f1f1f1; color:#333; }
+        @media (max-width:600px) { .floating-toolbar { right:8px; left:8px; justify-content:center; } .toolbar-btn span { display:none; } }
+        @media print { .floating-toolbar { display:none !important; } }
+    </style>
+</head>
+<body>
+  <!-- Floating toolbar -->
+  <div class="floating-toolbar" role="toolbar" aria-label="Result actions">
+    <button class="toolbar-btn secondary" onclick="viewResponses({{ result.id }}, {{ exam.id }})" aria-label="View responses"><i class="fa fa-list"></i><span> Responses</span></button>
+    <a href="/admin/users-analytics/download-result/{{ result.id }}" target="_blank" class="toolbar-btn secondary" aria-label="Download PDF"><i class="fa fa-download"></i><span> PDF</span></a>
+    <button class="toolbar-btn primary" onclick="doPrint()" aria-label="Print result"><i class="fa fa-print"></i><span> Print</span></button>
+    <button class="toolbar-btn secondary" onclick="closeWindow()" aria-label="Close"><i class="fa fa-times"></i><span> Close</span></button>
+  </div>
+
+  <div class="container">
+    <div class="result-container">
+      {% if result and exam and user %}
+        <div class="result-header">
+          <h1 class="result-title"><i class="fas fa-trophy me-3"></i> Exam Result</h1>
+          <p class="result-subtitle">Detailed performance report — {{ exam.name|default('Exam') }}</p>
+        </div>
+
+        <div class="result-body">
+          <!-- Student Information -->
+          <div class="info-card">
+            <h5 class="mb-3"><i class="fas fa-user me-2"></i> Student Information</h5>
+            <div class="info-row"><span class="info-label">Username:</span><span class="info-value">{{ user.username|default('Unknown') }}</span></div>
+            <div class="info-row"><span class="info-label">Full Name:</span><span class="info-value">{{ user.full_name|default('Unknown') }}</span></div>
+            <div class="info-row"><span class="info-label">Email:</span><span class="info-value">{{ user.email|default('') }}</span></div>
+          </div>
+
+          <!-- Exam Information -->
+          <div class="info-card">
+            <h5 class="mb-3"><i class="fas fa-file-alt me-2"></i> Exam Information</h5>
+            <div class="info-row"><span class="info-label">Exam Name:</span><span class="info-value">{{ exam.name|default('Unknown Exam') }}</span></div>
+            <div class="info-row"><span class="info-label">Instructions:</span><span class="info-value">{{ exam.instructions|default('No instructions') }}</span></div>
+            <div class="info-row"><span class="info-label">Duration:</span><span class="info-value">{% if result.time_taken_minutes %}{{ "%.1f"|format(result.time_taken_minutes) }} minutes{% else %}{{ exam.duration|default('Not specified') }} minutes{% endif %}</span></div>
+            <div class="info-row"><span class="info-label">Completed At:</span><span class="info-value">{{ result.completed_at|default('Not recorded') }}</span></div>
+          </div>
+
+          <!-- Score Display -->
+          <div class="score-display">
+            <h3 class="score-number">{{ "%.2f"|format(result.score|default(0.0)) }}/{{ "%.2f"|format(result.max_score|default(0.0)) }}</h3>
+            <p class="score-percentage">{{ "%.1f"|format(result.percentage|default(0.0)) }}%</p>
+            <span class="grade-badge {% if result.percentage|default(0) >= 75 %} {% elif result.percentage|default(0) >= 60 %} average {% else %} poor {% endif %}">Grade: {{ result.grade|default('N/A') }}</span>
+          </div>
+
+          <!-- Performance Details -->
+          <div class="info-card">
+            <h5 class="mb-3"><i class="fas fa-chart-bar me-2"></i> Performance Details</h5>
+            <div class="info-row"><span class="info-label">Total Questions:</span><span class="info-value">{{ result.total_questions|default('N/A') }}</span></div>
+            <div class="info-row"><span class="info-label">Attempted Questions:</span><span class="info-value">{{ result.attempted_questions|default('N/A') }}</span></div>
+            <div class="info-row"><span class="info-label">Correct Answers:</span><span class="info-value">{{ result.correct_answers|default('N/A') }}</span></div>
+            <div class="info-row"><span class="info-label">Incorrect Answers:</span><span class="info-value">{{ result.incorrect_answers|default('N/A') }}</span></div>
+            <div class="info-row"><span class="info-label">Unanswered:</span><span class="info-value">{{ result.unanswered_questions|default('N/A') }}</span></div>
+          </div>
+
+          {% if result.percentage|default(0) >= 90 %}
+            <div class="alert alert-success" role="alert"><i class="fas fa-star me-2"></i><strong>Excellent Performance!</strong> Outstanding work on this exam.</div>
+          {% elif result.percentage|default(0) >= 75 %}
+            <div class="alert alert-info" role="alert"><i class="fas fa-thumbs-up me-2"></i><strong>Good Performance!</strong> Well done on this exam.</div>
+          {% elif result.percentage|default(0) >= 60 %}
+            <div class="alert alert-warning" role="alert"><i class="fas fa-info-circle me-2"></i><strong>Average Performance.</strong> Room for improvement in some areas.</div>
+          {% else %}
+            <div class="alert alert-danger" role="alert"><i class="fas fa-exclamation-triangle me-2"></i><strong>Needs Improvement.</strong> Consider reviewing the material more thoroughly.</div>
+          {% endif %}
+        </div>
+
+      {% else %}
+        <div class="result-body">
+          <div class="error-state"><div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div><h4>Result Not Found</h4><p>The requested result could not be loaded. It may have been deleted or you may not have permission to view it.</p></div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    function viewResponses(resultId, examId) {
+      const url = `/admin/users-analytics/view-responses/${resultId}/${examId}`;
+      window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+    }
+
+    function closeWindow() {
+      try { window.close(); } catch(e) {}
+      try { history.back(); } catch(e) {}
+    }
+
+    // Print helpers (small, robust wrapper)
+    function expandForPrint() {
+      document.documentElement.style.height = 'auto';
+      document.body.style.height = 'auto';
+    }
+    function restoreAfterPrint() {
+      // nothing to restore in this simpler template
+    }
+    function doPrint() {
+      expandForPrint();
+      setTimeout(() => {
+        try { window.print(); } finally { setTimeout(restoreAfterPrint, 300); }
+      }, 100);
+    }
+
+    // ensure beforeprint/afterprint events
+    if (window.matchMedia) {
+      window.addEventListener('beforeprint', expandForPrint);
+      window.addEventListener('afterprint', restoreAfterPrint);
+    } else {
+      window.onbeforeprint = expandForPrint;
+      window.onafterprint = restoreAfterPrint;
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,620 @@
+<style>
+/* Results Tab Specific Styles - FIXED VERSION */
+.results-content {
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.filters-section {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1rem;
+    margin-bottom: 2rem;
+    border: 1px solid #dee2e6;
+    position: relative;
+}
+
+.filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    align-items: end;
+}
+
+.filter-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.filter-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.filter-input {
+    padding: 0.75rem;
+    border: 2px solid #e9ecef;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    background: white;
+}
+
+.filter-input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25);
+    outline: none;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+/* FIX: Consistent button styling that won't change on navigation */
+.btn-filter {
+    padding: 0.75rem 1.5rem !important;
+    border: none;
+    border-radius: 8px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    font-size: 0.9rem;
+    line-height: 1.4;
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    position: relative;
+}
+
+.btn-filter:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-filter.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+    color: white !important;
+}
+
+.btn-filter.primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.btn-filter.secondary {
+    background: #6c757d !important;
+    color: white !important;
+}
+
+.btn-filter.secondary:hover:not(:disabled) {
+    background: #5a6268 !important;
+    transform: translateY(-2px);
+}
+
+/* Loading spinner for buttons */
+.filter-loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Table loading overlay */
+.results-table-container {
+    background: white;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
+}
+
+.table-loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+    backdrop-filter: blur(2px);
+}
+
+.table-loading-overlay.show {
+    display: flex;
+}
+
+.loading-content {
+    text-align: center;
+    color: #667eea;
+}
+
+.loading-content .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-radius: 50%;
+    border-top-color: #667eea;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto 15px;
+}
+
+.results-table {
+    width: 100%;
+    margin: 0;
+}
+
+.results-table th {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1rem;
+    font-weight: 600;
+    border: none;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.results-table td {
+    padding: 1rem;
+    border-bottom: 1px solid #e9ecef;
+    vertical-align: middle;
+}
+
+.results-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+/* Result Status Badges */
+.result-badge {
+    padding: 0.4rem 0.8rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-align: center;
+    min-width: 80px;
+    display: inline-block;
+}
+
+.result-badge.excellent {
+    background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+    color: white;
+}
+
+.result-badge.good {
+    background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+    color: white;
+}
+
+.result-badge.average {
+    background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+    color: white;
+}
+
+.result-badge.poor {
+    background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+    color: white;
+}
+
+/* Action Buttons */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.btn-action {
+    padding: 0.4rem 0.8rem;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.btn-action.view {
+    background: #007bff;
+    color: white;
+}
+
+.btn-action.view:hover {
+    background: #0056b3;
+    transform: scale(1.05);
+}
+
+.btn-action.download {
+    background: #28a745;
+    color: white;
+}
+
+.btn-action.download:hover {
+    background: #1e7e34;
+    transform: scale(1.05);
+}
+
+.btn-action.details {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-action.details:hover {
+    background: #545b62;
+    transform: scale(1.05);
+}
+
+/* Pagination */
+.pagination-section {
+    background: #f8f9fa;
+    padding: 1rem 1.5rem;
+    border-top: 1px solid #dee2e6;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.pagination-info {
+    color: #6c757d;
+    font-size: 0.9rem;
+}
+
+.pagination-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.page-btn {
+    padding: 0.5rem 0.8rem;
+    border: 1px solid #dee2e6;
+    background: white;
+    color: #495057;
+    text-decoration: none;
+    border-radius: 6px;
+    transition: all 0.3s ease;
+}
+
+.page-btn:hover {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.page-btn.active {
+    background: #667eea;
+    color: white;
+    border-color: #667eea;
+}
+
+.page-btn.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Empty State */
+.empty-state {
+    text-align: center;
+    padding: 3rem;
+    color: #6c757d;
+}
+
+.empty-icon {
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    opacity: 0.5;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .filter-row {
+        grid-template-columns: 1fr;
+    }
+    
+    .results-table-container {
+        overflow-x: auto;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+    }
+    
+    .pagination-section {
+        flex-direction: column;
+        text-align: center;
+    }
+}
+</style>
+
+<div class="results-content">
+    <!-- Filters Section -->
+    <div class="filters-section">
+        <h5 class="mb-3"><i class="fas fa-filter me-2"></i>Filter Results</h5>
+        <div class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">User</label>
+                <select class="filter-input" id="userFilter">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }} ({{ user.full_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Exam</label>
+                <select class="filter-input" id="examFilter">
+                    <option value="">All Exams</option>
+                    {% for exam in exams %}
+                    <option value="{{ exam.id }}">{{ exam.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Date From</label>
+                <input type="date" class="filter-input" id="dateFromFilter">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Date To</label>
+                <input type="date" class="filter-input" id="dateToFilter">
+            </div>
+            <div class="filter-group">
+                <div class="filter-actions">
+                    <button class="btn-filter primary" id="applyFiltersBtn" onclick="applyFilters()">
+                        <i class="fas fa-search"></i> Apply Filters
+                    </button>
+                    <button class="btn-filter secondary" id="clearFiltersBtn" onclick="clearFilters()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Results Table -->
+    <div class="results-table-container">
+        <div class="table-loading-overlay" id="tableLoadingOverlay">
+            <div class="loading-content">
+                <div class="spinner"></div>
+                <div>Applying filters...</div>
+            </div>
+        </div>
+        
+        <table class="table results-table">
+            <thead>
+                <tr>
+                    <th><i class="fas fa-user me-2"></i>User</th>
+                    <th><i class="fas fa-file-alt me-2"></i>Exam</th>
+                    <th><i class="fas fa-calendar me-2"></i>Date</th>
+                    <th><i class="fas fa-trophy me-2"></i>Score</th>
+                    <th><i class="fas fa-percentage me-2"></i>Percentage</th>
+                    <th><i class="fas fa-medal me-2"></i>Grade</th>
+                    <th><i class="fas fa-clock me-2"></i>Duration</th>
+                    <th><i class="fas fa-cogs me-2"></i>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="resultsTableBody">
+                {% if results %}
+                    {% for result in results %}
+                    <tr>
+                        <td>
+                            <div>
+                                <strong>{{ result.username }}</strong>
+                                <br><small class="text-muted">{{ result.full_name }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <strong>{{ result.exam_name }}</strong>
+                                <br><small class="text-muted">{{ result.subject_name }}</small>
+                            </div>
+                        </td>
+                        <td>{{ result.created_at }}</td>
+                        <td><strong>{{ result.score }}/{{ result.max_score }}</strong></td>
+                        <td>
+                            <span class="result-badge {% if result.percentage >= 90 %}excellent{% elif result.percentage >= 75 %}good{% elif result.percentage >= 60 %}average{% else %}poor{% endif %}">
+                                {{ "%.1f"|format(result.percentage) }}%
+                            </span>
+                        </td>
+                        <td><strong>{{ result.grade }}</strong></td>
+                        <td>{{ result.duration or 'N/A' }}</td>
+                        <td>
+                            <div class="action-buttons">
+                                <a href="#" class="btn-action view" onclick="viewResult({{ result.id }}, {{ result.exam_id }})">
+                                    <i class="fas fa-eye"></i> View
+                                </a>
+                                <a href="#" class="btn-action details" onclick="viewResponses({{ result.id }}, {{ result.exam_id }})">
+                                    <i class="fas fa-list"></i> Details
+                                </a>
+                                <a href="/admin/users-analytics/download-result/{{ result.id }}" class="btn-action download">
+                                    <i class="fas fa-download"></i> PDF
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                {% else %}
+                    <tr>
+                        <td colspan="8">
+                            <div class="empty-state">
+                                <div class="empty-icon">
+                                    <i class="fas fa-inbox"></i>
+                                </div>
+                                <h5>No Results Found</h5>
+                                <p>No exam results match your current filters.</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+            </tbody>
+        </table>
+
+        <!-- Pagination -->
+        {% if pagination %}
+        <div class="pagination-section">
+            <div class="pagination-info">
+                Showing {{ pagination.start }} to {{ pagination.end }} of {{ pagination.total }} results
+            </div>
+            <div class="pagination-controls">
+                {% if pagination.has_prev %}
+                    <a href="#" class="page-btn" onclick="changePage({{ pagination.prev_num }})">
+                        <i class="fas fa-chevron-left"></i> Previous
+                    </a>
+                {% endif %}
+                
+                {% for page_num in pagination.iter_pages() %}
+                    {% if page_num %}
+                        {% if page_num != pagination.page %}
+                            <a href="#" class="page-btn" onclick="changePage({{ page_num }})">{{ page_num }}</a>
+                        {% else %}
+                            <span class="page-btn active">{{ page_num }}</span>
+                        {% endif %}
+                    {% else %}
+                        <span class="page-btn disabled">...</span>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if pagination.has_next %}
+                    <a href="#" class="page-btn" onclick="changePage({{ pagination.next_num }})">
+                        Next <i class="fas fa-chevron-right"></i>
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+let currentFilters = {
+    user: '',
+    exam: '',
+    dateFrom: '',
+    dateTo: '',
+    page: 1
+};
+
+let isFilterProcessing = false;
+
+function showFilterLoading() {
+    document.getElementById('tableLoadingOverlay').classList.add('show');
+}
+
+function hideFilterLoading() {
+    document.getElementById('tableLoadingOverlay').classList.remove('show');
+}
+
+function applyFilters() {
+    if (isFilterProcessing) return;
+    
+    isFilterProcessing = true;
+    const applyBtn = document.getElementById('applyFiltersBtn');
+    const originalContent = applyBtn.innerHTML;
+    
+    // Show loading states
+    applyBtn.innerHTML = '<div class="filter-loading-spinner"></div> Applying...';
+    applyBtn.disabled = true;
+    showFilterLoading();
+    
+    // Simulate processing time for better UX
+    setTimeout(() => {
+        currentFilters.user = document.getElementById('userFilter').value;
+        currentFilters.exam = document.getElementById('examFilter').value;
+        currentFilters.dateFrom = document.getElementById('dateFromFilter').value;
+        currentFilters.dateTo = document.getElementById('dateToFilter').value;
+        currentFilters.page = 1;
+        
+        loadFilteredResults(() => {
+            // Restore button state
+            applyBtn.innerHTML = originalContent;
+            applyBtn.disabled = false;
+            hideFilterLoading();
+            isFilterProcessing = false;
+        });
+    }, 600);
+}
+
+function clearFilters() {
+    if (isFilterProcessing) return;
+    
+    isFilterProcessing = true;
+    const clearBtn = document.getElementById('clearFiltersBtn');
+    const originalContent = clearBtn.innerHTML;
+    
+    // Show loading states
+    clearBtn.innerHTML = '<div class="filter-loading-spinner"></div> Clearing...';
+    clearBtn.disabled = true;
+    showFilterLoading();
+    
+    setTimeout(() => {
+        document.getElementById('userFilter').value = '';
+        document.getElementById('examFilter').value = '';
+        document.getElementById('dateFromFilter').value = '';
+        document.getElementById('dateToFilter').value = '';
+        
+        currentFilters = {
+            user: '',
+            exam: '',
+            dateFrom: '',
+            dateTo: '',
+            page: 1
+        };
+        
+        loadFilteredResults(() => {
+            // Restore button state
+            clearBtn.innerHTML = originalContent;
+            clearBtn.disabled = false;
+            hideFilterLoading();
+            isFilterProcessing = false;
+        });
+    }, 600);
+}
+
+function changePage(page) {
+    currentFilters.page = page;
+    loadFilteredResults();
+}
+
+function loadFilteredResults(callback) {
+    const params = new URLSearchParams(currentFilters);
+    
+    fetch(`/admin/users-analytics/results?${params}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('resultsContent').innerHTML = html;
+            if (callback) callback();
+        })
+        .catch(error => {
+            console.error('Error loading filtered results:', error);
+            hideFilterLoading();
+            if (callback) callback();
+        });
+}
+
+function viewResult(resultId, examId) {
+    const url = `/admin/users-analytics/view-result/${resultId}/${examId}`;
+    window.open(url, '_blank', 'width=900,height=700,scrollbars=yes,resizable=yes');
+}
+
+function viewResponses(resultId, examId) {
+    const url = `/admin/users-analytics/view-responses/${resultId}/${examId}`;
+    window.open(url, '_blank', 'width=1200,height=800,scrollbars=yes,resizable=yes');
+}
+</script>

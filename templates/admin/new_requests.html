@@ -1,0 +1,195 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}New Requests{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">
+    <i class="fas fa-bell me-3"></i>New Access Requests
+  </h1>
+</div>
+
+{% if requests %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table requests-table mb-0">
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Current Access</th>
+            <th>Requested Access</th>
+            <th>Request Date</th>
+            <th>Status</th>
+            <th style="width: 160px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for request in requests %}
+          <tr>
+            <td>
+              <span class="fw-bold">#{{ request.request_id }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar-sm bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                  <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                  <div class="fw-bold">{{ request.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="text-muted">{{ request.email }}</span>
+            </td>
+            <td>
+              {% set current_class = 'user' if request.current_access == 'user' else 'admin' if request.current_access == 'admin' else 'both' %}
+              <span class="access-badge access-{{ current_class }}">
+                {% if request.current_access == 'user' %}User
+                {% elif request.current_access == 'admin' %}Admin
+                {% elif ',' in request.current_access %}User & Admin
+                {% else %}{{ request.current_access|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td>
+              {% set requested_class = 'user' if request.requested_access == 'user' else 'admin' if request.requested_access == 'admin' else 'both' %}
+              <span class="access-badge access-{{ requested_class }}">
+                {% if request.requested_access == 'user' %}User
+                {% elif request.requested_access == 'admin' %}Admin
+                {% elif ',' in request.requested_access %}User & Admin
+                {% else %}{{ request.requested_access|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td>
+              <small class="text-muted">{{ request.request_date }}</small>
+            </td>
+            <td>
+              <span class="status-badge status-{{ request.status|lower }}">
+                {{ request.status|title }}
+              </span>
+            </td>
+            <td class="action-buttons">
+              <button class="btn btn-success btn-sm approve-btn" 
+                      data-request-id="{{ request.request_id }}"
+                      data-username="{{ request.username }}"
+                      title="Approve Request">
+                <i class="fas fa-check"></i>
+              </button>
+              <button class="btn btn-danger btn-sm deny-btn"
+                      data-request-id="{{ request.request_id }}"
+                      data-username="{{ request.username }}"
+                      title="Deny Request">
+                <i class="fas fa-times"></i>
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="fas fa-inbox"></i>
+      <h4>No Pending Requests</h4>
+      <p class="text-muted">All access requests have been processed.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+
+.requests-table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  padding: 16px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
+.requests-table tbody td {
+  padding: 16px;
+  vertical-align: middle;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.requests-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+}
+
+.access-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.access-user {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.access-admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.access-both {
+  background: rgba(147, 51, 234, 0.15);
+  color: #7c3aed;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.status-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  color: #000;
+}
+
+.action-buttons .btn {
+  padding: 8px 12px;
+  margin: 0 2px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+</style>
+{% endblock %}

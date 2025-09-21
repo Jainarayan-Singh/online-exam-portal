@@ -1,0 +1,425 @@
+{% extends "admin/admin_base.html" %}
+
+{% block title %}Users Analytics - Admin Portal{% endblock %}
+
+{% block content %}
+<style>
+/* Enhanced Analytics Styling */
+.analytics-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 2rem 0;
+    border-radius: 15px;
+    margin-bottom: 2rem;
+    box-shadow: 0 10px 30px rgba(102, 126, 234, 0.3);
+}
+
+.analytics-header h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.analytics-header p {
+    font-size: 1.1rem;
+    margin: 0.5rem 0 0 0;
+    opacity: 0.9;
+}
+
+/* Tab Navigation */
+.nav-tabs-custom {
+    border: none;
+    background: rgba(255,255,255,0.95);
+    border-radius: 12px;
+    padding: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin-bottom: 2rem;
+}
+
+.nav-tabs-custom .nav-link {
+    border: none;
+    border-radius: 8px;
+    color: #666;
+    font-weight: 600;
+    padding: 0.5rem 1rem;
+    margin: 0 0.25rem;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.nav-tabs-custom .nav-link:hover {
+    background: rgba(102, 126, 234, 0.1);
+    color: #667eea;
+    transform: translateY(-2px);
+}
+
+.nav-tabs-custom .nav-link.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+}
+
+.nav-tabs-custom .nav-link i {
+    margin-right: 0.5rem;
+}
+
+/* Stats Cards */
+.stats-row {
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 12px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    border-left: 4px solid #667eea;
+    transition: transform 0.3s ease;
+    height: 100%;
+}
+
+.stat-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.stat-icon {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    color: white;
+    margin-bottom: 1rem;
+}
+
+.stat-icon.users { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+.stat-icon.exams { background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); }
+.stat-icon.results { background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%); }
+.stat-icon.responses { background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%); }
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+.stat-label {
+    color: #666;
+    font-weight: 600;
+    margin: 0;
+}
+
+/* Content Area - FIXED: Consistent container */
+.tab-content-area {
+    background: white;
+    border-radius: 12px;
+    min-height: 600px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    position: relative;
+    overflow: hidden; /* FIX: Prevent content overflow */
+}
+
+/* FIX: Unified tab pane styling to prevent jumping */
+.tab-pane {
+    padding: 0 !important;
+    min-height: 550px;
+    position: relative;
+    top: 0;
+    width: 100%; /* FIX: Ensure consistent width */
+}
+
+/* FIX: Override analytics content styles that cause fluctuations */
+.tab-pane#analytics * {
+    max-width: 100% !important;
+}
+
+.tab-pane#analytics body {
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+}
+
+.tab-pane#analytics .analytics-content {
+    background: transparent !important;
+    padding: 2rem !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+/* FIX: Ensure results content has consistent styling */
+.tab-pane .results-content {
+    padding: 2rem;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+/* Loading States */
+.loading-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 400px;
+    color: #666;
+    padding: 2rem;
+}
+
+.loading-spinner {
+    width: 50px;
+    height: 50px;
+    border: 4px solid #f3f4f6;
+    border-top: 4px solid #667eea;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin-bottom: 1rem;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Error States */
+.error-state {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+}
+
+.error-icon {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+    opacity: 0.7;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .analytics-header h1 {
+        font-size: 2rem;
+    }
+    
+    .nav-tabs-custom .nav-link {
+        padding: 0.75rem 1rem;
+        font-size: 0.9rem;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+}
+</style>
+
+<div class="container-fluid">
+    <!-- Header Section -->
+    <div class="analytics-header text-center">
+        <div class="container">
+            <h1><i class="fas fa-chart-line me-3"></i>Users Analytics</h1>
+            <p>Comprehensive analysis of user performance, results, and responses</p>
+        </div>
+    </div>
+
+    <!-- Stats Overview -->
+    <div class="row stats-row">
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon users">
+                    <i class="fas fa-users"></i>
+                </div>
+                <h3 class="stat-number" id="totalUsers">0</h3>
+                <p class="stat-label">Total Users</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon exams">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="stat-number" id="totalExams">0</h3>
+                <p class="stat-label">Total Exams</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon results">
+                    <i class="fas fa-trophy"></i>
+                </div>
+                <h3 class="stat-number" id="totalResults">0</h3>
+                <p class="stat-label">Total Results</p>
+            </div>
+        </div>
+        <div class="col-lg-3 col-md-6 mb-3">
+            <div class="stat-card">
+                <div class="stat-icon responses">
+                    <i class="fas fa-clipboard-check"></i>
+                </div>
+                <h3 class="stat-number" id="totalResponses">0</h3>
+                <p class="stat-label">Total Responses</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tab Navigation -->
+    <ul class="nav nav-tabs nav-tabs-custom" id="analyticsTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="results-tab" data-bs-toggle="tab" data-bs-target="#results" type="button" role="tab" aria-controls="results" aria-selected="true">
+                <i class="fas fa-trophy"></i>Results & Responses
+            </button>
+        </li>
+
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="analytics-tab" data-bs-toggle="tab" data-bs-target="#analytics" type="button" role="tab" aria-controls="analytics" aria-selected="false">
+                <i class="fas fa-chart-bar"></i>Analytics
+            </button>
+        </li>
+    </ul>
+
+    <!-- Tab Content -->
+    <div class="tab-content tab-content-area" id="analyticsTabContent">
+        <!-- Results Tab -->
+        <div class="tab-pane fade show active" id="results" role="tabpanel" aria-labelledby="results-tab">
+            <div class="loading-state" id="resultsLoading">
+                <div class="loading-spinner"></div>
+                <p>Loading results data...</p>
+            </div>
+            <div id="resultsContent" style="display: none;"></div>
+        </div>
+
+        <!-- Analytics Tab -->
+        <div class="tab-pane fade" id="analytics" role="tabpanel" aria-labelledby="analytics-tab">
+            <div class="loading-state" id="analyticsLoading">
+                <div class="loading-spinner"></div>
+                <p>Loading analytics data...</p>
+            </div>
+            <div id="analyticsContent" style="display: none;"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+function runInlineScripts(container) {
+    if (!container) return;
+    const scripts = Array.from(container.querySelectorAll('script'));
+    scripts.forEach(orig => {
+        try {
+            const newScript = document.createElement('script');
+            if (orig.src) {
+                newScript.src = orig.src;
+                if (orig.async) newScript.async = true;
+                if (orig.defer) newScript.defer = true;
+                document.head.appendChild(newScript);
+            } else {
+                newScript.textContent = orig.textContent;
+                document.head.appendChild(newScript);
+            }
+        } catch (err) {
+            console.error('Error running inline script:', err);
+        } finally {
+            orig.remove();
+        }
+    });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    loadOverviewStats();
+    loadResultsTab();
+
+    document.getElementById('results-tab').addEventListener('click', function() {
+        loadResultsTab();
+    });
+
+    document.getElementById('analytics-tab').addEventListener('click', function() {
+        loadAnalyticsTab();
+    });
+});
+
+function loadOverviewStats() {
+    fetch('/admin/api/users-analytics/stats')
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('totalUsers').textContent = data.total_users || 0;
+            document.getElementById('totalExams').textContent = data.total_exams || 0;
+            document.getElementById('totalResults').textContent = data.total_results || 0;
+            document.getElementById('totalResponses').textContent = data.total_responses || 0;
+        })
+        .catch(error => {
+            console.error('Error loading stats:', error);
+        });
+}
+
+function loadResultsTab() {
+    const loading = document.getElementById('resultsLoading');
+    const content = document.getElementById('resultsContent');
+    
+    loading.style.display = 'flex';
+    content.style.display = 'none';
+
+    fetch('/admin/users-analytics/results')
+        .then(response => response.text())
+        .then(html => {
+            content.innerHTML = html;
+            runInlineScripts(content);
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error loading results:', error);
+            content.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4>Error Loading Results</h4>
+                    <p>Unable to load results data. Please try again.</p>
+                    <button class="btn btn-primary" onclick="loadResultsTab()">Retry</button>
+                </div>
+            `;
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        });
+}
+
+function loadAnalyticsTab() {
+    const loading = document.getElementById('analyticsLoading');
+    const content = document.getElementById('analyticsContent');
+    
+    loading.style.display = 'flex';
+    content.style.display = 'none';
+
+    fetch('/admin/users-analytics/analytics')
+        .then(response => response.text())
+        .then(html => {
+            content.innerHTML = html;
+            runInlineScripts(content);
+
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error loading analytics:', error);
+            content.innerHTML = `
+                <div class="error-state">
+                    <div class="error-icon">
+                        <i class="fas fa-exclamation-triangle"></i>
+                    </div>
+                    <h4>Error Loading Analytics</h4>
+                    <p>Unable to load analytics data. Please try again.</p>
+                    <button class="btn btn-primary" onclick="loadAnalyticsTab()">Retry</button>
+                </div>
+            `;
+            loading.style.display = 'none';
+            content.style.display = 'block';
+        });
+}
+</script>
+
+{% endblock %}

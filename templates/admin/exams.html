@@ -267,7 +267,6 @@
   </div>
 </div>
 
-<!-- Enhanced Exams Table -->
 <div class="card border-0 shadow-lg">
   <div class="card-body p-0">
     <table class="table exams-table mb-0">
@@ -302,6 +301,7 @@
           </td>
           <td>
             <span class="question-count">{{ exam.total_questions }}</span>
+            <div class="small text-muted mt-1">Max Attempts: <strong>{{ exam.max_attempts if exam.max_attempts else '∞' }}</strong></div>
           </td>
           <td>
             <span class="status-badge status-{{ exam.status }}">{{ exam.status }}</span>
@@ -338,7 +338,6 @@
   </div>
 </div>
 
-<!-- Edit Exam Modals -->
 {% for exam in exams %}
 <div class="modal fade" id="editExamModal{{ exam.id }}" tabindex="-1" aria-labelledby="editExamModalLabel{{ exam.id }}" aria-hidden="true">
   <div class="modal-dialog modal-lg">
@@ -392,6 +391,11 @@
               <label class="form-label">Negative Marks</label>
               <input type="text" class="form-control" name="negative_marks" value="{{ exam.negative_marks }}">
             </div>
+            <div class="col-md-6">
+              <label class="form-label">Max Attempts (blank = unlimited)</label>
+              <input type="number" class="form-control" name="max_attempts" min="0" step="1" value="{{ exam.max_attempts or '' }}">
+              <div class="form-text">Only whole non-negative numbers</div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -408,7 +412,6 @@
 </div>
 {% endfor %}
 
-<!-- Add Exam Modal -->
 <div class="modal fade" id="addExamModal" tabindex="-1" aria-labelledby="addExamModalLabel" aria-hidden="true">
   <div class="modal-dialog modal-lg">
     <div class="modal-content">
@@ -461,6 +464,11 @@
               <label class="form-label">Negative Marks</label>
               <input type="text" class="form-control" name="negative_marks" placeholder="e.g. 1" value="1">
             </div>
+            <div class="col-md-6">
+              <label class="form-label">Max Attempts (blank = unlimited)</label>
+              <input type="number" class="form-control" name="max_attempts" min="0" step="1" placeholder="e.g. 3">
+              <div class="form-text">Only whole non-negative numbers</div>
+            </div>
           </div>
         </div>
         <div class="modal-footer">
@@ -478,31 +486,38 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', function() {
-  // Simple loading states for form submissions
   const forms = document.querySelectorAll('form');
   forms.forEach(form => {
     form.addEventListener('submit', function(e) {
+      const ma = this.querySelector('input[name="max_attempts"]');
+      if (ma) {
+        const v = ma.value.trim();
+        if (v !== "" && !/^\d+$/.test(v)) {
+          e.preventDefault();
+          alert('Max Attempts must be a whole non-negative number');
+          ma.focus();
+          return false;
+        }
+      }
       const submitBtn = this.querySelector('button[type="submit"]');
       if (submitBtn && !submitBtn.disabled) {
+        submitBtn.setAttribute('data-original-text', submitBtn.innerHTML);
         submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Processing...';
         submitBtn.disabled = true;
       }
     });
   });
 
-  // Ensure modals are properly handled
   const modals = document.querySelectorAll('.modal');
   modals.forEach(modal => {
     modal.addEventListener('hidden.bs.modal', function() {
-      // Reset any form data if needed
       const forms = this.querySelectorAll('form');
       forms.forEach(form => {
         const submitBtn = form.querySelector('button[type="submit"]');
         if (submitBtn) {
           submitBtn.disabled = false;
-          if (submitBtn.innerHTML.includes('Processing')) {
-            submitBtn.innerHTML = submitBtn.innerHTML.replace('<i class="fas fa-spinner fa-spin me-1"></i>Processing...', submitBtn.getAttribute('data-original-text') || 'Submit');
-          }
+          const orig = submitBtn.getAttribute('data-original-text');
+          if (orig) submitBtn.innerHTML = orig;
         }
       });
     });

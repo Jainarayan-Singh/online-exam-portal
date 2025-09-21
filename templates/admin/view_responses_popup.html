@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Detailed Responses - Admin Portal</title>
+
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" rel="stylesheet"/>
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet"/>
+
+  <!-- MathJax Configuration - FIXED -->
+  <script>
+  window.MathJax = {
+    tex: {
+      inlineMath: [['$', '$'], ['\\(', '\\)']],
+      displayMath: [['$$','$$'], ['\\[','\\]']],
+      processEscapes: true,
+      processEnvironments: true
+    },
+    options: { 
+      skipHtmlTags: ['script','noscript','style','textarea','pre','code'],
+      ignoreHtmlClass: 'tex2jax_ignore',
+      processHtmlClass: 'tex2jax_process|math-content'
+    },
+    startup: {
+      typeset: false
+    }
+  };
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js" id="MathJax-script" async></script>
+
+  <style>
+    /* layout + theme (kept visual design similar to your original) */
+    body { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; min-height: 100vh; margin:0; padding:1rem 0; }
+
+    .responses-container { background:white; border-radius:15px; box-shadow:0 10px 30px rgba(0,0,0,0.2); overflow:visible; max-width:1100px; margin:0 auto; padding-bottom:1rem; position:relative; }
+
+    .responses-header { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:2rem; text-align:center; border-top-left-radius:15px; border-top-right-radius:15px; }
+    .responses-title { font-size:2rem; font-weight:700; margin:0; text-shadow:0 2px 4px rgba(0,0,0,0.1); }
+    .responses-subtitle { opacity:.9; margin:.5rem 0 0 0; }
+
+    .summary-section { background:#f8f9fa; padding:1.5rem; border-bottom:1px solid #dee2e6; }
+    .summary-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:1rem; text-align:center; }
+    .summary-item { background:white; padding:1rem; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.1); }
+    .summary-number { font-size:1.5rem; font-weight:700; color:#667eea; margin:0; }
+    .summary-label { color:#6c757d; font-size:.9rem; margin:0; }
+
+    .responses-body { padding:1rem; max-height:none; overflow:visible; }
+
+    .question-card { background:white; border:2px solid #e9ecef; border-radius:12px; margin-bottom:1.5rem; overflow:visible; transition:all .3s ease; }
+    .question-card.correct { border-color:#28a745; box-shadow:0 4px 15px rgba(40,167,69,.2); }
+    .question-card.incorrect { border-color:#dc3545; box-shadow:0 4px 15px rgba(220,53,69,.2); }
+    .question-card.unanswered { border-color:#6c757d; box-shadow:0 4px 15px rgba(108,117,125,.2); }
+
+    .question-header { background:linear-gradient(135deg,#f8f9fa 0%,#e9ecef 100%); padding:1rem 1.5rem; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; }
+    .question-number { background:linear-gradient(135deg,#667eea 0%,#764ba2 100%); color:white; padding:.5rem 1rem; border-radius:20px; font-weight:700; font-size:.9rem; }
+    .answer-status { padding:.4rem 1rem; border-radius:20px; font-size:.8rem; font-weight:600; text-transform:uppercase; }
+    .answer-status.correct { background:#28a745; color:white; }
+    .answer-status.incorrect { background:#dc3545; color:white; }
+    .answer-status.unanswered { background:#6c757d; color:white; }
+
+    .question-content { padding:1.5rem; }
+    .question-text { background:#f8f9fa; padding:1rem; border-radius:8px; border-left:4px solid #667eea; margin-bottom:1.5rem; font-weight:500; }
+    .answers-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1rem; margin-bottom:1rem; }
+    .answer-box { padding:1rem; border-radius:8px; border:2px solid #e9ecef; transition:all .3s ease; }
+    .answer-box.user-answer { border-color:#007bff; background:rgba(0,123,255,.1); }
+    .answer-box.correct-answer { border-color:#28a745; background:rgba(40,167,69,.1); }
+    .answer-box.user-answer.correct { border-color:#28a745; background:rgba(40,167,69,.2); }
+    .answer-box.user-answer.incorrect { border-color:#dc3545; background:rgba(220,53,69,.1); }
+
+    .answer-label { font-weight:600; color:#495057; margin-bottom:.5rem; display:flex; align-items:center; gap:.5rem; }
+    .answer-text { margin:0; line-height:1.5; }
+    .explanation-section { background:#e7f3ff; border:2px solid #b3d7ff; border-radius:8px; padding:1rem; margin-top:1rem; }
+    .explanation-label { font-weight:600; color:#0066cc; margin-bottom:.5rem; display:flex; align-items:center; gap:.5rem; }
+
+    .filter-section { background:#e9ecef; padding:1rem 1.5rem; border-bottom:1px solid #dee2e6; display:flex; gap:1rem; align-items:center; flex-wrap:wrap; }
+    .filter-btn { padding:.5rem 1rem; border:1px solid #dee2e6; background:white; border-radius:6px; cursor:pointer; transition:all .3s ease; }
+    .filter-btn:hover { background:#f8f9fa; }
+    .filter-btn.active { background:#667eea; color:white; border-color:#667eea; }
+
+    .no-results { text-align:center; padding:1.5rem; color:#6c757d; font-style:italic; display:none; }
+
+    /* Math content styling */
+    .math-content { 
+      line-height: 1.6; 
+      overflow-wrap: break-word; 
+      word-wrap: break-word;
+    }
+
+    /* Floating toolbar (top-right) */
+    .floating-toolbar {
+      position: fixed;
+      top: 18px;
+      right: 18px;
+      z-index: 1100;
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      background: rgba(255,255,255,0.95);
+      padding: 6px;
+      border-radius: 10px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.16);
+      border: 1px solid rgba(0,0,0,0.06);
+      backdrop-filter: blur(4px);
+    }
+    .toolbar-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: none;
+      background: #fff;
+      cursor: pointer;
+      font-weight: 600;
+      color: #333;
+    }
+    .toolbar-btn .fa { font-size: 16px; }
+    .toolbar-btn.primary { background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); color: #fff; }
+    .toolbar-btn.secondary { background: #f1f1f1; color: #333; }
+
+    @media (max-width: 600px) {
+      .floating-toolbar { right: 8px; left: 8px; justify-content: center; }
+      .toolbar-btn span { display: none; } /* show icons only on small */
+    }
+
+    @media print {
+      .floating-toolbar { display:none !important; }
+      .filter-section, .actions-section { display:none !important; }
+      .question-card { page-break-inside: avoid; break-inside: avoid; }
+    }
+  </style>
+</head>
+<body>
+  <!-- Floating toolbar (always visible) -->
+  <div class="floating-toolbar" role="toolbar" aria-label="Response actions">
+    <button class="toolbar-btn primary" onclick="doPrint()" aria-label="Print responses"><i class="fa fa-print"></i><span> Print</span></button>
+    <!-- optional download button (if you implement server PDF for responses) -->
+    <!-- <button class="toolbar-btn secondary" onclick="downloadResponses()" aria-label="Download responses PDF"><i class="fa fa-download"></i><span> Download</span></button> -->
+    <button class="toolbar-btn secondary" onclick="closeWindow()" aria-label="Close window"><i class="fa fa-times"></i><span> Close</span></button>
+  </div>
+
+  <div class="container-fluid">
+    <div class="responses-container" id="responsesContainer">
+      {% if responses and result and exam and user %}
+        <div class="responses-header">
+          <h1 class="responses-title"><i class="fas fa-clipboard-list me-3"></i> Detailed Responses</h1>
+          <p class="responses-subtitle">{{ user.username }} - {{ exam.name }}</p>
+        </div>
+
+        <div class="summary-section">
+          <div class="summary-grid">
+            <div class="summary-item">
+              <h3 class="summary-number">{{ result.score }}/{{ result.max_score }}</h3>
+              <p class="summary-label">Final Score</p>
+            </div>
+            <div class="summary-item">
+              <h3 class="summary-number">{{ "%.1f"|format(result.percentage) }}%</h3>
+              <p class="summary-label">Percentage</p>
+            </div>
+            <div class="summary-item">
+              <h3 class="summary-number">{{ result.grade }}</h3>
+              <p class="summary-label">Grade</p>
+            </div>
+            <div class="summary-item">
+              <h3 class="summary-number">{{ responses|length }}</h3>
+              <p class="summary-label">Questions</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="filter-section">
+          <span class="fw-bold">Filter by status:</span>
+          <button id="btn-all" class="filter-btn active" data-status="all" onclick="filterResponses(this,'all')">All</button>
+          <button id="btn-correct" class="filter-btn" data-status="correct" onclick="filterResponses(this,'correct')"><i class="fas fa-check me-1"></i>Correct</button>
+          <button id="btn-incorrect" class="filter-btn" data-status="incorrect" onclick="filterResponses(this,'incorrect')"><i class="fas fa-times me-1"></i>Incorrect</button>
+          <button id="btn-unanswered" class="filter-btn" data-status="unanswered" onclick="filterResponses(this,'unanswered')"><i class="fas fa-question me-1"></i>Unanswered</button>
+        </div>
+
+        <div class="responses-body" id="responsesBody">
+          {% for response in responses %}
+          <div class="question-card {{ response.status }}" data-status="{{ response.status }}">
+            <div class="question-header">
+              <div class="question-number"><i class="fas fa-question-circle me-2"></i> Question {{ loop.index }}</div>
+              <div class="answer-status {{ response.status }}">
+                {% if response.status == 'correct' %}
+                  <i class="fas fa-check-circle me-1"></i>Correct
+                {% elif response.status == 'incorrect' %}
+                  <i class="fas fa-times-circle me-1"></i>Incorrect
+                {% else %}
+                  <i class="fas fa-question-circle me-1"></i>Unanswered
+                {% endif %}
+              </div>
+            </div>
+
+            <div class="question-content">
+              <div class="question-text">
+                <strong>Question:</strong>
+                <div class="math-content">{{ response.question_text|safe }}</div>
+              </div>
+
+              <div class="answers-grid">
+                <div class="answer-box {% if response.user_answer %}user-answer {{ response.status }}{% endif %}">
+                  <div class="answer-label"><i class="fas fa-user me-1"></i> Student's Answer:</div>
+                  <p class="answer-text">
+                    {% if response.user_answer %}
+                      <span class="math-content">{{ response.user_answer|safe }}</span>
+                    {% else %}
+                      <em style="color:#6c757d;">Not answered</em>
+                    {% endif %}
+                  </p>
+                </div>
+
+                <div class="answer-box correct-answer">
+                  <div class="answer-label"><i class="fas fa-check-circle me-1"></i> Correct Answer:</div>
+                  <p class="answer-text"><span class="math-content">{{ response.correct_answer|safe }}</span></p>
+                </div>
+              </div>
+
+              {% if response.explanation %}
+              <div class="explanation-section">
+                <div class="explanation-label"><i class="fas fa-lightbulb me-1"></i> Explanation:</div>
+                <p class="answer-text"><span class="math-content">{{ response.explanation|safe }}</span></p>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+          {% endfor %}
+
+          <div id="noResultsMessage" class="no-results">No questions match the selected filter.</div>
+        </div>
+
+      {% else %}
+        <div class="responses-body">
+          <div class="error-state">
+            <div class="error-icon"><i class="fas fa-exclamation-triangle"></i></div>
+            <h4>Responses Not Found</h4>
+            <p>The requested responses could not be loaded. The data may be missing or you may not have permission to view it.</p>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <script>
+    // MathJax initialization and typeset - FIXED
+    document.addEventListener('DOMContentLoaded', () => {
+      // Wait for MathJax to be ready
+      if (window.MathJax) {
+        MathJax.startup.promise.then(() => {
+          console.log('MathJax is ready');
+          return MathJax.typesetPromise();
+        }).catch((err) => {
+          console.error('MathJax startup error:', err);
+        });
+      } else {
+        // If MathJax isn't loaded yet, wait for it
+        const checkMathJax = setInterval(() => {
+          if (window.MathJax && window.MathJax.typesetPromise) {
+            clearInterval(checkMathJax);
+            MathJax.typesetPromise().catch((err) => {
+              console.error('MathJax typeset error:', err);
+            });
+          }
+        }, 100);
+        
+        // Clear interval after 5 seconds to avoid infinite loop
+        setTimeout(() => clearInterval(checkMathJax), 5000);
+      }
+    });
+
+    // Helper function to re-render MathJax
+    function renderMathJax() {
+      if (window.MathJax && window.MathJax.typesetPromise) {
+        MathJax.typesetPromise().catch((err) => {
+          console.error('MathJax re-render failed:', err);
+        });
+      }
+    }
+
+    // Print helpers: expand content to ensure full print (safe across browsers)
+    const responsesBody = document.getElementById('responsesBody');
+    let savedBodyStyle = null;
+
+    function expandForPrint() {
+      if (!responsesBody) return;
+      savedBodyStyle = {
+        maxHeight: responsesBody.style.maxHeight,
+        overflowY: responsesBody.style.overflowY
+      };
+      responsesBody.style.maxHeight = 'none';
+      responsesBody.style.overflowY = 'visible';
+      document.documentElement.style.height = 'auto';
+      document.body.style.height = 'auto';
+    }
+
+    function restoreAfterPrint() {
+      if (!responsesBody || !savedBodyStyle) return;
+      responsesBody.style.maxHeight = savedBodyStyle.maxHeight || '';
+      responsesBody.style.overflowY = savedBodyStyle.overflowY || '';
+      savedBodyStyle = null;
+    }
+
+    // universal print wrapper
+    function doPrint() {
+      expandForPrint();
+      setTimeout(() => {
+        try {
+          window.print();
+        } finally {
+          // restore after a delay if browser doesn't fire afterprint
+          setTimeout(restoreAfterPrint, 500);
+        }
+      }, 120);
+    }
+
+    // ensure beforeprint/afterprint hooks also handled
+    if (window.matchMedia) {
+      window.addEventListener('beforeprint', expandForPrint);
+      window.addEventListener('afterprint', restoreAfterPrint);
+    } else {
+      window.onbeforeprint = expandForPrint;
+      window.onafterprint = restoreAfterPrint;
+    }
+
+    function closeWindow() {
+      // if opened as window, this closes it; fallback to history back
+      try { window.close(); } catch(e) {}
+      try { history.back(); } catch(e) {}
+    }
+
+    // reuse filter logic (ensure available)
+    function normalizeStatus(raw) {
+      if (raw === undefined || raw === null) return 'unanswered';
+      const s = String(raw).toLowerCase().trim();
+      if (s === '' || s === 'none' || s === 'na' || s === 'n/a') return 'unanswered';
+      if (s === 'wrong' || s === 'false' || s === '0') return 'incorrect';
+      if (s === 'right' || s === 'true' || s === '1') return 'correct';
+      if (['correct','incorrect','unanswered'].includes(s)) return s;
+      if (s.includes('incorrect') || s.includes('wrong') || s.includes('false')) return 'incorrect';
+      if (s.includes('correct') || s.includes('right') || s.includes('true')) return 'correct';
+      return 'unanswered';
+    }
+
+    function filterResponses(button, status) {
+      document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+      if (button && button.classList) button.classList.add('active');
+
+      const cards = Array.from(document.querySelectorAll('.question-card'));
+      let visibleCount = 0;
+      const wanted = (status || 'all').toLowerCase();
+
+      cards.forEach(card => {
+        const raw = card.dataset.status;
+        const ns = normalizeStatus(raw);
+        let show = false;
+        if (wanted === 'all') show = true;
+        else if (wanted === 'unanswered') show = (ns === 'unanswered');
+        else if (wanted === 'correct') show = (ns === 'correct');
+        else if (wanted === 'incorrect') show = (ns === 'incorrect');
+        else show = true;
+        card.style.display = show ? 'block' : 'none';
+        if (show) visibleCount++;
+      });
+
+      const noMsg = document.getElementById('noResultsMessage');
+      if (noMsg) noMsg.style.display = (visibleCount === 0) ? 'block' : 'none';
+
+      // Re-render MathJax after filtering
+      setTimeout(renderMathJax, 50);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const allBtn = document.querySelector('.filter-btn[data-status="all"]');
+      if (allBtn) filterResponses(allBtn, 'all');
+      const noMsg = document.getElementById('noResultsMessage');
+      if (noMsg) noMsg.style.display = 'none';
+    });
+  </script>
+</body>
+</html>

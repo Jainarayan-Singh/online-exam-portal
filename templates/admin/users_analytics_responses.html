@@ -1,0 +1,531 @@
+<style>
+/* Responses Tab Specific Styles */
+.responses-header {
+    background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+    color: white;
+    padding: 1.5rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+}
+
+.response-card {
+    background: white;
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    overflow: hidden;
+    transition: transform 0.3s ease;
+}
+
+.response-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+}
+
+.response-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 1.5rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.response-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.response-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    margin: 0;
+}
+
+.response-subtitle {
+    opacity: 0.9;
+    margin: 0;
+    font-size: 0.9rem;
+}
+
+.response-stats {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.stat-item {
+    background: rgba(255,255,255,0.2);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.response-body {
+    padding: 0;
+}
+
+.question-response {
+    border-bottom: 1px solid #e9ecef;
+    padding: 1.5rem;
+}
+
+.question-response:last-child {
+    border-bottom: none;
+}
+
+.question-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.question-number {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.9rem;
+}
+
+.answer-status {
+    padding: 0.4rem 1rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.answer-status.correct {
+    background: #28a745;
+    color: white;
+}
+
+.answer-status.incorrect {
+    background: #dc3545;
+    color: white;
+}
+
+.answer-status.unanswered {
+    background: #6c757d;
+    color: white;
+}
+
+.question-content {
+    margin-bottom: 1rem;
+}
+
+.question-text {
+    background: #f8f9fa;
+    padding: 1rem;
+    border-radius: 8px;
+    border-left: 4px solid #667eea;
+    margin-bottom: 1rem;
+}
+
+.answers-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.answer-box {
+    padding: 1rem;
+    border-radius: 8px;
+    border: 2px solid #e9ecef;
+    transition: all 0.3s ease;
+}
+
+.answer-box.user-answer {
+    border-color: #007bff;
+    background: rgba(0, 123, 255, 0.1);
+}
+
+.answer-box.correct-answer {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.1);
+}
+
+.answer-box.user-answer.correct-answer {
+    border-color: #28a745;
+    background: rgba(40, 167, 69, 0.2);
+}
+
+.answer-box.user-answer.incorrect {
+    border-color: #dc3545;
+    background: rgba(220, 53, 69, 0.1);
+}
+
+.answer-label {
+    font-weight: 600;
+    color: #495057;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.answer-text {
+    margin: 0;
+    line-height: 1.5;
+}
+
+.explanation-section {
+    background: #e7f3ff;
+    border: 2px solid #b3d7ff;
+    border-radius: 8px;
+    padding: 1rem;
+    margin-top: 1rem;
+}
+
+.explanation-label {
+    font-weight: 600;
+    color: #0066cc;
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Search and Filter for Responses */
+.responses-filters {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.search-group {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
+}
+
+.quick-filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.quick-filter-btn {
+    padding: 0.5rem 1rem;
+    border: 2px solid #e9ecef;
+    background: white;
+    color: #495057;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.quick-filter-btn:hover {
+    border-color: #667eea;
+    color: #667eea;
+}
+
+.quick-filter-btn.active {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-color: transparent;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .response-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .answers-section {
+        grid-template-columns: 1fr;
+    }
+    
+    .question-header {
+        flex-direction: column;
+        text-align: center;
+    }
+    
+    .search-group {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="responses-content">
+    <!-- Filters Section -->
+    <div class="responses-filters">
+        <h5 class="mb-3"><i class="fas fa-search me-2"></i>Search Responses</h5>
+        <div class="search-group">
+            <div class="filter-group">
+                <label class="filter-label">User</label>
+                <select class="filter-input" id="responseUserFilter">
+                    <option value="">All Users</option>
+                    {% for user in users %}
+                    <option value="{{ user.id }}">{{ user.username }} ({{ user.full_name }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Exam</label>
+                <select class="filter-input" id="responseExamFilter">
+                    <option value="">All Exams</option>
+                    {% for exam in exams %}
+                    <option value="{{ exam.id }}">{{ exam.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Result ID</label>
+                <input type="number" class="filter-input" id="resultIdFilter" placeholder="Enter result ID">
+            </div>
+            <div class="filter-group">
+                <div class="filter-actions">
+                    <button class="btn-filter primary" onclick="searchResponses()">
+                        <i class="fas fa-search"></i> Search
+                    </button>
+                    <button class="btn-filter secondary" onclick="clearResponseFilters()">
+                        <i class="fas fa-times"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="quick-filters">
+            <span class="filter-label me-3">Quick Filters:</span>
+            <button class="quick-filter-btn" onclick="filterByStatus('correct')">
+                <i class="fas fa-check-circle"></i> Correct Only
+            </button>
+            <button class="quick-filter-btn" onclick="filterByStatus('incorrect')">
+                <i class="fas fa-times-circle"></i> Incorrect Only
+            </button>
+            <button class="quick-filter-btn" onclick="filterByStatus('unanswered')">
+                <i class="fas fa-question-circle"></i> Unanswered Only
+            </button>
+            <button class="quick-filter-btn active" onclick="filterByStatus('all')">
+                <i class="fas fa-list"></i> Show All
+            </button>
+        </div>
+    </div>
+
+    <!-- Responses List -->
+    <div id="responsesList">
+        {% if responses_data %}
+            {% for response_group in responses_data %}
+            <div class="response-card" data-result-id="{{ response_group.result_id }}">
+                <div class="response-header">
+                    <div class="response-info">
+                        <h4 class="response-title">{{ response_group.username }} - {{ response_group.exam_name }}</h4>
+                        <p class="response-subtitle">
+                            <i class="fas fa-calendar me-2"></i>{{ response_group.exam_date }}
+                            <i class="fas fa-user ms-3 me-2"></i>{{ response_group.full_name }}
+                        </p>
+                    </div>
+                    <div class="response-stats">
+                        <div class="stat-item">
+                            <i class="fas fa-trophy me-1"></i>
+                            {{ response_group.score }}/{{ response_group.max_score }}
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-percentage me-1"></i>
+                            {{ "%.1f"|format(response_group.percentage) }}%
+                        </div>
+                        <div class="stat-item">
+                            <i class="fas fa-medal me-1"></i>
+                            {{ response_group.grade }}
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="response-body">
+                    {% for response in response_group.responses %}
+                    <div class="question-response" data-question-id="{{ response.question_id }}">
+                        <div class="question-header">
+                            <div class="question-number">
+                                <i class="fas fa-question-circle me-2"></i>Question {{ response.question_number }}
+                            </div>
+                            <div class="answer-status {{ response.status }}">
+                                {% if response.status == 'correct' %}
+                                    <i class="fas fa-check-circle me-1"></i>Correct
+                                {% elif response.status == 'incorrect' %}
+                                    <i class="fas fa-times-circle me-1"></i>Incorrect
+                                {% else %}
+                                    <i class="fas fa-question-circle me-1"></i>Unanswered
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="question-content">
+                            <div class="question-text">
+                                <strong>Question:</strong> {{ response.question_text }}
+                            </div>
+                            
+                            <div class="answers-section">
+                                <div class="answer-box {% if response.user_answer %}user-answer{% endif %} {% if response.user_answer == response.correct_answer %}correct-answer{% elif response.user_answer %}incorrect{% endif %}">
+                                    <div class="answer-label">
+                                        <i class="fas fa-user me-1"></i>
+                                        User's Answer:
+                                    </div>
+                                    <p class="answer-text">
+                                        {% if response.user_answer %}
+                                            {{ response.user_answer }}
+                                        {% else %}
+                                            <em style="color: #6c757d;">Not answered</em>
+                                        {% endif %}
+                                    </p>
+                                </div>
+                                
+                                <div class="answer-box correct-answer">
+                                    <div class="answer-label">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Correct Answer:
+                                    </div>
+                                    <p class="answer-text">{{ response.correct_answer }}</p>
+                                </div>
+                            </div>
+                            
+                            {% if response.explanation %}
+                            <div class="explanation-section">
+                                <div class="explanation-label">
+                                    <i class="fas fa-lightbulb me-1"></i>
+                                    Explanation:
+                                </div>
+                                <p class="answer-text">{{ response.explanation }}</p>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <div class="empty-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <h5>No Responses Found</h5>
+                <p>No detailed responses match your current filters.</p>
+            </div>
+        {% endif %}
+    </div>
+    
+    <!-- Load More Button -->
+    {% if has_more %}
+    <div class="text-center mt-4">
+        <button class="btn btn-primary btn-lg" onclick="loadMoreResponses()">
+            <i class="fas fa-plus-circle me-2"></i>Load More Responses
+        </button>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+let responseFilters = {
+    user: '',
+    exam: '',
+    resultId: '',
+    status: 'all',
+    page: 1
+};
+
+function searchResponses() {
+    responseFilters.user = document.getElementById('responseUserFilter').value;
+    responseFilters.exam = document.getElementById('responseExamFilter').value;
+    responseFilters.resultId = document.getElementById('resultIdFilter').value;
+    responseFilters.page = 1;
+    
+    loadFilteredResponses();
+}
+
+function clearResponseFilters() {
+    document.getElementById('responseUserFilter').value = '';
+    document.getElementById('responseExamFilter').value = '';
+    document.getElementById('resultIdFilter').value = '';
+    
+    responseFilters = {
+        user: '',
+        exam: '',
+        resultId: '',
+        status: 'all',
+        page: 1
+    };
+    
+    // Reset quick filter buttons
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    document.querySelector('.quick-filter-btn[onclick="filterByStatus(\'all\')"]').classList.add('active');
+    
+    loadFilteredResponses();
+}
+
+function filterByStatus(status) {
+    // Update active button
+    document.querySelectorAll('.quick-filter-btn').forEach(btn => {
+        btn.classList.remove('active');
+    });
+    event.target.classList.add('active');
+    
+    responseFilters.status = status;
+    responseFilters.page = 1;
+    
+    loadFilteredResponses();
+}
+
+function loadFilteredResponses() {
+    const params = new URLSearchParams(responseFilters);
+    
+    fetch(`/admin/users-analytics/responses?${params}`)
+        .then(response => response.text())
+        .then(html => {
+            document.getElementById('responsesContent').innerHTML = html;
+        })
+        .catch(error => {
+            console.error('Error loading filtered responses:', error);
+        });
+}
+
+function loadMoreResponses() {
+    responseFilters.page += 1;
+    const params = new URLSearchParams(responseFilters);
+    
+    fetch(`/admin/users-analytics/responses?${params}`)
+        .then(response => response.text())
+        .then(html => {
+            // Append new content instead of replacing
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = html;
+            
+            const newResponses = tempDiv.querySelectorAll('.response-card');
+            const responsesList = document.getElementById('responsesList');
+            
+            newResponses.forEach(card => {
+                responsesList.appendChild(card);
+            });
+            
+            // Update load more button
+            const newLoadMoreSection = tempDiv.querySelector('.text-center');
+            const currentLoadMoreSection = document.querySelector('.text-center');
+            if (currentLoadMoreSection) {
+                if (newLoadMoreSection) {
+                    currentLoadMoreSection.replaceWith(newLoadMoreSection);
+                } else {
+                    currentLoadMoreSection.remove();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error loading more responses:', error);
+        });
+}
+</script>

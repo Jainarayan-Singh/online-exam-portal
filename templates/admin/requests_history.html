@@ -1,0 +1,244 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Requests History{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1 class="page-title">
+    <i class="fas fa-history me-3"></i>Requests History
+  </h1>
+</div>
+
+{% if requests %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table requests-table mb-0">
+        <thead>
+          <tr>
+            <th>Request ID</th>
+            <th>Username</th>
+            <th>Email</th>
+            <th>Current Access</th>
+            <th>Requested Access</th>
+            <th>Request Date</th>
+            <th style="min-width: 130px; text-align: center;">Status</th>
+            <th>Processed By</th>
+            <th>Reason/Details</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for request in requests %}
+          <tr>
+            <td>
+              <span class="fw-bold">#{{ request.request_id }}</span>
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar-sm bg-secondary rounded-circle d-flex align-items-center justify-content-center me-3">
+                  <i class="fas fa-user" style="color: #000000 !important; text-shadow: 0 0 1px #000000, 0 0 2px #000000 !important;"></i>
+                </div>
+                <div>
+                  <div class="fw-bold">{{ request.username }}</div>
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="text-muted">{{ request.email }}</span>
+            </td>
+            <td>
+              {% set current_class = 'user' if request.current_access == 'user' else 'admin' if request.current_access == 'admin' else 'both' %}
+              <span class="access-badge access-{{ current_class }}">
+                {% if request.current_access == 'user' %}User
+                {% elif request.current_access == 'admin' %}Admin
+                {% elif ',' in request.current_access %}User & Admin
+                {% else %}{{ request.current_access|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td>
+              {% set requested_class = 'user' if request.requested_access == 'user' else 'admin' if request.requested_access == 'admin' else 'both' %}
+              <span class="access-badge access-{{ requested_class }}">
+                {% if request.requested_access == 'user' %}User
+                {% elif request.requested_access == 'admin' %}Admin
+                {% elif ',' in request.requested_access %}User & Admin
+                {% else %}{{ request.requested_access|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td>
+              <small class="text-muted">{{ request.request_date }}</small>
+            </td>
+            <td style="text-align: center;">
+              {% if request.status == 'completed' %}
+                <span style="padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; min-width: 110px; justify-content: center; text-align: center; white-space: nowrap; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); letter-spacing: 0.5px; background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%); color: #065f46; border: 1px solid #059669;">
+                  <i class="fas fa-check me-1" style="color: #047857 !important; text-shadow: 0 0 1px #047857, 0 0 2px #047857 !important;"></i>APPROVED
+                </span>
+              {% elif request.status == 'denied' %}
+                <span style="padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; min-width: 110px; justify-content: center; text-align: center; white-space: nowrap; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); letter-spacing: 0.5px; background: linear-gradient(135deg, #fee2e2 0%, #f87171 100%); color: #991b1b; border: 1px solid #ef4444;">
+                  <i class="fas fa-times me-1" style="color: #b91c1c !important; text-shadow: 0 0 1px #b91c1c, 0 0 2px #b91c1c !important;"></i>DENIED
+                </span>
+              {% else %}
+                <span style="padding: 8px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; text-transform: uppercase; display: inline-flex; align-items: center; min-width: 110px; justify-content: center; text-align: center; white-space: nowrap; box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); letter-spacing: 0.5px; background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%); color: #92400e; border: 1px solid #f59e0b;">
+                  <i class="fas fa-clock me-1" style="color: #b45309 !important; text-shadow: 0 0 1px #b45309, 0 0 2px #b45309 !important;"></i>{{ request.status|upper }}
+                </span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="d-flex flex-column">
+                <span class="fw-medium">{{ request.processed_by or 'Admin' }}</span>
+                {% if request.processed_date %}
+                  <small class="text-muted">{{ request.processed_date }}</small>
+                {% endif %}
+              </div>
+            </td>
+            <td>
+              {% if request.reason %}
+                <div class="reason-cell" title="{{ request.reason }}">
+                  {% if request.status == 'completed' %}
+                    <span class="text-success">
+                      <i class="fas fa-check-circle me-1"></i>
+                      {{ request.reason[:50] }}{% if request.reason|length > 50 %}...{% endif %}
+                    </span>
+                  {% else %}
+                    <span class="text-danger">
+                      <i class="fas fa-exclamation-circle me-1"></i>
+                      {{ request.reason[:50] }}{% if request.reason|length > 50 %}...{% endif %}
+                    </span>
+                  {% endif %}
+                </div>
+              {% else %}
+                <span class="text-muted">-</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="fas fa-history"></i>
+      <h4>No Request History</h4>
+      <p class="text-muted">No requests have been processed yet.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 28px 32px;
+  margin: -32px -32px 32px -32px;
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.avatar-sm {
+  width: 32px;
+  height: 32px;
+  font-size: 0.75rem;
+}
+
+.requests-table thead th {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-weight: 700;
+  padding: 16px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+}
+
+.requests-table tbody td {
+  padding: 16px;
+  vertical-align: middle;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.requests-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+}
+
+.access-badge {
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.access-user {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.access-admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.access-both {
+  background: rgba(147, 51, 234, 0.15);
+  color: #7c3aed;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.requests-table th:nth-child(7),
+.requests-table td:nth-child(7) {
+  min-width: 130px;
+  width: 130px;
+  text-align: center;
+}
+
+.reason-cell {
+  max-width: 200px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: help;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+.reason-cell[title]:hover {
+  position: relative;
+}
+
+.reason-cell[title]:hover::after {
+  content: attr(title);
+  position: absolute;
+  bottom: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #000;
+  color: white;
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  white-space: normal;
+  max-width: 300px;
+  z-index: 1000;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+}
+</style>
+{% endblock %}

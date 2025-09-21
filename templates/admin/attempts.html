@@ -1,0 +1,1169 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}Attempts Management{% endblock %}
+
+{% block content %}
+<style>
+  body {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    min-height: 100vh;
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+  
+  .main-container {
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 20px;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+    margin: 20px;
+    padding: 0;
+    overflow: hidden;
+    backdrop-filter: blur(10px);
+  }
+  
+  .page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 40px 30px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .page-header::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 20"><defs><radialGradient id="a" cx="50%" cy="0%" r="100%"><stop offset="0%" stop-color="white" stop-opacity=".1"/><stop offset="100%" stop-color="white" stop-opacity="0"/></radialGradient></defs><ellipse cx="50" cy="0" rx="50" ry="20" fill="url(%23a)"/></svg>');
+    background-size: cover;
+  }
+  
+  .header-content {
+    position: relative;
+    z-index: 1;
+    text-align: center;
+  }
+  
+  .page-title {
+    margin: 0;
+    font-size: 2.5rem;
+    font-weight: 700;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+  }
+  
+  .page-subtitle {
+    margin: 10px 0 0 0;
+    font-size: 1.1rem;
+    opacity: 0.9;
+    font-weight: 400;
+  }
+  
+  .controls-section {
+    background: #f8fafc;
+    padding: 30px;
+    border-bottom: 1px solid #e2e8f0;
+    position: relative;
+  }
+  
+  .filter-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+  }
+  
+  .filter-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: #1a202c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .active-filters {
+    background: #e6fffa;
+    color: #065f46;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: none;
+  }
+  
+  .filter-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-bottom: 25px;
+  }
+  
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .filter-label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #374151;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+    background: white;
+    font-size: 0.95rem;
+  }
+  
+  .form-control:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+    outline: none;
+    transform: translateY(-1px);
+  }
+  
+  .filter-actions {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .btn {
+    border: none;
+    border-radius: 12px;
+    padding: 12px 24px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .btn-primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+  }
+  
+  .btn-primary:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(102, 126, 234, 0.4);
+  }
+  
+  .btn-secondary {
+    background: #6c757d;
+    color: white;
+    box-shadow: 0 4px 15px rgba(108, 117, 125, 0.2);
+  }
+  
+  .btn-secondary:hover:not(:disabled) {
+    background: #5a6268;
+    transform: translateY(-2px);
+  }
+  
+  .btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none !important;
+  }
+  
+  .loading-spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+  }
+  
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+  
+  .table-section {
+    padding: 30px;
+    background: white;
+  }
+  
+  .table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  
+  .table-title {
+    font-size: 1.3rem;
+    font-weight: 700;
+    color: #1a202c;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .results-counter {
+    background: #f0f4f8;
+    color: #2d3748;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+  
+  .table-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 4px 25px rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+    position: relative;
+  }
+  
+  .table-loading {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(255, 255, 255, 0.9);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 10;
+  }
+  
+  .table-loading.show {
+    display: flex;
+  }
+  
+  .loading-content {
+    text-align: center;
+    color: #667eea;
+  }
+  
+  .loading-content .spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid #e2e8f0;
+    border-radius: 50%;
+    border-top-color: #667eea;
+    animation: spin 1s ease-in-out infinite;
+    margin: 0 auto 15px;
+  }
+  
+  .table {
+    margin-bottom: 0;
+    font-size: 0.95rem;
+  }
+  
+  .table thead th {
+    background: linear-gradient(135deg, #2d3748 0%, #1a202c 100%);
+    color: white;
+    border: none;
+    padding: 20px 18px;
+    font-weight: 700;
+    text-transform: uppercase;
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+    position: sticky;
+    top: 0;
+    z-index: 5;
+  }
+  
+  .table tbody tr {
+    transition: all 0.3s ease;
+    border-bottom: 1px solid #e2e8f0;
+  }
+  
+  .table tbody tr:hover {
+    background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
+    transform: translateX(4px);
+  }
+  
+  .table td {
+    padding: 18px;
+    vertical-align: middle;
+    border: none;
+  }
+  
+  .user-info, .exam-info {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .user-badge, .exam-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    display: inline-block;
+    max-width: fit-content;
+  }
+  
+  .exam-badge {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  }
+  
+  .attempts-badge {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    display: inline-block;
+  }
+  
+  .remaining-attempts {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #2d3748;
+  }
+  
+  .remaining-attempts.unlimited {
+    color: #48bb78;
+  }
+  
+  .remaining-attempts.exhausted {
+    color: #e53e3e;
+  }
+  
+  .action-buttons {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  
+  .action-btn {
+    border: none;
+    border-radius: 8px;
+    padding: 8px 12px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+  
+  .action-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+  
+  .btn-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(72, 187, 120, 0.3);
+  }
+  
+  .btn-warning {
+    background: linear-gradient(135deg, #ed8936 0%, #dd6b20 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(237, 137, 54, 0.3);
+  }
+  
+  .btn-info {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+    color: white;
+    box-shadow: 0 2px 8px rgba(66, 153, 225, 0.3);
+  }
+  
+  .action-btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+  }
+  
+  .pagination-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 25px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  .pagination-info {
+    color: #4a5568;
+    font-size: 0.9rem;
+    font-weight: 500;
+  }
+  
+  .pagination-controls {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+  }
+  
+  .modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+  }
+  
+  .modal-content {
+    background: white;
+    margin: 8% auto;
+    padding: 0;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 25px 80px rgba(0, 0, 0, 0.3);
+    animation: modalSlideIn 0.3s ease-out;
+    overflow: hidden;
+  }
+  
+  @keyframes modalSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(-50px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+  
+  .modal-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 25px 30px;
+    position: relative;
+  }
+  
+  .modal-title {
+    margin: 0;
+    font-size: 1.4rem;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .modal-body {
+    padding: 30px;
+  }
+  
+  .modal-message {
+    color: #4a5568;
+    line-height: 1.6;
+    margin-bottom: 20px;
+  }
+  
+  .amount-input-group {
+    margin-top: 20px;
+    padding: 20px;
+    background: #f7fafc;
+    border-radius: 12px;
+    border: 2px solid #e2e8f0;
+  }
+  
+  .modal-footer {
+    display: flex;
+    gap: 12px;
+    justify-content: flex-end;
+    padding: 25px 30px;
+    background: #f7fafc;
+    border-top: 1px solid #e2e8f0;
+  }
+  
+  .toast {
+    position: fixed;
+    top: 25px;
+    right: 25px;
+    z-index: 1100;
+    min-width: 350px;
+    padding: 18px 25px;
+    border-radius: 12px;
+    color: white;
+    font-weight: 600;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+    animation: toastSlideIn 0.4s ease-out;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  
+  @keyframes toastSlideIn {
+    from {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+  
+  .toast-success {
+    background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
+  }
+  
+  .toast-error {
+    background: linear-gradient(135deg, #e53e3e 0%, #c53030 100%);
+  }
+  
+  .toast-info {
+    background: linear-gradient(135deg, #4299e1 0%, #3182ce 100%);
+  }
+  
+  .close-btn {
+    margin-left: auto;
+    font-size: 1.2rem;
+    font-weight: bold;
+    cursor: pointer;
+    opacity: 0.8;
+    transition: opacity 0.3s ease;
+  }
+  
+  .close-btn:hover {
+    opacity: 1;
+  }
+  
+  .empty-state {
+    text-align: center;
+    padding: 60px 30px;
+    color: #a0aec0;
+  }
+  
+  .empty-icon {
+    font-size: 4rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+  }
+  
+  .no-results {
+    display: none;
+  }
+  
+  @media (max-width: 768px) {
+    .filter-row {
+      grid-template-columns: 1fr;
+    }
+    
+    .table-header {
+      flex-direction: column;
+      gap: 15px;
+      align-items: flex-start;
+    }
+    
+    .pagination-container {
+      flex-direction: column;
+      gap: 15px;
+    }
+    
+    .action-buttons {
+      flex-direction: column;
+    }
+  }
+</style>
+
+<div class="main-container">
+  <div class="page-header">
+    <div class="header-content">
+      <h1 class="page-title">
+        <i class="fas fa-users-cog"></i>
+        Attempts Management
+      </h1>
+      <p class="page-subtitle">Manage user exam attempts and restrictions efficiently</p>
+    </div>
+  </div>
+
+  <div class="controls-section">
+    <div class="filter-header">
+      <h3 class="filter-title">
+        <i class="fas fa-filter"></i>
+        Advanced Filters
+      </h3>
+      <div class="active-filters" id="activeFilters">
+        <i class="fas fa-check-circle"></i>
+        Filters Applied
+      </div>
+    </div>
+    
+    <div class="filter-row">
+      <div class="filter-group">
+        <label class="filter-label">
+          <i class="fas fa-user"></i>
+          User Filter
+        </label>
+        <input type="text" id="userFilter" class="form-control" placeholder="Search by username...">
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">
+          <i class="fas fa-file-alt"></i>
+          Exam Filter
+        </label>
+        <input type="text" id="examFilter" class="form-control" placeholder="Search by exam name...">
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">
+          <i class="fas fa-chart-bar"></i>
+          Status Filter
+        </label>
+        <select id="statusFilter" class="form-control">
+          <option value="">All Status</option>
+          <option value="unlimited">Unlimited Attempts</option>
+          <option value="available">Has Remaining</option>
+          <option value="exhausted">No Remaining</option>
+        </select>
+      </div>
+      
+      <div class="filter-group">
+        <label class="filter-label">
+          <i class="fas fa-list"></i>
+          Items Per Page
+        </label>
+        <select id="itemsPerPage" class="form-control">
+          <option value="5">5 items</option>
+          <option value="10" selected>10 items</option>
+          <option value="25">25 items</option>
+          <option value="50">50 items</option>
+          <option value="100">100 items</option>
+          <option value="all">Show All</option>
+        </select>
+      </div>
+    </div>
+    
+    <div class="filter-actions">
+      <button class="btn btn-primary" id="applyFiltersBtn" onclick="applyFilters()">
+        <i class="fas fa-search"></i>
+        Apply Filters
+      </button>
+      <button class="btn btn-secondary" id="clearFiltersBtn" onclick="clearFilters()">
+        <i class="fas fa-times"></i>
+        Clear All
+      </button>
+    </div>
+  </div>
+
+  <div class="table-section">
+    <div class="table-header">
+      <h3 class="table-title">
+        <i class="fas fa-table"></i>
+        Attempts Overview
+      </h3>
+      <div class="results-counter" id="resultsCounter">
+        Showing {{ rows|length }} results
+      </div>
+    </div>
+    
+    <div class="table-container">
+      <div class="table-loading" id="tableLoading">
+        <div class="loading-content">
+          <div class="spinner"></div>
+          <div>Processing request...</div>
+        </div>
+      </div>
+      
+      <table class="table" id="attemptsTable">
+        <thead>
+          <tr>
+            <th><i class="fas fa-user me-2"></i>USER</th>
+            <th><i class="fas fa-file-alt me-2"></i>EXAM</th>
+            <th><i class="fas fa-hashtag me-2"></i>MAX ATTEMPTS</th>
+            <th><i class="fas fa-chart-line me-2"></i>USED</th>
+            <th><i class="fas fa-clock me-2"></i>REMAINING</th>
+            <th><i class="fas fa-cogs me-2"></i>ACTIONS</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          {% for r in rows %}
+          <tr data-user="{{ r.username|lower }}" data-exam="{{ r.exam_name|lower }}" data-status="{% if r.remaining == '∞' %}unlimited{% elif r.remaining == 0 %}exhausted{% else %}available{% endif %}">
+            <td>
+              <div class="user-info">
+                <div class="user-badge">{{ r.username }}</div>
+                <small class="text-muted">ID: {{ r.student_id }}</small>
+              </div>
+            </td>
+            <td>
+              <div class="exam-info">
+                <div class="exam-badge">{{ r.exam_name }}</div>
+                <small class="text-muted">Exam ID: {{ r.exam_id }}</small>
+              </div>
+            </td>
+            <td><strong>{{ r.max_attempts }}</strong></td>
+            <td><span class="attempts-badge">{{ r.attempts_used }}</span></td>
+            <td>
+              <span class="remaining-attempts {% if r.remaining == '∞' %}unlimited{% elif r.remaining == 0 %}exhausted{% endif %}">
+                {{ r.remaining }}
+              </span>
+            </td>
+            <td>
+              <div class="action-buttons">
+                <button class="action-btn btn-success" onclick="openModal('reset', '{{ r.student_id }}', '{{ r.exam_id }}', '{{ r.username }}', '{{ r.exam_name }}')">
+                  <i class="fas fa-redo"></i>Reset
+                </button>
+                <button class="action-btn btn-info" onclick="openModal('increase', '{{ r.student_id }}', '{{ r.exam_id }}', '{{ r.username }}', '{{ r.exam_name }}')">
+                  <i class="fas fa-plus"></i>+1
+                </button>
+                <button class="action-btn btn-warning" onclick="openModal('decrease', '{{ r.student_id }}', '{{ r.exam_id }}', '{{ r.username }}', '{{ r.exam_name }}')">
+                  <i class="fas fa-minus"></i>-1
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      
+      <div class="empty-state no-results" id="noResults">
+        <div class="empty-icon">
+          <i class="fas fa-search"></i>
+        </div>
+        <h4>No Results Found</h4>
+        <p>Try adjusting your filters to see more results.</p>
+      </div>
+      
+      <div class="pagination-container">
+        <div class="pagination-info">
+          <span id="paginationInfo">Showing 1-10 of {{ rows|length }} entries</span>
+        </div>
+        <div class="pagination-controls">
+          <button class="btn btn-secondary" id="prevBtn" onclick="changePage(-1)">
+            <i class="fas fa-chevron-left"></i>Previous
+          </button>
+          <span id="pageInfo" class="mx-3">Page 1</span>
+          <button class="btn btn-secondary" id="nextBtn" onclick="changePage(1)">
+            Next<i class="fas fa-chevron-right ms-1"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Modal -->
+<div id="actionModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2 class="modal-title" id="modalTitle">
+        <i class="fas fa-exclamation-triangle"></i>
+        Confirm Action
+      </h2>
+    </div>
+    <div class="modal-body">
+      <div class="modal-message" id="modalMessage">
+        Are you sure you want to perform this action?
+      </div>
+      <div class="amount-input-group" id="amountInput" style="display: none;">
+        <label for="amount" class="filter-label">
+          <i class="fas fa-hashtag"></i>
+          Amount:
+        </label>
+        <input type="number" id="amount" class="form-control" min="1" value="1">
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal()">
+        <i class="fas fa-times"></i>Cancel
+      </button>
+      <button class="btn btn-primary" id="confirmBtn" onclick="confirmAction()">
+        <i class="fas fa-check"></i>Confirm
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+let filteredRows = [];
+let currentPage = 1;
+let itemsPerPage = 10;
+let currentAction = null;
+let currentStudentId = null;
+let currentExamId = null;
+let isProcessing = false;
+
+// Initialize page
+document.addEventListener('DOMContentLoaded', function() {
+  filteredRows = Array.from(document.querySelectorAll('#tableBody tr'));
+  updatePagination();
+  updateResultsCounter();
+});
+
+// Show loading state
+function showTableLoading() {
+  document.getElementById('tableLoading').classList.add('show');
+}
+
+function hideTableLoading() {
+  document.getElementById('tableLoading').classList.remove('show');
+}
+
+// Filter functions with loading states
+function applyFilters() {
+  if (isProcessing) return;
+  
+  isProcessing = true;
+  const applyBtn = document.getElementById('applyFiltersBtn');
+  const originalContent = applyBtn.innerHTML;
+  
+  // Show loading state
+  applyBtn.innerHTML = '<div class="loading-spinner"></div>Processing...';
+  applyBtn.disabled = true;
+  showTableLoading();
+  
+  // Simulate processing time for better UX
+  setTimeout(() => {
+    const userFilter = document.getElementById('userFilter').value.toLowerCase();
+    const examFilter = document.getElementById('examFilter').value.toLowerCase();
+    const statusFilter = document.getElementById('statusFilter').value;
+    const itemsPerPageValue = document.getElementById('itemsPerPage').value;
+    
+    const allRows = Array.from(document.querySelectorAll('#tableBody tr'));
+    
+    filteredRows = allRows.filter(row => {
+      const userData = row.dataset.user;
+      const examData = row.dataset.exam;
+      const statusData = row.dataset.status;
+      
+      const userMatch = !userFilter || userData.includes(userFilter);
+      const examMatch = !examFilter || examData.includes(examFilter);
+      const statusMatch = !statusFilter || statusData === statusFilter;
+      
+      return userMatch && examMatch && statusMatch;
+    });
+    
+    itemsPerPage = itemsPerPageValue === 'all' ? filteredRows.length : parseInt(itemsPerPageValue);
+    currentPage = 1;
+    
+    updatePagination();
+    updateResultsCounter();
+    updateActiveFiltersIndicator();
+    
+    // Hide loading and restore button
+    hideTableLoading();
+    applyBtn.innerHTML = originalContent;
+    applyBtn.disabled = false;
+    isProcessing = false;
+    
+    showToast(`Filters applied! Showing ${filteredRows.length} results`, 'success');
+  }, 800);
+}
+
+function clearFilters() {
+  if (isProcessing) return;
+  
+  isProcessing = true;
+  const clearBtn = document.getElementById('clearFiltersBtn');
+  const originalContent = clearBtn.innerHTML;
+  
+  clearBtn.innerHTML = '<div class="loading-spinner"></div>Clearing...';
+  clearBtn.disabled = true;
+  showTableLoading();
+  
+  setTimeout(() => {
+    document.getElementById('userFilter').value = '';
+    document.getElementById('examFilter').value = '';
+    document.getElementById('statusFilter').value = '';
+    document.getElementById('itemsPerPage').value = '10';
+    
+    filteredRows = Array.from(document.querySelectorAll('#tableBody tr'));
+    itemsPerPage = 10;
+    currentPage = 1;
+    
+    updatePagination();
+    updateResultsCounter();
+    updateActiveFiltersIndicator();
+    
+    hideTableLoading();
+    clearBtn.innerHTML = originalContent;
+    clearBtn.disabled = false;
+    isProcessing = false;
+    
+    showToast('All filters cleared!', 'info');
+  }, 600);
+}
+
+// Update active filters indicator
+function updateActiveFiltersIndicator() {
+  const userFilter = document.getElementById('userFilter').value;
+  const examFilter = document.getElementById('examFilter').value;
+  const statusFilter = document.getElementById('statusFilter').value;
+  const activeFilters = document.getElementById('activeFilters');
+  
+  const hasFilters = userFilter || examFilter || statusFilter;
+  activeFilters.style.display = hasFilters ? 'block' : 'none';
+}
+
+// Update results counter
+function updateResultsCounter() {
+  const counter = document.getElementById('resultsCounter');
+  const total = filteredRows.length;
+  const allRows = document.querySelectorAll('#tableBody tr').length;
+  
+  if (total === allRows) {
+    counter.textContent = `Showing ${total} results`;
+  } else {
+    counter.textContent = `Showing ${total} of ${allRows} results`;
+  }
+}
+
+// Pagination functions
+function updatePagination() {
+  const totalItems = filteredRows.length;
+  const totalPages = Math.ceil(totalItems / itemsPerPage);
+  const startItem = totalItems > 0 ? (currentPage - 1) * itemsPerPage + 1 : 0;
+  const endItem = Math.min(currentPage * itemsPerPage, totalItems);
+  
+  // Hide all rows first
+  document.querySelectorAll('#tableBody tr').forEach(row => row.style.display = 'none');
+  
+  // Show no results message if no filtered rows
+  const noResults = document.getElementById('noResults');
+  if (totalItems === 0) {
+    noResults.style.display = 'block';
+  } else {
+    noResults.style.display = 'none';
+    
+    // Show only the current page rows
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    filteredRows.slice(startIndex, endIndex).forEach(row => row.style.display = '');
+  }
+  
+  // Update pagination info
+  document.getElementById('paginationInfo').textContent = 
+    totalItems > 0 ? `Showing ${startItem}-${endItem} of ${totalItems} entries` : 'No entries to show';
+  document.getElementById('pageInfo').textContent = `Page ${currentPage} of ${Math.max(1, totalPages)}`;
+  
+  // Update button states
+  document.getElementById('prevBtn').disabled = currentPage === 1;
+  document.getElementById('nextBtn').disabled = currentPage === totalPages || totalPages === 0;
+}
+
+function changePage(direction) {
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const newPage = currentPage + direction;
+  
+  if (newPage >= 1 && newPage <= totalPages) {
+    currentPage = newPage;
+    updatePagination();
+  }
+}
+
+// Modal functions with enhanced styling
+function openModal(action, studentId, examId, username, examName) {
+  currentAction = action;
+  currentStudentId = studentId;
+  currentExamId = examId;
+  
+  const modal = document.getElementById('actionModal');
+  const title = document.getElementById('modalTitle');
+  const message = document.getElementById('modalMessage');
+  const amountInput = document.getElementById('amountInput');
+  const confirmBtn = document.getElementById('confirmBtn');
+  
+  switch(action) {
+    case 'reset':
+      title.innerHTML = '<i class="fas fa-redo"></i> Reset Attempts';
+      message.innerHTML = `
+        <strong>⚠️ This action will reset all attempts for:</strong><br><br>
+        <div style="background: #f7fafc; padding: 15px; border-radius: 8px; margin: 10px 0;">
+          <strong>👤 User:</strong> ${username}<br>
+          <strong>📋 Exam:</strong> ${examName}
+        </div>
+        <em>This action cannot be undone.</em>
+      `;
+      amountInput.style.display = 'none';
+      confirmBtn.className = 'btn btn-primary';
+      confirmBtn.innerHTML = '<i class="fas fa-redo"></i> Reset Attempts';
+      break;
+      
+    case 'increase':
+      title.innerHTML = '<i class="fas fa-plus"></i> Increase Attempts';
+      message.innerHTML = `
+        <strong>📈 Add more attempts for:</strong><br><br>
+        <div style="background: #f0fff4; padding: 15px; border-radius: 8px; margin: 10px 0;">
+          <strong>👤 User:</strong> ${username}<br>
+          <strong>📋 Exam:</strong> ${examName}
+        </div>
+      `;
+      amountInput.style.display = 'block';
+      document.getElementById('amount').value = 1;
+      confirmBtn.className = 'btn btn-primary';
+      confirmBtn.innerHTML = '<i class="fas fa-plus"></i> Add Attempts';
+      break;
+      
+    case 'decrease':
+      title.innerHTML = '<i class="fas fa-minus"></i> Decrease Attempts';
+      message.innerHTML = `
+        <strong>📉 Remove attempts for:</strong><br><br>
+        <div style="background: #fff5f5; padding: 15px; border-radius: 8px; margin: 10px 0;">
+          <strong>👤 User:</strong> ${username}<br>
+          <strong>📋 Exam:</strong> ${examName}
+        </div>
+        <em>This will reduce their available attempts.</em>
+      `;
+      amountInput.style.display = 'block';
+      document.getElementById('amount').value = 1;
+      confirmBtn.className = 'btn btn-primary';
+      confirmBtn.innerHTML = '<i class="fas fa-minus"></i> Remove Attempts';
+      break;
+  }
+  
+  modal.style.display = 'block';
+}
+
+function closeModal() {
+  document.getElementById('actionModal').style.display = 'none';
+}
+
+async function confirmAction() {
+  if (isProcessing) return;
+  
+  isProcessing = true;
+  const confirmBtn = document.getElementById('confirmBtn');
+  const originalContent = confirmBtn.innerHTML;
+  const amount = document.getElementById('amount').value || 1;
+  
+  // Show loading state
+  confirmBtn.innerHTML = '<div class="loading-spinner"></div> Processing...';
+  confirmBtn.disabled = true;
+  
+  try {
+    const response = await fetch("{{ url_for('admin.attempts_modify') }}", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({
+        student_id: currentStudentId,
+        exam_id: currentExamId,
+        action: currentAction,
+        amount: parseInt(amount)
+      })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showToast('Action completed successfully! Page will reload shortly.', 'success');
+      closeModal();
+      setTimeout(() => location.reload(), 2000);
+    } else {
+      showToast('Action failed. Please try again.', 'error');
+      confirmBtn.innerHTML = originalContent;
+      confirmBtn.disabled = false;
+      isProcessing = false;
+    }
+  } catch (error) {
+    showToast('Network error. Please check your connection and try again.', 'error');
+    confirmBtn.innerHTML = originalContent;
+    confirmBtn.disabled = false;
+    isProcessing = false;
+    console.error('Error:', error);
+  }
+}
+
+// Enhanced toast notification function
+function showToast(message, type) {
+  const iconMap = {
+    success: 'fas fa-check-circle',
+    error: 'fas fa-exclamation-circle',
+    info: 'fas fa-info-circle',
+    warning: 'fas fa-exclamation-triangle'
+  };
+  
+  const toast = document.createElement('div');
+  toast.className = `toast toast-${type}`;
+  toast.innerHTML = `
+    <i class="${iconMap[type]}"></i>
+    <span>${message}</span>
+    <span class="close-btn" onclick="this.parentElement.remove()">&times;</span>
+  `;
+  
+  document.body.appendChild(toast);
+  
+  // Auto remove after 5 seconds
+  setTimeout(() => {
+    if (toast.parentElement) {
+      toast.style.animation = 'toastSlideOut 0.3s ease-out forwards';
+      setTimeout(() => toast.remove(), 300);
+    }
+  }, 5000);
+}
+
+// Add slide out animation
+const style = document.createElement('style');
+style.textContent = `
+  @keyframes toastSlideOut {
+    to {
+      opacity: 0;
+      transform: translateX(100px);
+    }
+  }
+`;
+document.head.appendChild(style);
+
+// Close modal when clicking outside
+window.onclick = function(event) {
+  const modal = document.getElementById('actionModal');
+  if (event.target === modal) {
+    closeModal();
+  }
+}
+
+// Add keyboard shortcuts
+document.addEventListener('keydown', function(event) {
+  // Escape key closes modal
+  if (event.key === 'Escape') {
+    closeModal();
+  }
+  
+  // Ctrl/Cmd + F focuses on user filter
+  if ((event.ctrlKey || event.metaKey) && event.key === 'f') {
+    event.preventDefault();
+    document.getElementById('userFilter').focus();
+  }
+});
+
+// Add real-time search
+let searchTimeout;
+document.getElementById('userFilter').addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (this.value.length > 0) {
+      updateActiveFiltersIndicator();
+    }
+  }, 300);
+});
+
+document.getElementById('examFilter').addEventListener('input', function() {
+  clearTimeout(searchTimeout);
+  searchTimeout = setTimeout(() => {
+    if (this.value.length > 0) {
+      updateActiveFiltersIndicator();
+    }
+  }, 300);
+});
+
+document.getElementById('statusFilter').addEventListener('change', updateActiveFiltersIndicator);
+</script>
+{% endblock %}

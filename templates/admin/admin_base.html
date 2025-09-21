@@ -505,48 +505,67 @@
     </div>
     <hr style="border-color: rgba(255,255,255,0.1); margin: 0 -1rem 2rem -1rem;"/>
 
-    <ul class="nav flex-column">
-      <li class="nav-item mb-2">
-        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.dashboard') %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
-          <i class="fas fa-home me-3"></i> Dashboard
-        </a>
-      </li>
-      <li class="nav-item mb-2">
-        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.exams') %}active{% endif %}" href="{{ url_for('admin.exams') }}">
-          <i class="fas fa-file-alt me-3"></i> Exams
-        </a>
-      </li>
-      <li class="nav-item mb-2">
-        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.subjects') %}active{% endif %}" href="{{ url_for('admin.subjects') }}">
-          <i class="fas fa-book me-3"></i> Subjects
-        </a>
-      </li>
-      <li class="nav-item mb-2">
-        <a class="nav-link {% if request.endpoint and (request.endpoint.startswith('admin.questions') or request.endpoint == 'admin.questions_index') %}active{% endif %}" href="{{ url_for('admin.questions_index') }}">
-          <i class="fas fa-question-circle me-3"></i> Questions
-        </a>
-      </li>
-      <li class="nav-item mb-2">
-        <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.upload_images') %}active{% endif %}" href="{{ url_for('admin.upload_images_page') }}">
-          <i class="fas fa-images me-3"></i> Upload Images
-        </a>
-      </li>
-      <li class="nav-item mb-2">
-        <button id="open-latex-editor-admin-base" class="nav-link w-100 text-start">
-          <span class="me-3">∫</span> Open LaTeX Editor
-        </button>
-      </li>
-      <li class="nav-item mb-4">
-        <a class="nav-link publish {% if request.endpoint and request.endpoint.startswith('admin.publish') %}active{% endif %}" href="{{ url_for('admin.publish') }}">
-          <i class="fas fa-bolt me-3"></i> Publish
-        </a>
-      </li>
-      <li class="nav-item mt-4">
-        <a class="nav-link text-danger" href="{{ url_for('admin.logout') }}" style="background: rgba(220, 53, 69, 0.1); border-radius: 10px;">
-          <i class="fas fa-sign-out-alt me-3"></i> Logout
-        </a>
-      </li>
-    </ul>
+<ul class="nav flex-column">
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.dashboard') %}active{% endif %}" href="{{ url_for('admin.dashboard') }}">
+      <i class="fas fa-home me-3"></i> Dashboard
+    </a>
+  </li>
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.exams') %}active{% endif %}" href="{{ url_for('admin.exams') }}">
+      <i class="fas fa-file-alt me-3"></i> Manage Exams
+    </a>
+  </li>
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.subjects') %}active{% endif %}" href="{{ url_for('admin.subjects') }}">
+      <i class="fas fa-book me-3"></i> Manage Subjects
+    </a>
+  </li>
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and (request.endpoint.startswith('admin.questions') or request.endpoint == 'admin.questions_index') %}active{% endif %}" href="{{ url_for('admin.questions_index') }}">
+      <i class="fas fa-question-circle me-3"></i> Manage Questions
+    </a>
+  </li>
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.upload_images') %}active{% endif %}" href="{{ url_for('admin.upload_images_page') }}">
+      <i class="fas fa-images me-3"></i> Upload Images
+    </a>
+  </li>
+  <li class="nav-item mb-2">
+    <button id="open-latex-editor-admin-base" class="nav-link w-100 text-start">
+      <span class="me-3">∫</span> Open LaTeX Editor
+    </button>
+  </li>
+  
+  <!-- NEW: Requests Management Section -->
+  <li class="nav-item mb-2">
+    <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.requests') or request.endpoint.startswith('admin.new_requests') or request.endpoint.startswith('admin.requests_history') %}active{% endif %}" href="{{ url_for('admin.requests_dashboard') }}">
+      <i class="fas fa-user-plus me-3"></i> Users & Requests 
+      <span class="badge bg-dark ms-2" id="requestsBadge" style="font-size: 0.7rem;">0</span>
+    </a>
+  </li>
+  
+  <li class="nav-item">
+    <a class="nav-link" href="{{ url_for('admin.attempts') }}">
+      <i class="fas fa-list-ol me-2"></i> Manage Attempts
+    </a>
+  </li> 
+<li class="nav-item mb-2">
+  <a class="nav-link {% if request.endpoint and request.endpoint.startswith('admin.users_analytics') %}active{% endif %}" href="{{ url_for('admin.users_analytics') }}">
+    <i class="fas fa-chart-line me-3"></i> Users Analytics
+  </a>
+</li>       
+  <li class="nav-item mb-4">
+    <a class="nav-link publish {% if request.endpoint and request.endpoint.startswith('admin.publish') %}active{% endif %}" href="{{ url_for('admin.publish') }}">
+      <i class="fas fa-bolt me-3"></i> Publish
+    </a>
+  </li>
+  <li class="nav-item mt-4">
+    <a class="nav-link text-danger" href="{{ url_for('admin.logout') }}" style="background: rgba(220, 53, 69, 0.1); border-radius: 10px;">
+      <i class="fas fa-sign-out-alt me-3"></i> Logout
+    </a>
+  </li>
+</ul>
   </div>
 
   <!-- Content -->
@@ -690,6 +709,33 @@ document.addEventListener('DOMContentLoaded', function() {
     }
   }, false);
 })();
+</script>
+<script>
+// Auto-update requests badge
+document.addEventListener('DOMContentLoaded', function() {
+    function updateRequestsBadge() {
+        fetch('/admin/api/requests/stats')
+            .then(response => response.json())
+            .then(data => {
+                const badge = document.getElementById('requestsBadge');
+                if (badge) {
+                    badge.textContent = data.pending || 0;
+                    badge.style.display = (data.pending > 0) ? 'inline' : 'none';
+                }
+            })
+            .catch(error => {
+                console.error('Error loading requests stats:', error);
+            });
+    }
+
+    // Update on page load
+    updateRequestsBadge();
+
+    // Update every 30 seconds if on admin pages
+    if (window.location.pathname.startsWith('/admin/')) {
+        setInterval(updateRequestsBadge, 30000);
+    }
+});
 </script>
 </body>
 </html>

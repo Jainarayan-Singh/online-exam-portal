@@ -1,0 +1,1193 @@
+<!-- requests.html - Main dashboard with User Management tab -->
+{% extends "admin/admin_base.html" %}
+{% block title %}Requests Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+      <i class="fas fa-user-plus me-3"></i>Access Requests & User Management
+    </h1>
+    <div class="header-stats" id="requestStats">
+      <span class="badge badge-pending me-2">
+        <i class="fas fa-clock me-1"></i>
+        <span id="pendingCount">-</span> Pending
+      </span>
+      <span class="badge badge-completed me-2">
+        <i class="fas fa-check me-1"></i>
+        <span id="completedCount">-</span> Completed
+      </span>
+      <span class="badge badge-denied">
+        <i class="fas fa-times me-1"></i>
+        <span id="deniedCount">-</span> Denied
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-12">
+    <div class="card">
+      <div class="card-header">
+        <ul class="nav nav-tabs card-header-tabs" id="requestTabs">
+          <li class="nav-item">
+            <a class="nav-link active" id="new-requests-tab" data-bs-toggle="tab" href="#new-requests" role="tab">
+              <i class="fas fa-bell me-2"></i>New Requests
+              <span class="badge badge-pending-small ms-2" id="newRequestsBadge">-</span>
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="history-tab" data-bs-toggle="tab" href="#history" role="tab">
+              <i class="fas fa-history me-2"></i>Requests History
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" id="user-management-tab" data-bs-toggle="tab" href="#user-management" role="tab">
+              <i class="fas fa-users-cog me-2"></i>User Management
+            </a>
+          </li>
+        </ul>
+      </div>
+      <div class="card-body p-0">
+        <div class="tab-content" id="requestTabsContent">
+          <div class="tab-pane fade show active" id="new-requests" role="tabpanel">
+            <div id="newRequestsContainer">
+              <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="history" role="tabpanel">
+            <div id="historyContainer">
+              <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="tab-pane fade" id="user-management" role="tabpanel">
+            <div id="userManagementContainer">
+              <div class="text-center p-4">
+                <div class="spinner-border text-primary" role="status">
+                  <span class="visually-hidden">Loading...</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Approval Modal -->
+<div class="modal fade" id="approvalModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-check-circle me-2"></i>Approve Request
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Select the access level to approve for <strong id="approvalUsername"></strong>:</p>
+        <div class="mb-3">
+          <label class="form-label">Access Level</label>
+          <select class="form-select" id="approvedAccess">
+            <option value="">Choose access level...</option>
+            <option value="user">User</option>
+            <option value="admin">Admin</option>
+            <option value="user,admin">User & Admin</option>
+          </select>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-success" id="confirmApproval">
+          <i class="fas fa-check me-2"></i>Approve Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Denial Modal -->
+<div class="modal fade" id="denialModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          <i class="fas fa-times-circle me-2"></i>Deny Request
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Provide a reason for denying the request from <strong id="denialUsername"></strong>:</p>
+        <div class="mb-3">
+          <label class="form-label">Denial Reason</label>
+          <textarea class="form-control" id="denialReason" rows="3" placeholder="Enter reason for denial..." required></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmDenial">
+          <i class="fas fa-times me-2"></i>Deny Request
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+.page-header {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 28px 32px;
+    margin: -32px -32px 32px -32px;
+    border-radius: 0 0 24px 24px;
+    box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+/* FIXED: Professional badge colors - no yellow */
+.badge {
+    font-size: 0.85rem;
+    padding: 10px 16px;
+    border-radius: 20px;
+    font-weight: 700;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+}
+
+.badge-pending, .badge-pending-small {
+    background: linear-gradient(135deg, #fef3c7 0%, #fbbf24 100%);
+    color: #92400e;
+    border-color: rgba(251, 191, 36, 0.5);
+    box-shadow: 0 4px 15px rgba(251, 191, 36, 0.3);
+    font-weight: 700;
+}
+
+.badge-completed {
+    background: linear-gradient(135deg, #d1fae5 0%, #10b981 100%);
+    color: #065f46;
+    border-color: rgba(16, 185, 129, 0.5);
+    box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);
+    font-weight: 700;
+}
+
+.badge-denied {
+    background: linear-gradient(135deg, #fee2e2 0%, #f87171 100%);
+    color: #991b1b;
+    border-color: rgba(248, 113, 113, 0.5);
+    box-shadow: 0 4px 15px rgba(248, 113, 113, 0.3);
+    font-weight: 700;
+}
+
+.badge-pending-small {
+    font-size: 0.75rem;
+    padding: 4px 8px;
+}
+
+.requests-table {
+    margin: 0;
+}
+
+.requests-table thead th {
+    background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+    color: #2d3748;
+    font-weight: 700;
+    padding: 16px;
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: none;
+}
+
+.requests-table tbody td {
+    padding: 16px;
+    vertical-align: middle;
+    border: none;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.requests-table tbody tr:hover {
+    background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+}
+
+.access-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
+.access-user {
+    background: rgba(59, 130, 246, 0.15);
+    color: #1d4ed8;
+    border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.access-admin {
+    background: rgba(239, 68, 68, 0.15);
+    color: #dc2626;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.access-both {
+    background: rgba(147, 51, 234, 0.15);
+    color: #7c3aed;
+    border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.status-badge {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+/* FIXED: Professional status colors */
+.status-pending {
+    background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+    color: white;
+}
+
+.status-completed {
+    background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+    color: white;
+}
+
+.status-denied {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.action-buttons .btn {
+    padding: 8px 16px;
+    margin: 0 2px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.empty-state {
+    text-align: center;
+    padding: 60px 20px;
+    color: #6b7280;
+}
+
+.empty-state i {
+    font-size: 3rem;
+    margin-bottom: 20px;
+    opacity: 0.5;
+}
+
+/* Loading state indicator */
+.loading-badge {
+    background: linear-gradient(135deg, #e5e7eb 0%, #d1d5db 100%);
+    color: #6b7280;
+    animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Tab improvements */
+.nav-tabs .nav-link {
+    position: relative;
+    border: none;
+    color: #6b7280;
+    font-weight: 600;
+    padding: 16px 24px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    border: none;
+    color: #667eea;
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.nav-tabs .nav-link.active {
+    background: transparent;
+    border: none;
+    color: #667eea;
+    position: relative;
+}
+
+.nav-tabs .nav-link.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 3px 3px 0 0;
+}
+
+/* User Management specific styles */
+.badge-total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.badge-user {
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  color: white;
+  border-color: rgba(0, 210, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+}
+
+.badge-admin {
+  background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+  color: white;
+  border-color: rgba(255, 140, 66, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+}
+
+.badge-both {
+  background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+  color: #2d5d3f;
+  border-color: rgba(168, 230, 207, 0.5);
+  box-shadow: 0 4px 15px rgba(168, 230, 207, 0.3);
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box input {
+  padding-right: 40px;
+  border-radius: 20px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 0.9rem;
+}
+
+.users-table thead th {
+  background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+  color: #2d3748;
+  font-weight: 700;
+  padding: 16px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.users-table tbody td {
+  padding: 16px;
+  vertical-align: middle;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.users-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+}
+
+.role-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+}
+
+.role-user {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.role-both {
+  background: rgba(147, 51, 234, 0.15);
+  color: #7c3aed;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.form-select-sm {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.form-select-sm:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.update-role-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bulk-actions .form-select {
+  min-width: 150px;
+}
+
+/* Animation for role updates */
+.role-updating {
+  animation: pulse 1s infinite;
+}
+
+/* Highlight selected rows */
+.user-row.selected {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+}
+
+.user-row.selected td {
+  border-color: rgba(102, 126, 234, 0.2);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let currentRequestId = null;
+    let statsCache = null; // Cache stats to prevent flickering
+    let userStatsCache = null;
+
+    // FIXED: Load stats immediately with cache
+    loadStatsWithCache();
+    loadNewRequests();
+
+    // Tab switching
+    document.getElementById('history-tab').addEventListener('click', function() {
+        loadRequestsHistory();
+    });
+
+    document.getElementById('new-requests-tab').addEventListener('click', function() {
+        loadNewRequests();
+    });
+
+    // NEW: User Management tab
+    document.getElementById('user-management-tab').addEventListener('click', function() {
+        loadUserManagement();
+    });
+
+    // Modal handlers
+    document.getElementById('confirmApproval').addEventListener('click', handleApproval);
+    document.getElementById('confirmDenial').addEventListener('click', handleDenial);
+
+    // FIXED: Stats loading with caching to prevent flickering
+    function loadStatsWithCache() {
+        // Show cached values immediately if available
+        if (statsCache) {
+            updateStatsDisplay(statsCache);
+        }
+
+        fetch('/admin/api/requests/stats')
+            .then(response => response.json())
+            .then(data => {
+                statsCache = data;
+                updateStatsDisplay(data);
+            })
+            .catch(error => {
+                console.error('Error loading stats:', error);
+                // Keep showing cached data if available
+                if (!statsCache) {
+                    // Only show error state if no cache available
+                    document.getElementById('pendingCount').textContent = 'Error';
+                    document.getElementById('completedCount').textContent = 'Error';
+                    document.getElementById('deniedCount').textContent = 'Error';
+                    document.getElementById('newRequestsBadge').textContent = 'Error';
+                }
+            });
+    }
+
+    // FIXED: Separate function to update display without flickering
+    function updateStatsDisplay(data) {
+        const pendingCount = document.getElementById('pendingCount');
+        const completedCount = document.getElementById('completedCount');
+        const deniedCount = document.getElementById('deniedCount');
+        const newRequestsBadge = document.getElementById('newRequestsBadge');
+
+        // Only update if values actually changed
+        if (pendingCount.textContent !== String(data.pending)) {
+            pendingCount.textContent = data.pending;
+        }
+        if (completedCount.textContent !== String(data.completed)) {
+            completedCount.textContent = data.completed;
+        }
+        if (deniedCount.textContent !== String(data.denied)) {
+            deniedCount.textContent = data.denied;
+        }
+        if (newRequestsBadge.textContent !== String(data.pending)) {
+            newRequestsBadge.textContent = data.pending;
+        }
+
+        // Hide badge if no pending requests
+        if (data.pending === 0) {
+            newRequestsBadge.style.display = 'none';
+        } else {
+            newRequestsBadge.style.display = 'inline';
+        }
+    }
+
+    function loadNewRequests() {
+        const container = document.getElementById('newRequestsContainer');
+        container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+        fetch('/admin/requests/new')
+            .then(response => response.text())
+            .then(html => {
+                // Extract table content from the response
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const tableContainer = doc.querySelector('.table-responsive') || doc.querySelector('table')?.parentElement;
+                
+                if (tableContainer) {
+                    container.innerHTML = tableContainer.outerHTML;
+                    attachActionHandlers();
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-inbox"></i>
+                            <h4>No Pending Requests</h4>
+                            <p>All access requests have been processed.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading new requests:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading requests. Please refresh the page.
+                    </div>
+                `;
+            });
+    }
+
+    function loadRequestsHistory() {
+        const container = document.getElementById('historyContainer');
+        container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+        fetch('/admin/requests/history')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                const tableContainer = doc.querySelector('.table-responsive') || doc.querySelector('table')?.parentElement;
+                
+                if (tableContainer) {
+                    container.innerHTML = tableContainer.outerHTML;
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-history"></i>
+                            <h4>No Request History</h4>
+                            <p>No requests have been processed yet.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading history:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading history. Please refresh the page.
+                    </div>
+                `;
+            });
+    }
+
+    // FIXED: Load User Management tab with proper event listener attachment
+    function loadUserManagement() {
+        const container = document.getElementById('userManagementContainer');
+        container.innerHTML = '<div class="text-center p-4"><div class="spinner-border text-primary" role="status"></div></div>';
+
+        fetch('/admin/users/manage')
+            .then(response => response.text())
+            .then(html => {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(html, 'text/html');
+                
+                // Extract the main content (everything inside content block)
+                const contentDiv = doc.querySelector('.content-wrap') || doc.querySelector('.container-fluid') || doc.body;
+                
+                if (contentDiv) {
+                    // Remove page header if it exists (we have our own)
+                    const pageHeader = contentDiv.querySelector('.page-header');
+                    if (pageHeader) {
+                        pageHeader.remove();
+                    }
+                    
+                    container.innerHTML = contentDiv.innerHTML;
+                    
+                    // FIXED: Properly initialize user management functionality
+                    initializeUserManagement();
+                } else {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-users"></i>
+                            <h4>Unable to Load User Management</h4>
+                            <p>Please try refreshing the page.</p>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error loading user management:', error);
+                container.innerHTML = `
+                    <div class="alert alert-danger m-3">
+                        <i class="fas fa-exclamation-triangle me-2"></i>
+                        Error loading user management. Please refresh the page.
+                    </div>
+                `;
+            });
+    }
+
+    // FIXED: Separate function to initialize user management functionality
+    function initializeUserManagement() {
+        // Load user stats
+        loadUserStatsWithCache();
+        
+        // Role select change handlers
+        document.querySelectorAll('.role-select').forEach(select => {
+            select.addEventListener('change', function() {
+                const userId = this.dataset.userId;
+                const currentRole = this.closest('tr').querySelector('.current-role').dataset.role;
+                const newRole = this.value;
+                const updateBtn = this.closest('tr').querySelector('.update-role-btn');
+                
+                // Enable/disable update button based on role change
+                if (newRole !== currentRole) {
+                    updateBtn.disabled = false;
+                    updateBtn.classList.add('btn-warning');
+                    updateBtn.classList.remove('btn-success');
+                    updateBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Update';
+                } else {
+                    updateBtn.disabled = true;
+                    updateBtn.classList.remove('btn-warning');
+                    updateBtn.classList.add('btn-success');
+                    updateBtn.innerHTML = '<i class="fas fa-save me-1"></i>Update';
+                }
+            });
+        });
+
+        // Individual update buttons
+        document.querySelectorAll('.update-role-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const userId = this.dataset.userId;
+                const username = this.dataset.username;
+                const select = this.closest('tr').querySelector('.role-select');
+                const newRole = select.value;
+                
+                updateUserRole(userId, username, newRole, this);
+            });
+        });
+
+        // Checkbox handlers
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                const checkboxes = document.querySelectorAll('.user-checkbox');
+                const isChecked = this.checked;
+                
+                checkboxes.forEach(checkbox => {
+                    checkbox.checked = isChecked;
+                    toggleRowSelection(checkbox.closest('tr'), isChecked);
+                });
+                
+                updateBulkActionState();
+            });
+        }
+
+        document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+            checkbox.addEventListener('change', function() {
+                toggleRowSelection(this.closest('tr'), this.checked);
+                updateSelectAllState();
+                updateBulkActionState();
+            });
+        });
+
+        // Bulk action buttons
+        const selectAllBtn = document.getElementById('selectAllBtn');
+        if (selectAllBtn) {
+            selectAllBtn.addEventListener('click', function() {
+                const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = true;
+                    selectAllCheckbox.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        const clearSelectionBtn = document.getElementById('clearSelectionBtn');
+        if (clearSelectionBtn) {
+            clearSelectionBtn.addEventListener('click', function() {
+                const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+                if (selectAllCheckbox) {
+                    selectAllCheckbox.checked = false;
+                    selectAllCheckbox.dispatchEvent(new Event('change'));
+                }
+            });
+        }
+
+        const bulkRoleSelect = document.getElementById('bulkRoleSelect');
+        if (bulkRoleSelect) {
+            bulkRoleSelect.addEventListener('change', updateBulkActionState);
+        }
+
+        const applyBulkUpdate = document.getElementById('applyBulkUpdate');
+        if (applyBulkUpdate) {
+            applyBulkUpdate.addEventListener('click', function() {
+                const selectedUsers = getSelectedUsers();
+                const newRole = document.getElementById('bulkRoleSelect').value;
+                
+                if (selectedUsers.length === 0) {
+                    showAlert('Please select users to update', 'warning');
+                    return;
+                }
+                
+                if (!newRole) {
+                    showAlert('Please select a role to apply', 'warning');
+                    return;
+                }
+                
+                if (confirm(`Are you sure you want to update ${selectedUsers.length} users to ${newRole} role?`)) {
+                    bulkUpdateRoles(selectedUsers, newRole);
+                }
+            });
+        }
+
+        // Search functionality
+        const userSearch = document.getElementById('userSearch');
+        if (userSearch) {
+            userSearch.addEventListener('input', function() {
+                const searchTerm = this.value.toLowerCase();
+                const rows = document.querySelectorAll('.user-row');
+                
+                rows.forEach(row => {
+                    const username = row.querySelector('.user-username')?.textContent?.toLowerCase() || '';
+                    const email = row.querySelector('.user-email')?.textContent?.toLowerCase() || '';
+                    const fullName = row.querySelector('.text-muted')?.textContent?.toLowerCase() || '';
+                    
+                    const matches = username.includes(searchTerm) || 
+                                  email.includes(searchTerm) || 
+                                  fullName.includes(searchTerm);
+                    
+                    row.style.display = matches ? '' : 'none';
+                });
+            });
+        }
+    }
+
+    // User Management Functions
+    function loadUserStatsWithCache() {
+        if (userStatsCache) {
+            updateUserStatsDisplay(userStatsCache);
+        }
+
+        fetch('/admin/api/users/stats')
+            .then(response => response.json())
+            .then(data => {
+                userStatsCache = data;
+                updateUserStatsDisplay(data);
+            })
+            .catch(error => {
+                console.error('Error loading user stats:', error);
+                if (!userStatsCache) {
+                    updateUserStatsDisplay({
+                        total_users: 'Error',
+                        user_role: 'Error',
+                        admin_role: 'Error',
+                        both_roles: 'Error'
+                    });
+                }
+            });
+    }
+
+    function updateUserStatsDisplay(data) {
+        const totalUsers = document.getElementById('totalUsers');
+        const userCount = document.getElementById('userCount');
+        const adminCount = document.getElementById('adminCount');
+        const bothCount = document.getElementById('bothCount');
+
+        if (totalUsers) totalUsers.textContent = data.total_users;
+        if (userCount) userCount.textContent = data.user_role;
+        if (adminCount) adminCount.textContent = data.admin_role;
+        if (bothCount) bothCount.textContent = data.both_roles;
+    }
+
+    function updateUserRole(userId, username, newRole, button) {
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        button.disabled = true;
+
+        fetch('/admin/users/update-role', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                new_role: newRole
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.no_change) {
+                    showAlert(data.message, 'info');
+                } else {
+                    showAlert(data.message, 'success');
+                    updateRowAfterRoleChange(userId, newRole);
+                    loadUserStatsWithCache();
+                }
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalHtml;
+            button.disabled = true;
+            button.classList.remove('btn-warning');
+            button.classList.add('btn-success');
+        });
+    }
+
+    function bulkUpdateRoles(userIds, newRole) {
+        const updates = userIds.map(id => ({ user_id: id, new_role: newRole }));
+        const button = document.getElementById('applyBulkUpdate');
+        const originalHtml = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        button.disabled = true;
+
+        fetch('/admin/users/bulk-update-roles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ updates: updates })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                
+                // Update UI for all updated users
+                userIds.forEach(userId => {
+                    updateRowAfterRoleChange(userId, newRole);
+                });
+                
+                // Clear selections
+                const clearBtn = document.getElementById('clearSelectionBtn');
+                if (clearBtn) clearBtn.click();
+                
+                const bulkSelect = document.getElementById('bulkRoleSelect');
+                if (bulkSelect) bulkSelect.value = '';
+                
+                loadUserStatsWithCache();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalHtml;
+            updateBulkActionState();
+        });
+    }
+
+    function updateRowAfterRoleChange(userId, newRole) {
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        if (!row) return;
+
+        const currentRoleBadge = row.querySelector('.current-role');
+        const roleSelect = row.querySelector('.role-select');
+        const updateBtn = row.querySelector('.update-role-btn');
+
+        // Update current role badge
+        let roleClass, roleIcon, roleText;
+        if (newRole === 'user') {
+            roleClass = 'role-user';
+            roleIcon = 'fas fa-user';
+            roleText = 'User';
+        } else if (newRole === 'admin') {
+            roleClass = 'role-admin';
+            roleIcon = 'fas fa-user-shield';
+            roleText = 'Admin';
+        } else if (newRole === 'user,admin') {
+            roleClass = 'role-both';
+            roleIcon = 'fas fa-user-plus';
+            roleText = 'User & Admin';
+        }
+
+        currentRoleBadge.className = `role-badge ${roleClass} current-role`;
+        currentRoleBadge.dataset.role = newRole;
+        currentRoleBadge.innerHTML = `<i class="${roleIcon} me-1"></i>${roleText}`;
+
+        // Update role select options
+        roleSelect.innerHTML = `
+            <option value="${newRole}" selected>Keep Current</option>
+            ${newRole !== 'user' ? '<option value="user">User</option>' : ''}
+            ${newRole !== 'admin' ? '<option value="admin">Admin</option>' : ''}
+            ${newRole !== 'user,admin' ? '<option value="user,admin">User & Admin</option>' : ''}
+        `;
+
+        // Reset update button
+        updateBtn.disabled = true;
+        updateBtn.classList.remove('btn-warning');
+        updateBtn.classList.add('btn-success');
+        updateBtn.innerHTML = '<i class="fas fa-save me-1"></i>Update';
+
+        // Update timestamp
+        const timestampCell = row.querySelector('td:last-child small');
+        if (timestampCell) {
+            timestampCell.textContent = new Date().toLocaleString();
+        }
+
+        // Add animation effect
+        row.classList.add('role-updating');
+        setTimeout(() => {
+            row.classList.remove('role-updating');
+        }, 1000);
+    }
+
+    function toggleRowSelection(row, isSelected) {
+        if (isSelected) {
+            row.classList.add('selected');
+        } else {
+            row.classList.remove('selected');
+        }
+    }
+
+    function updateSelectAllState() {
+        const allCheckboxes = document.querySelectorAll('.user-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        
+        if (!selectAllCheckbox) return;
+        
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    function updateBulkActionState() {
+        const selectedUsers = getSelectedUsers();
+        const bulkRoleSelect = document.getElementById('bulkRoleSelect');
+        const applyBulkUpdate = document.getElementById('applyBulkUpdate');
+        
+        if (!bulkRoleSelect || !applyBulkUpdate) return;
+        
+        const hasSelection = selectedUsers.length > 0;
+        const hasRole = bulkRoleSelect.value !== '';
+        
+        applyBulkUpdate.disabled = !(hasSelection && hasRole);
+        
+        if (hasSelection) {
+            applyBulkUpdate.innerHTML = `<i class="fas fa-users-cog me-1"></i>Apply to ${selectedUsers.length} Selected`;
+        } else {
+            applyBulkUpdate.innerHTML = '<i class="fas fa-users-cog me-1"></i>Apply to Selected';
+        }
+    }
+
+    function getSelectedUsers() {
+        return Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+    }
+
+    function attachActionHandlers() {
+        // Approve buttons
+        document.querySelectorAll('.approve-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentRequestId = this.dataset.requestId;
+                const username = this.dataset.username;
+                document.getElementById('approvalUsername').textContent = username;
+                new bootstrap.Modal(document.getElementById('approvalModal')).show();
+            });
+        });
+
+        // Deny buttons
+        document.querySelectorAll('.deny-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                currentRequestId = this.dataset.requestId;
+                const username = this.dataset.username;
+                document.getElementById('denialUsername').textContent = username;
+                document.getElementById('denialReason').value = '';
+                new bootstrap.Modal(document.getElementById('denialModal')).show();
+            });
+        });
+    }
+
+    function handleApproval() {
+        const approvedAccess = document.getElementById('approvedAccess').value;
+        
+        if (!approvedAccess) {
+            alert('Please select an access level to approve');
+            return;
+        }
+
+        const btn = document.getElementById('confirmApproval');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        btn.disabled = true;
+
+        fetch(`/admin/requests/approve/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                approved_access: approvedAccess
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('approvalModal')).hide();
+                showAlert(data.message, 'success');
+                // FIXED: Reload stats and requests without flickering
+                loadStatsWithCache();
+                loadNewRequests();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    function handleDenial() {
+        const denialReason = document.getElementById('denialReason').value.trim();
+        
+        if (!denialReason) {
+            alert('Please provide a reason for denial');
+            return;
+        }
+
+        const btn = document.getElementById('confirmDenial');
+        const originalText = btn.innerHTML;
+        btn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Processing...';
+        btn.disabled = true;
+
+        fetch(`/admin/requests/deny/${currentRequestId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                reason: denialReason
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                bootstrap.Modal.getInstance(document.getElementById('denialModal')).hide();
+                showAlert(data.message, 'success');
+                // FIXED: Reload stats and requests without flickering
+                loadStatsWithCache();
+                loadNewRequests();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            btn.innerHTML = originalText;
+            btn.disabled = false;
+        });
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.content-wrap') || document.querySelector('.container-fluid') || document.body;
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // FIXED: Refresh stats every 30 seconds without flickering
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            loadStatsWithCache();
+            // Also refresh user stats if user management is active
+            const userManagementTab = document.getElementById('user-management-tab');
+            if (userManagementTab && userManagementTab.classList.contains('active')) {
+                loadUserStatsWithCache();
+            }
+        }
+    }, 30000);
+});
+</script>
+
+{% endblock %}

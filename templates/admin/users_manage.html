@@ -1,0 +1,753 @@
+{% extends "admin/admin_base.html" %}
+{% block title %}User Management{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <div class="d-flex justify-content-between align-items-center">
+    <h1 class="page-title">
+      <i class="fas fa-users-cog me-3"></i>User Management
+    </h1>
+    <div class="header-stats" id="userStats">
+      <span class="badge badge-total me-2">
+        <i class="fas fa-users me-1"></i>
+        <span id="totalUsers">-</span> Total
+      </span>
+      <span class="badge badge-user me-2">
+        <i class="fas fa-user me-1"></i>
+        <span id="userCount">-</span> Users
+      </span>
+      <span class="badge badge-admin me-2">
+        <i class="fas fa-user-shield me-1"></i>
+        <span id="adminCount">-</span> Admins
+      </span>
+      <span class="badge badge-both">
+        <i class="fas fa-user-plus me-1"></i>
+        <span id="bothCount">-</span> Both
+      </span>
+    </div>
+  </div>
+</div>
+
+<div class="row mb-3">
+  <div class="col-md-8">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center">
+          <div class="bulk-actions me-3">
+            <label class="form-label mb-0 me-2 fw-bold">Bulk Actions:</label>
+            <select class="form-select form-select-sm d-inline-block w-auto me-2" id="bulkRoleSelect">
+              <option value="">Select Role...</option>
+              <option value="user">User</option>
+              <option value="admin">Admin</option>
+              <option value="user,admin">User & Admin</option>
+            </select>
+            <button class="btn btn-primary btn-sm" id="applyBulkUpdate" disabled>
+              <i class="fas fa-users-cog me-1"></i>Apply to Selected
+            </button>
+          </div>
+          <div class="ms-auto">
+            <button class="btn btn-outline-secondary btn-sm" id="selectAllBtn">
+              <i class="fas fa-check-square me-1"></i>Select All
+            </button>
+            <button class="btn btn-outline-secondary btn-sm" id="clearSelectionBtn">
+              <i class="fas fa-square me-1"></i>Clear All
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-md-4">
+    <div class="search-box">
+      <input type="text" class="form-control" id="userSearch" placeholder="Search users...">
+      <i class="fas fa-search search-icon"></i>
+    </div>
+  </div>
+</div>
+
+{% if users %}
+<div class="card">
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table users-table mb-0" id="usersTable">
+        <thead>
+          <tr>
+            <th width="40">
+              <input type="checkbox" id="selectAllCheckbox" class="form-check-input">
+            </th>
+            <th>User Info</th>
+            <th>Email</th>
+            <th>Current Role</th>
+            <th>New Role</th>
+            <th>Actions</th>
+            <th>Last Updated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for user in users %}
+          <tr data-user-id="{{ user.id }}" class="user-row">
+            <td>
+              <input type="checkbox" class="form-check-input user-checkbox" value="{{ user.id }}">
+            </td>
+            <td>
+              <div class="d-flex align-items-center">
+                <div class="avatar-md bg-primary rounded-circle d-flex align-items-center justify-content-center me-3">
+                  <i class="fas fa-user text-white"></i>
+                </div>
+                <div>
+                  <div class="fw-bold user-username">{{ user.username }}</div>
+                  {% if user.full_name and user.full_name != user.username %}
+                    <small class="text-muted">{{ user.full_name }}</small>
+                  {% endif %}
+                </div>
+              </div>
+            </td>
+            <td>
+              <span class="text-muted user-email">{{ user.email }}</span>
+            </td>
+            <td>
+              {% set current_class = 'user' if user.role == 'user' else 'admin' if user.role == 'admin' else 'both' %}
+              <span class="role-badge role-{{ current_class }} current-role" data-role="{{ user.role }}">
+                {% if user.role == 'user' %}
+                  <i class="fas fa-user me-1"></i>User
+                {% elif user.role == 'admin' %}
+                  <i class="fas fa-user-shield me-1"></i>Admin
+                {% elif ',' in user.role %}
+                  <i class="fas fa-user-plus me-1"></i>User & Admin
+                {% else %}
+                  <i class="fas fa-question me-1"></i>{{ user.role|title }}
+                {% endif %}
+              </span>
+            </td>
+            <td>
+              <select class="form-select form-select-sm role-select" data-user-id="{{ user.id }}">
+                <option value="{{ user.role }}" selected>Keep Current</option>
+                {% if user.role != 'user' %}
+                  <option value="user">User</option>
+                {% endif %}
+                {% if user.role != 'admin' %}
+                  <option value="admin">Admin</option>
+                {% endif %}
+                {% if user.role != 'user,admin' %}
+                  <option value="user,admin">User & Admin</option>
+                {% endif %}
+              </select>
+            </td>
+            <td>
+              <button class="btn btn-success btn-sm update-role-btn" 
+                      data-user-id="{{ user.id }}" 
+                      data-username="{{ user.username }}" 
+                      disabled>
+                <i class="fas fa-save me-1"></i>Update
+              </button>
+            </td>
+            <td>
+              <div class="d-flex flex-column">
+                {% if user.updated_at %}
+                  <small class="text-muted">{{ user.updated_at }}</small>
+                {% else %}
+                  <small class="text-muted">{{ user.created_at or 'N/A' }}</small>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body">
+    <div class="empty-state">
+      <i class="fas fa-users"></i>
+      <h4>No Users Found</h4>
+      <p class="text-muted">No user data available in the system.</p>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+.page-header {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 28px 32px;
+  margin: -32px -32px 32px -32px;
+  border-radius: 0 0 24px 24px;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2);
+}
+
+.badge {
+  font-size: 0.85rem;
+  padding: 10px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.badge-total {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  border-color: rgba(102, 126, 234, 0.3);
+  box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+}
+
+.badge-user {
+  background: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+  color: white;
+  border-color: rgba(0, 210, 255, 0.3);
+  box-shadow: 0 4px 15px rgba(0, 210, 255, 0.3);
+}
+
+.badge-admin {
+  background: linear-gradient(135deg, #ff8c42 0%, #ff6b35 100%);
+  color: white;
+  border-color: rgba(255, 140, 66, 0.3);
+  box-shadow: 0 4px 15px rgba(255, 140, 66, 0.3);
+}
+
+.badge-both {
+  background: linear-gradient(135deg, #a8e6cf 0%, #88d8a3 100%);
+  color: #2d5d3f;
+  border-color: rgba(168, 230, 207, 0.5);
+  box-shadow: 0 4px 15px rgba(168, 230, 207, 0.3);
+}
+
+.search-box {
+  position: relative;
+}
+
+.search-box input {
+  padding-right: 40px;
+  border-radius: 20px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.search-box input:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.search-icon {
+  position: absolute;
+  right: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+}
+
+.avatar-md {
+  width: 40px;
+  height: 40px;
+  font-size: 0.9rem;
+}
+
+.users-table thead th {
+  background: linear-gradient(135deg, #f8faff 0%, #f1f5f9 100%);
+  color: #2d3748;
+  font-weight: 700;
+  padding: 16px;
+  font-size: 0.9rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border: none;
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.users-table tbody td {
+  padding: 16px;
+  vertical-align: middle;
+  border: none;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.users-table tbody tr:hover {
+  background: linear-gradient(135deg, #f8faff 0%, rgba(102, 126, 234, 0.02) 100%);
+}
+
+.role-badge {
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-flex;
+  align-items: center;
+}
+
+.role-user {
+  background: rgba(59, 130, 246, 0.15);
+  color: #1d4ed8;
+  border: 1px solid rgba(59, 130, 246, 0.3);
+}
+
+.role-admin {
+  background: rgba(239, 68, 68, 0.15);
+  color: #dc2626;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.role-both {
+  background: rgba(147, 51, 234, 0.15);
+  color: #7c3aed;
+  border: 1px solid rgba(147, 51, 234, 0.3);
+}
+
+.form-select-sm {
+  border-radius: 8px;
+  border: 2px solid #e2e8f0;
+  transition: all 0.3s ease;
+}
+
+.form-select-sm:focus {
+  border-color: #667eea;
+  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.update-role-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.bulk-actions .form-select {
+  min-width: 150px;
+}
+
+.empty-state {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.empty-state i {
+  font-size: 3rem;
+  margin-bottom: 20px;
+  opacity: 0.5;
+}
+
+/* Animation for role updates */
+.role-updating {
+  animation: pulse 1s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.5; }
+}
+
+/* Highlight selected rows */
+.user-row.selected {
+  background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%) !important;
+}
+
+.user-row.selected td {
+  border-color: rgba(102, 126, 234, 0.2);
+}
+
+/* Checkbox styling for better visibility */
+.form-check-input {
+  border: 2px solid #d1d5db !important;
+  background-color: #ffffff !important;
+  width: 1.2em !important;
+  height: 1.2em !important;
+  margin-top: 0.1em !important;
+}
+
+.form-check-input:checked {
+  background-color: #667eea !important;
+  border-color: #667eea !important;
+}
+
+.form-check-input:focus {
+  border-color: #667eea !important;
+  box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.25) !important;
+}
+
+.form-check-input:hover {
+  border-color: #9333ea !important;
+}
+
+/* Table header checkbox */
+.users-table th .form-check-input {
+  border: 2px solid #94a3b8 !important;
+}
+
+.users-table th .form-check-input:checked {
+  background-color: #667eea !important;
+  border-color: #667eea !important;
+}
+
+/* Indeterminate state for select all checkbox */
+.form-check-input:indeterminate {
+  background-color: #f59e0b !important;
+  border-color: #f59e0b !important;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let userStatsCache = null;
+
+    // Load stats immediately
+    loadUserStatsWithCache();
+    
+    // Role select change handlers
+    document.querySelectorAll('.role-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const userId = this.dataset.userId;
+            const currentRole = this.closest('tr').querySelector('.current-role').dataset.role;
+            const newRole = this.value;
+            const updateBtn = this.closest('tr').querySelector('.update-role-btn');
+            
+            // Enable/disable update button based on role change
+            if (newRole !== currentRole) {
+                updateBtn.disabled = false;
+                updateBtn.classList.add('btn-warning');
+                updateBtn.classList.remove('btn-success');
+                updateBtn.innerHTML = '<i class="fas fa-exclamation-triangle me-1"></i>Update';
+            } else {
+                updateBtn.disabled = true;
+                updateBtn.classList.remove('btn-warning');
+                updateBtn.classList.add('btn-success');
+                updateBtn.innerHTML = '<i class="fas fa-save me-1"></i>Update';
+            }
+        });
+    });
+
+    // Individual update buttons
+    document.querySelectorAll('.update-role-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const userId = this.dataset.userId;
+            const username = this.dataset.username;
+            const select = this.closest('tr').querySelector('.role-select');
+            const newRole = select.value;
+            
+            updateUserRole(userId, username, newRole, this);
+        });
+    });
+
+    // Checkbox handlers
+    document.getElementById('selectAllCheckbox').addEventListener('change', function() {
+        const checkboxes = document.querySelectorAll('.user-checkbox');
+        const isChecked = this.checked;
+        
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = isChecked;
+            toggleRowSelection(checkbox.closest('tr'), isChecked);
+        });
+        
+        updateBulkActionState();
+    });
+
+    document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            toggleRowSelection(this.closest('tr'), this.checked);
+            updateSelectAllState();
+            updateBulkActionState();
+        });
+    });
+
+    // Bulk action buttons
+    document.getElementById('selectAllBtn').addEventListener('click', function() {
+        document.getElementById('selectAllCheckbox').checked = true;
+        document.getElementById('selectAllCheckbox').dispatchEvent(new Event('change'));
+    });
+
+    document.getElementById('clearSelectionBtn').addEventListener('click', function() {
+        document.getElementById('selectAllCheckbox').checked = false;
+        document.getElementById('selectAllCheckbox').dispatchEvent(new Event('change'));
+    });
+
+    document.getElementById('bulkRoleSelect').addEventListener('change', updateBulkActionState);
+
+    document.getElementById('applyBulkUpdate').addEventListener('click', function() {
+        const selectedUsers = getSelectedUsers();
+        const newRole = document.getElementById('bulkRoleSelect').value;
+        
+        if (selectedUsers.length === 0) {
+            showAlert('Please select users to update', 'warning');
+            return;
+        }
+        
+        if (!newRole) {
+            showAlert('Please select a role to apply', 'warning');
+            return;
+        }
+        
+        if (confirm(`Are you sure you want to update ${selectedUsers.length} users to ${newRole} role?`)) {
+            bulkUpdateRoles(selectedUsers, newRole);
+        }
+    });
+
+    // Search functionality
+    document.getElementById('userSearch').addEventListener('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = document.querySelectorAll('.user-row');
+        
+        rows.forEach(row => {
+            const username = row.querySelector('.user-username').textContent.toLowerCase();
+            const email = row.querySelector('.user-email').textContent.toLowerCase();
+            const fullName = row.querySelector('.text-muted')?.textContent?.toLowerCase() || '';
+            
+            const matches = username.includes(searchTerm) || 
+                          email.includes(searchTerm) || 
+                          fullName.includes(searchTerm);
+            
+            row.style.display = matches ? '' : 'none';
+        });
+    });
+
+    // Functions
+    function loadUserStatsWithCache() {
+        if (userStatsCache) {
+            updateStatsDisplay(userStatsCache);
+        }
+
+        fetch('/admin/api/users/stats')
+            .then(response => response.json())
+            .then(data => {
+                userStatsCache = data;
+                updateStatsDisplay(data);
+            })
+            .catch(error => {
+                console.error('Error loading user stats:', error);
+                if (!userStatsCache) {
+                    updateStatsDisplay({
+                        total_users: 'Error',
+                        user_role: 'Error',
+                        admin_role: 'Error',
+                        both_roles: 'Error'
+                    });
+                }
+            });
+    }
+
+    function updateStatsDisplay(data) {
+        document.getElementById('totalUsers').textContent = data.total_users;
+        document.getElementById('userCount').textContent = data.user_role;
+        document.getElementById('adminCount').textContent = data.admin_role;
+        document.getElementById('bothCount').textContent = data.both_roles;
+    }
+
+    function updateUserRole(userId, username, newRole, button) {
+        const originalHtml = button.innerHTML;
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        button.disabled = true;
+
+        fetch('/admin/users/update-role', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                user_id: userId,
+                new_role: newRole
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                if (data.no_change) {
+                    showAlert(data.message, 'info');
+                } else {
+                    showAlert(data.message, 'success');
+                    updateRowAfterRoleChange(userId, newRole);
+                    loadUserStatsWithCache();
+                }
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalHtml;
+            button.disabled = true;
+            button.classList.remove('btn-warning');
+            button.classList.add('btn-success');
+        });
+    }
+
+    function bulkUpdateRoles(userIds, newRole) {
+        const updates = userIds.map(id => ({ user_id: id, new_role: newRole }));
+        const button = document.getElementById('applyBulkUpdate');
+        const originalHtml = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Updating...';
+        button.disabled = true;
+
+        fetch('/admin/users/bulk-update-roles', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ updates: updates })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert(data.message, 'success');
+                
+                // Update UI for all updated users
+                userIds.forEach(userId => {
+                    updateRowAfterRoleChange(userId, newRole);
+                });
+                
+                // Clear selections
+                document.getElementById('clearSelectionBtn').click();
+                document.getElementById('bulkRoleSelect').value = '';
+                
+                loadUserStatsWithCache();
+            } else {
+                showAlert(data.message, 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('System error occurred', 'danger');
+        })
+        .finally(() => {
+            button.innerHTML = originalHtml;
+            updateBulkActionState();
+        });
+    }
+
+    function updateRowAfterRoleChange(userId, newRole) {
+        const row = document.querySelector(`tr[data-user-id="${userId}"]`);
+        if (!row) return;
+
+        const currentRoleBadge = row.querySelector('.current-role');
+        const roleSelect = row.querySelector('.role-select');
+        const updateBtn = row.querySelector('.update-role-btn');
+
+        // Update current role badge
+        let roleClass, roleIcon, roleText;
+        if (newRole === 'user') {
+            roleClass = 'role-user';
+            roleIcon = 'fas fa-user';
+            roleText = 'User';
+        } else if (newRole === 'admin') {
+            roleClass = 'role-admin';
+            roleIcon = 'fas fa-user-shield';
+            roleText = 'Admin';
+        } else if (newRole === 'user,admin') {
+            roleClass = 'role-both';
+            roleIcon = 'fas fa-user-plus';
+            roleText = 'User & Admin';
+        }
+
+        currentRoleBadge.className = `role-badge ${roleClass} current-role`;
+        currentRoleBadge.dataset.role = newRole;
+        currentRoleBadge.innerHTML = `<i class="${roleIcon} me-1"></i>${roleText}`;
+
+        // Update role select options
+        roleSelect.innerHTML = `
+            <option value="${newRole}" selected>Keep Current</option>
+            ${newRole !== 'user' ? '<option value="user">User</option>' : ''}
+            ${newRole !== 'admin' ? '<option value="admin">Admin</option>' : ''}
+            ${newRole !== 'user,admin' ? '<option value="user,admin">User & Admin</option>' : ''}
+        `;
+
+        // Reset update button
+        updateBtn.disabled = true;
+        updateBtn.classList.remove('btn-warning');
+        updateBtn.classList.add('btn-success');
+        updateBtn.innerHTML = '<i class="fas fa-save me-1"></i>Update';
+
+        // Update timestamp
+        const timestampCell = row.querySelector('td:last-child small');
+        if (timestampCell) {
+            timestampCell.textContent = new Date().toLocaleString();
+        }
+
+        // Add animation effect
+        row.classList.add('role-updating');
+        setTimeout(() => {
+            row.classList.remove('role-updating');
+        }, 1000);
+    }
+
+    function toggleRowSelection(row, isSelected) {
+        if (isSelected) {
+            row.classList.add('selected');
+        } else {
+            row.classList.remove('selected');
+        }
+    }
+
+    function updateSelectAllState() {
+        const allCheckboxes = document.querySelectorAll('.user-checkbox');
+        const checkedCheckboxes = document.querySelectorAll('.user-checkbox:checked');
+        const selectAllCheckbox = document.getElementById('selectAllCheckbox');
+        
+        if (checkedCheckboxes.length === 0) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = false;
+        } else if (checkedCheckboxes.length === allCheckboxes.length) {
+            selectAllCheckbox.indeterminate = false;
+            selectAllCheckbox.checked = true;
+        } else {
+            selectAllCheckbox.indeterminate = true;
+            selectAllCheckbox.checked = false;
+        }
+    }
+
+    function updateBulkActionState() {
+        const selectedUsers = getSelectedUsers();
+        const bulkRoleSelect = document.getElementById('bulkRoleSelect');
+        const applyBulkUpdate = document.getElementById('applyBulkUpdate');
+        
+        const hasSelection = selectedUsers.length > 0;
+        const hasRole = bulkRoleSelect.value !== '';
+        
+        applyBulkUpdate.disabled = !(hasSelection && hasRole);
+        
+        if (hasSelection) {
+            applyBulkUpdate.innerHTML = `<i class="fas fa-users-cog me-1"></i>Apply to ${selectedUsers.length} Selected`;
+        } else {
+            applyBulkUpdate.innerHTML = '<i class="fas fa-users-cog me-1"></i>Apply to Selected';
+        }
+    }
+
+    function getSelectedUsers() {
+        return Array.from(document.querySelectorAll('.user-checkbox:checked')).map(cb => cb.value);
+    }
+
+    function showAlert(message, type) {
+        const alertDiv = document.createElement('div');
+        alertDiv.className = `alert alert-${type} alert-dismissible fade show`;
+        alertDiv.innerHTML = `
+            <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'} me-2"></i>
+            ${message}
+            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+        `;
+        
+        const container = document.querySelector('.content-wrap') || document.querySelector('.container-fluid') || document.body;
+        container.insertBefore(alertDiv, container.firstChild);
+        
+        // Auto-remove after 5 seconds
+        setTimeout(() => {
+            if (alertDiv.parentElement) {
+                alertDiv.remove();
+            }
+        }, 5000);
+    }
+
+    // Refresh stats every 30 seconds
+    setInterval(() => {
+        if (document.visibilityState === 'visible') {
+            loadUserStatsWithCache();
+        }
+    }, 30000);
+});
+</script>
+
+{% endblock %}
