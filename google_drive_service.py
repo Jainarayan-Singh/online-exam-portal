@@ -106,15 +106,37 @@ def create_drive_service():
         print(f"❌ create_drive_service error: {e}")
         return None
 
+
+def clear_csv_cache(file_id: str | None = None):
+    """
+    Clear CSV cache for a specific file_id (or all if file_id is None).
+    Used by main app to ensure fresh reads after save.
+    """
+    try:
+        if file_id:
+            ckey = f"csv::{file_id}"
+            _file_cache.pop(ckey, None)
+            _cache_timestamps.pop(ckey, None)
+        else:
+            _file_cache.clear()
+            _cache_timestamps.clear()
+        print(f"✅ Cleared csv cache for {file_id or 'ALL'}")
+    except Exception as e:
+        print(f"⚠️ clear_csv_cache error: {e}")
+
+
 # -------------------------------------------------------------------
 # CSV helpers
 # -------------------------------------------------------------------
+# google_drive_service.py
+# Replace your existing load_csv_from_drive with this version
+
 def load_csv_from_drive(service, file_id: str, max_retries: int = 3, **kwargs) -> pd.DataFrame:
     if not service:
         print("❌ load_csv_from_drive: service is None")
         return pd.DataFrame()
 
-    if not file_id or len(file_id) < 8:
+    if not file_id or len(str(file_id)) < 8:
         print(f"❌ load_csv_from_drive: invalid file_id '{file_id}'")
         return pd.DataFrame()
 
@@ -127,8 +149,24 @@ def load_csv_from_drive(service, file_id: str, max_retries: int = 3, **kwargs) -
         try:
             print(f"📥 Loading CSV (try {attempt}/{max_retries}) id={file_id}")
             meta = service.files().get(fileId=file_id, fields="id,name,size,mimeType").execute()
-            print(f"📄 File: {meta.get('name')} ({meta.get('size', '0')} bytes, {meta.get('mimeType')})")
 
+            if not isinstance(meta, dict):
+                print(f"⚠️ Unexpected meta type ({type(meta)}) for file_id={file_id}")
+                raise RuntimeError("Unexpected metadata type returned from Drive API")
+
+            mime = meta.get("mimeType", "")
+            print(f"📄 File: {meta.get('name')} ({meta.get('size', '0')} bytes, {mime})")
+
+            if 'folder' in mime:
+                print(f"❌ File id {file_id} is a FOLDER. Returning empty DataFrame.")
+                return pd.DataFrame()
+
+            size = meta.get("size")
+            if size in [None, "0", 0]:
+                print(f"⚠️ File id {file_id} has size={size} (empty). Returning empty DataFrame.")
+                return pd.DataFrame()
+
+            # Download media
             req = service.files().get_media(fileId=file_id)
             buf = BytesIO()
             downloader = MediaIoBaseDownload(buf, req)
@@ -139,30 +177,55 @@ def load_csv_from_drive(service, file_id: str, max_retries: int = 3, **kwargs) -
                     prog = int(status.progress() * 100)
                     if prog % 25 == 0:
                         print(f"📊 Download progress: {prog}%")
+            
             buf.seek(0)
             content = buf.read().decode("utf-8", errors="replace")
             if not content.strip():
-                print("⚠️ CSV empty")
+                print("⚠️ CSV empty (no textual content)")
                 return pd.DataFrame()
 
+            # 🔧 FIX: Handle header-only files properly
+            lines = content.strip().split('\n')
+            if len(lines) <= 1:
+                # Only headers, no data rows
+                df = pd.read_csv(StringIO(content))
+                print(f"📋 Header-only CSV detected: {list(df.columns)}")
+                _set_cache(cache_key, df.copy(), _file_cache)
+                return df
+            
             df = pd.read_csv(StringIO(content))
-            if df is None or df.empty:
-                print("⚠️ Parsed DataFrame empty")
+            if df is None:
+                print("⚠️ Parsed DataFrame is None")
                 return pd.DataFrame()
 
             _set_cache(cache_key, df.copy(), _file_cache)
             print(f"✅ Loaded {len(df)} rows, {len(df.columns)} cols")
             return df
+
         except HttpError as he:
-            print(f"❌ HTTP {he.resp.status} on load: {he}")
-            if he.resp.status in (403, 404):
-                break
+            status_code = getattr(he.resp, "status", None)
+            print(f"❌ HTTP {status_code} on load: {he}")
+            if status_code in (403, 404):
+                print("⚠️ Received 403/404 from Drive; returning empty DataFrame")
+                return pd.DataFrame()
             time.sleep(2 * attempt)
+
         except Exception as e:
-            print(f"❌ load error (try {attempt}): {e}")
+            import ssl
+            es = str(e)
+            if isinstance(e, ssl.SSLError) or 'WRONG_VERSION_NUMBER' in es or 'SSLError' in es or 'DECRYPTION_FAILED' in es:
+                print(f"❌ SSL error while loading CSV (try {attempt}): {e}")
+                if attempt < max_retries:
+                    time.sleep(3 * attempt)  # Longer delay for SSL issues
+                    continue
+            else:
+                print(f"❌ load error (try {attempt}): {e}")
             time.sleep(1 * attempt)
 
+    print(f"⚠️ All {max_retries} attempts failed for id={file_id}. Returning empty DataFrame.")
     return pd.DataFrame()
+
+
 
 def save_csv_to_drive(service, df: pd.DataFrame, file_id: str, max_retries: int = 3) -> bool:
     if not service:
@@ -171,7 +234,7 @@ def save_csv_to_drive(service, df: pd.DataFrame, file_id: str, max_retries: int 
     if df is None or df.empty:
         print("⚠️ save_csv_to_drive: empty DataFrame")
         return False
-    if not file_id or len(file_id) < 8:
+    if not file_id or len(str(file_id)) < 8:
         print(f"❌ save_csv_to_drive: invalid file_id '{file_id}'")
         return False
 
@@ -201,8 +264,9 @@ def save_csv_to_drive(service, df: pd.DataFrame, file_id: str, max_retries: int 
             print("✅ CSV saved & cache cleared")
             return True
         except HttpError as he:
-            print(f"❌ HTTP {he.resp.status} on save: {he}")
-            if he.resp.status in (403, 404):
+            status_code = getattr(he.resp, "status", None)
+            print(f"❌ HTTP {status_code} on save: {he}")
+            if status_code in (403, 404):
                 break
             time.sleep(2 * attempt)
         except Exception as e:
